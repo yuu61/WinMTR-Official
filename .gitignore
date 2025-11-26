@@ -1,0 +1,12 @@
+# Visual Studio
+*.suo
+*.user
+*.ncb
+*.aps
+Debug/
+Release/
+x64/
+*.obj
+*.pdb
+*.ilk
+*.exe
