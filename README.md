@@ -17,7 +17,7 @@ WinMTR is offered as Open Source Software under GPL v2.
 
 ## Installation
 
-You will get a `.zip` archive containing two folders: `WinMTR-32` and `WinMTR-64`. Both contain two files: `WinMTR.exe` and `README.TXT`.
+You will get a `.zip` archive containing two folders: `WinMTR-32` and `WinMTR-64`. Both contain two files: `WinMTR.exe` and `README.md`.
 
 Just extract the `WinMTR.exe` for your platform (32 or 64 bit) and click to run it. If you don't know what version you need, just click on both files and see which one works ;-)
 
