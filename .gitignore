@@ -4,9 +4,12 @@
 *.ncb
 *.aps
 Debug/
+Debug_*/
 Release/
+Release_*/
 x64/
 *.obj
 *.pdb
 *.ilk
 *.exe
+.vs/
