@@ -435,7 +435,7 @@ HCURSOR WinMTRDialog::OnQueryDragIcon()
 // WinMTRDialog::OnDblclkList
 //
 //*****************************************************************************
-void WinMTRDialog::OnDblclkList(NMHDR* pNMHDR, LRESULT* pResult)
+void WinMTRDialog::OnDblclkList(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 {
 	*pResult = 0;
 
@@ -581,7 +581,7 @@ void WinMTRDialog::OnRestart()
 				
 				nrLRU++;
 				sprintf(key_name, "Host%d", nrLRU);
-				r = RegSetValueEx(hKey,key_name, 0, REG_SZ, (const unsigned char *)(LPCTSTR)sHost, strlen((LPCTSTR)sHost)+1);
+				r = RegSetValueEx(hKey,key_name, 0, REG_SZ, (const unsigned char *)(LPCTSTR)sHost, (DWORD)(strlen((LPCTSTR)sHost)+1));
 				tmp_dword = nrLRU;
 				r = RegSetValueEx(hKey,"NrLRU", 0, REG_DWORD, (const unsigned char *)&tmp_dword, sizeof(DWORD));
 				RegCloseKey(hKey);
@@ -942,15 +942,14 @@ int WinMTRDialog::DisplayRedraw()
 int WinMTRDialog::InitMTRNet()
 {
 	char strtmp[255];
-	char *Hostname = strtmp;
+	const char *Hostname = strtmp;
 	char buf[255];
-	struct hostent *host;
 	m_comboHost.GetWindowText(strtmp, 255);
-   	
+
 	if (Hostname == NULL) Hostname = "localhost";
-   
+
 	int isIP=1;
-	char *t = Hostname;
+	const char *t = Hostname;
 	while(*t) {
 		if(!isdigit(*t) && *t!='.') {
 			isIP=0;
@@ -962,12 +961,15 @@ int WinMTRDialog::InitMTRNet()
 	if(!isIP) {
 		sprintf(buf, "Resolving host %s...", strtmp);
 		statusBar.SetPaneText(0,buf);
-		host = gethostbyname(Hostname);
-		if(host == NULL) {
+		struct addrinfo hints = {};
+		hints.ai_family = AF_INET;
+		struct addrinfo *result = NULL;
+		if (getaddrinfo(Hostname, NULL, &hints, &result) != 0 || result == NULL) {
 			statusBar.SetPaneText(0, CString((LPCSTR)IDS_STRING_SB_NAME) );
 			AfxMessageBox("Unable to resolve hostname.");
 			return 0;
 		}
+		freeaddrinfo(result);
 	}
 
 	return 1;
@@ -984,18 +986,16 @@ void PingThread(void *p)
 	WinMTRDialog *wmtrdlg = (WinMTRDialog *)p;
 	WaitForSingleObject(wmtrdlg->traceThreadMutex, INFINITE);
 
-	struct hostent *host, *lhost;
 	char strtmp[255];
-	char *Hostname = strtmp;
+	const char *Hostname = strtmp;
 	int traddr;
-	int localaddr;
 
 	wmtrdlg->m_comboHost.GetWindowText(strtmp, 255);
-   	
+
 	if (Hostname == NULL) Hostname = "localhost";
-   
+
 	int isIP=1;
-	char *t = Hostname;
+	const char *t = Hostname;
 	while(*t) {
 		if(!isdigit(*t) && *t!='.') {
 			isIP=0;
@@ -1005,19 +1005,26 @@ void PingThread(void *p)
 	}
 
 	if(!isIP) {
-      host = gethostbyname(Hostname);
-      traddr = *(int *)host->h_addr;
-	} else
-      traddr = inet_addr(Hostname);
-
-	lhost = gethostbyname("localhost");
-	if(lhost == NULL) {
-      AfxMessageBox("Unable to get local IP address.");
-      ReleaseMutex(wmtrdlg->traceThreadMutex);
-      return;
+		struct addrinfo hints = {};
+		hints.ai_family = AF_INET;
+		struct addrinfo *result = NULL;
+		if (getaddrinfo(Hostname, NULL, &hints, &result) != 0 || result == NULL) {
+			AfxMessageBox("Unable to resolve hostname.");
+			ReleaseMutex(wmtrdlg->traceThreadMutex);
+			return;
+		}
+		traddr = ((struct sockaddr_in *)result->ai_addr)->sin_addr.s_addr;
+		freeaddrinfo(result);
+	} else {
+		struct in_addr addr;
+		if (inet_pton(AF_INET, Hostname, &addr) != 1) {
+			AfxMessageBox("Invalid IP address.");
+			ReleaseMutex(wmtrdlg->traceThreadMutex);
+			return;
+		}
+		traddr = addr.s_addr;
 	}
-	localaddr = *(int *)lhost->h_addr;
-	
+
 	wmtrdlg->wmtrnet->DoTrace(traddr);
 
 	ReleaseMutex(wmtrdlg->traceThreadMutex);

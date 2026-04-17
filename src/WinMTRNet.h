@@ -68,7 +68,7 @@ public:
 	int		GetMax();
 
 	void	SetAddr(int at, __int32 addr);
-	void	SetName(int at, char *n);
+	void	SetName(int at, const char *n);
 	void	SetBest(int at, int current);
 	void	SetWorst(int at, int current);
 	void	SetLast(int at, int last);

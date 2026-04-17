@@ -68,11 +68,6 @@ BOOL WinMTRMain::InitInstance()
 	}
 
 	AfxEnableControlContainer();
-	
-#ifdef _AFXDLL
-	Enable3dControls();			// Call this when using MFC in a shared DLL
-#endif
-
 
 	WinMTRDialog mtrDialog;
 	m_pMainWnd = &mtrDialog;
@@ -82,7 +77,7 @@ BOOL WinMTRMain::InitInstance()
 		ParseCommandLineParams(m_lpCmdLine, &mtrDialog);
 	}
 
-	int nResponse = mtrDialog.DoModal();
+	mtrDialog.DoModal();
 
 
 	return FALSE;
@@ -132,7 +127,7 @@ void WinMTRMain::ParseCommandLineParams(LPTSTR cmd, WinMTRDialog *wmtrdlg)
 //
 // 
 //*****************************************************************************
-int WinMTRMain::GetParamValue(LPTSTR cmd, char * param, char sparam, char *value)
+int WinMTRMain::GetParamValue(LPTSTR cmd, const char *param, char sparam, char *value)
 {
 	char *p;
 	
@@ -172,7 +167,7 @@ int WinMTRMain::GetParamValue(LPTSTR cmd, char * param, char sparam, char *value
 int WinMTRMain::GetHostNameParamValue(LPTSTR cmd, std::string& host_name)
 {
 // WinMTR -h -i 1 -n google.com
-	int size = strlen(cmd);
+	int size = (int)strlen(cmd);
 	std::string name = "";
 	while(cmd[--size] == ' ');
 

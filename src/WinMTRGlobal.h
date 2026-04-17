@@ -28,6 +28,7 @@
   #include <afxcmn.h>
 #endif 
 #include <afxsock.h>
+#include <ws2tcpip.h>
 
 #include <process.h>
 #include <stdio.h>

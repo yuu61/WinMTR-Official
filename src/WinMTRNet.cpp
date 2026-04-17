@@ -151,7 +151,7 @@ void TraceThread(void *p)
      * Init IPInfo structure
      */
     lpstIPInfo				= &stIPInfo;
-    stIPInfo.Ttl			= current->ttl;
+    stIPInfo.Ttl			= (UCHAR)current->ttl;
     stIPInfo.Tos			= 0;
     stIPInfo.Flags			= IPFLAG_DONT_FRAGMENT;
     stIPInfo.OptionsSize	= 0;
@@ -172,7 +172,7 @@ void TraceThread(void *p)
 		// - as soon as we get a hop, we start pinging directly that hop, with a greater TTL
 		// - a drawback would be that, some servers are configured to reply for TTL transit expire, but not to ping requests, so,
 		// for these servers we'll have 100% loss
-		dwReplyCount = wmtrnet->lpfnIcmpSendEcho(wmtrnet->hICMP, current->address, achReqData, nDataLen, lpstIPInfo, achRepData, sizeof(achRepData), ECHO_REPLY_TIMEOUT);
+		dwReplyCount = wmtrnet->lpfnIcmpSendEcho(wmtrnet->hICMP, current->address, achReqData, (WORD)nDataLen, lpstIPInfo, achRepData, sizeof(achRepData), ECHO_REPLY_TIMEOUT);
 
 		PICMPECHO icmp_echo_reply = (PICMPECHO)achRepData;
 
@@ -248,7 +248,7 @@ void TraceThread(void *p)
 			}
 
 			if(wmtrnet->wmtrdlg->interval * 1000 > icmp_echo_reply->RoundTripTime)
-				Sleep(wmtrnet->wmtrdlg->interval * 1000 - icmp_echo_reply->RoundTripTime);
+				Sleep((DWORD)(wmtrnet->wmtrdlg->interval * 1000 - icmp_echo_reply->RoundTripTime));
 		}
 
     } /* end ping loop */
@@ -380,7 +380,7 @@ void WinMTRNet::SetAddr(int at, __int32 addr)
 	ReleaseMutex(ghMutex);
 }
 
-void WinMTRNet::SetName(int at, char *n)
+void WinMTRNet::SetName(int at, const char *n)
 {
 	WaitForSingleObject(ghMutex, INFINITE);
 	strcpy(host[at].name, n);
@@ -402,6 +402,8 @@ void WinMTRNet::SetBest(int at, int current)
 
 void WinMTRNet::SetWorst(int at, int current)
 {
+	UNREFERENCED_PARAMETER(at);
+	UNREFERENCED_PARAMETER(current);
 	WaitForSingleObject(ghMutex, INFINITE);
 	ReleaseMutex(ghMutex);
 }
@@ -434,17 +436,17 @@ void DnsResolverThread(void *p)
 	dns_resolver_thread *dnt = (dns_resolver_thread*)p;
 	WinMTRNet* wn = dnt->winmtr;
 
-	struct hostent *phent ;
-
 	char buf[100];
 	int addr = wn->GetAddr(dnt->index);
 	sprintf (buf, "%d.%d.%d.%d", (addr >> 24) & 0xff, (addr >> 16) & 0xff, (addr >> 8) & 0xff, addr & 0xff);
 
-	int haddr = htonl(addr);
-	phent = gethostbyaddr( (const char*)&haddr, sizeof(int), AF_INET);
+	struct sockaddr_in sa = {};
+	sa.sin_family = AF_INET;
+	sa.sin_addr.s_addr = htonl(addr);
 
-	if(phent) {
-		wn->SetName(dnt->index, phent->h_name);
+	char hostname[NI_MAXHOST];
+	if (getnameinfo((struct sockaddr*)&sa, sizeof(sa), hostname, sizeof(hostname), NULL, 0, NI_NAMEREQD) == 0) {
+		wn->SetName(dnt->index, hostname);
 	} else {
 		wn->SetName(dnt->index, buf);
 	}
