@@ -8,6 +8,9 @@
 #include "Reporter.h"
 #include "HopStatistics.h"
 
+#include <fstream>
+#include <vector>
+
 
 //*****************************************************************************
 // Reporter::BuildTextReport
@@ -117,9 +120,29 @@ bool Reporter::CopyToClipboard(CWnd* owner, const CString& content)
 //*****************************************************************************
 bool Reporter::SaveToFile(LPCWSTR path, const CString& content)
 {
-	FILE* fp = _wfopen(path, L"w, ccs=UTF-8");
-	if (fp == NULL) return false;
-	fwprintf(fp, L"%s", (LPCWSTR)content);
-	fclose(fp);
-	return true;
+	// MSVC extends std::ofstream with a wide-path constructor, so we can
+	// hand the Unicode path directly instead of going through _wfopen.
+	std::ofstream out(path, std::ios::binary | std::ios::trunc);
+	if (!out) return false;
+
+	// UTF-8 BOM so the resulting file is unambiguously UTF-8 for downstream
+	// tools (Notepad, editors without an encoding picker).
+	constexpr char kUtf8Bom[] = "\xEF\xBB\xBF";
+	out.write(kUtf8Bom, 3);
+
+	const int wideLen = content.GetLength();
+	if (wideLen > 0) {
+		const int utf8Len = WideCharToMultiByte(CP_UTF8, 0,
+			static_cast<LPCWSTR>(content), wideLen,
+			nullptr, 0, nullptr, nullptr);
+		if (utf8Len <= 0) return false;
+
+		std::vector<char> utf8(static_cast<size_t>(utf8Len));
+		WideCharToMultiByte(CP_UTF8, 0,
+			static_cast<LPCWSTR>(content), wideLen,
+			utf8.data(), utf8Len, nullptr, nullptr);
+		out.write(utf8.data(), utf8Len);
+	}
+
+	return out.good();
 }

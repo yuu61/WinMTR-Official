@@ -3,10 +3,8 @@
 *.user
 *.ncb
 *.aps
-Debug/
-Debug_*/
-Release/
-Release_*/
+Debug*/
+Release*/
 x64/
 *.obj
 *.pdb

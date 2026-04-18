@@ -72,10 +72,8 @@ BOOL Main::InitInstance()
 	Dialog mtrDialog;
 	m_pMainWnd = &mtrDialog;
 
-	if (wcslen(m_lpCmdLine)) {
-		std::wstring cmd = m_lpCmdLine;
-		cmd += L' ';
-		auto parsed = CommandLine::Parse(cmd.data());
+	if (m_lpCmdLine != nullptr && m_lpCmdLine[0] != L'\0') {
+		auto parsed = CommandLine::Parse(GetCommandLineW());
 		if (parsed.helpRequested) {
 			Help mtrHelp;
 			m_pMainWnd = &mtrHelp;

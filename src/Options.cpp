@@ -8,11 +8,41 @@
 #include "Options.h"
 #include "License.h"
 
+#include <cwchar>
+
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #undef THIS_FILE
 static char THIS_FILE[] = __FILE__;
 #endif
+
+namespace {
+
+// Dialog text -> numeric with endptr-based validation. Leaves `out`
+// untouched on parse failure so the previous value persists.
+bool ParseDoubleField(LPCWSTR text, double& out)
+{
+	if (text == nullptr || text[0] == L'\0') return false;
+	wchar_t* end = nullptr;
+	errno = 0;
+	const double v = std::wcstod(text, &end);
+	if (end == text || errno == ERANGE) return false;
+	out = v;
+	return true;
+}
+
+bool ParseIntField(LPCWSTR text, int& out)
+{
+	if (text == nullptr || text[0] == L'\0') return false;
+	wchar_t* end = nullptr;
+	errno = 0;
+	const long v = std::wcstol(text, &end, 10);
+	if (end == text || errno == ERANGE) return false;
+	out = static_cast<int>(v);
+	return true;
+}
+
+} // namespace
 
 
 //*****************************************************************************
@@ -82,13 +112,13 @@ void Options::OnOK()
 	useDNS = m_checkDNS.GetCheck();
 
 	m_editInterval.GetWindowText(tmpstr, 20);
-	interval = _wtof(tmpstr);
+	ParseDoubleField(tmpstr, interval);
 
 	m_editSize.GetWindowText(tmpstr, 20);
-	pingsize = _wtoi(tmpstr);
+	ParseIntField(tmpstr, pingsize);
 
 	m_editMaxLRU.GetWindowText(tmpstr, 20);
-	maxLRU = _wtoi(tmpstr);
+	ParseIntField(tmpstr, maxLRU);
 
 	CDialog::OnOK();
 }

@@ -24,9 +24,11 @@ struct ParseResult {
 	CommandLineOverrides        overrides;
 };
 
-// Parses cmd into a ParseResult. On --help / -h, sets helpRequested and
-// skips remaining parsing.
-ParseResult Parse(LPWSTR cmd);
+// Parses the full command line string (e.g. as returned by GetCommandLineW())
+// into a ParseResult. Splits via CommandLineToArgvW so quoting and escaping
+// follow standard Windows shell semantics. On --help / -h, sets helpRequested
+// and skips the remainder.
+ParseResult Parse(LPCWSTR cmdLine);
 
 } // namespace CommandLine
 

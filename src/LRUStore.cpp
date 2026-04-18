@@ -5,6 +5,8 @@
 #include "Global.h"
 #include "LRUStore.h"
 
+#include <string_view>
+
 namespace {
 
 // Duplicated with Settings.cpp's OpenWinMTRSubKey; candidate for a shared
@@ -80,9 +82,10 @@ void LRUStore::Append(LPCWSTR host)
 	if (nr_ >= max_) nr_ = 0;
 	nr_++;
 	const auto keyName = std::format(L"Host{}", nr_);
+	const std::wstring_view hostView{host};
 	RegSetValueExW(hLRU, keyName.c_str(), 0, REG_SZ,
-				   (const BYTE*)host,
-				   (DWORD)((wcslen(host) + 1) * sizeof(wchar_t)));
+				   reinterpret_cast<const BYTE*>(host),
+				   static_cast<DWORD>((hostView.size() + 1) * sizeof(wchar_t)));
 	DWORD tmp = (DWORD)nr_;
 	RegSetValueExW(hLRU, L"NrLRU", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
 	RegCloseKey(hLRU);
