@@ -26,7 +26,7 @@ CString Reporter::BuildTextReport(const HopStatistics& stats)
 	result += L"|------------------------------------------------|------|------|------|------|------|------|\r\n";
 
 	for(int i=0;i <nh ; i++) {
-		stats.GetName(i, buf);
+		stats.GetName(i, buf, _countof(buf));
 		if (buf[0] == L'\0') wcscpy_s(buf, L"No response from host");
 
 		CString line;
@@ -62,7 +62,7 @@ CString Reporter::BuildHtmlReport(const HopStatistics& stats)
 	result += L"<tr><td>Host</td> <td>%</td> <td>Sent</td> <td>Recv</td> <td>Best</td> <td>Avrg</td> <td>Wrst</td> <td>Last</td></tr>\r\n";
 
 	for(int i=0;i <nh ; i++) {
-		stats.GetName(i, buf);
+		stats.GetName(i, buf, _countof(buf));
 		if (buf[0] == L'\0') wcscpy_s(buf, L"No response from host");
 
 		CString line;

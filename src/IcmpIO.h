@@ -2,8 +2,10 @@
 // FILE:            IcmpIO.h
 //
 // DESCRIPTION:
-//   RAII wrapper around ICMP.DLL. Owns the dynamic library, the function
-//   pointers, and the IcmpCreateFile handle.
+//   Per-worker RAII wrapper around the static-linked iphlpapi ICMP APIs.
+//   Owns the IPv4/IPv6 ICMP handles and the async completion event used by
+//   IcmpSendEcho2 / Icmp6SendEcho2. Uses IcmpParseReplies to decode the
+//   asynchronous reply buffer.
 //
 //*****************************************************************************
 
@@ -12,16 +14,18 @@
 
 #include <afxwin.h>
 #include <ws2tcpip.h>
+#include <iphlpapi.h>
+#include <icmpapi.h>
 
-typedef ip_option_information IPINFO, *PIPINFO, FAR *LPIPINFO;
-
-#ifdef _WIN64
-typedef icmp_echo_reply32 ICMPECHO, *PICMPECHO, FAR *LPICMPECHO;
-#else
-typedef icmp_echo_reply ICMPECHO, *PICMPECHO, FAR *LPICMPECHO;
-#endif
+#include "IpAddress.h"
 
 constexpr DWORD ECHO_REPLY_TIMEOUT = 5000;
+
+// Reply buffer must hold at least one ICMP_ECHO_REPLY (or ICMPV6_ECHO_REPLY)
+// plus the echoed request data plus 8 bytes of headroom, per MSDN. For the
+// asynchronous IcmpSendEcho2 path the driver prepends an IO_STATUS_BLOCK-
+// sized header before the reply record, so reserve extra slack.
+constexpr size_t ICMP_REPLY_HEADROOM = 64;
 
 class IcmpIO {
 public:
@@ -33,24 +37,21 @@ public:
 	[[nodiscard]] bool    IsValid()   const { return valid_; }
 	[[nodiscard]] LPCWSTR LastError() const { return last_error_; }
 
-	// Matches IcmpSendEcho semantics; returns 0 on failure or if invalid.
-	DWORD SendEcho(u_long dest_addr, LPVOID req_data, WORD req_size,
-	               LPIPINFO ip_info, LPVOID reply_buffer, DWORD reply_size,
-	               DWORD timeout);
+	// Issues an asynchronous echo, waits for either completion or stop_event,
+	// and parses the reply. Returns the number of replies (0 on timeout,
+	// failure, or stop). On success the caller reads reply_buffer as
+	// ICMP_ECHO_REPLY (AF_INET) or ICMPV6_ECHO_REPLY (AF_INET6).
+	DWORD DoEcho(const IpAddress& dest, UCHAR ttl,
+	             LPVOID req_data, WORD req_size,
+	             LPVOID reply_buffer, DWORD reply_size,
+	             HANDLE stop_event, DWORD timeout);
 
 private:
-	typedef HANDLE (WINAPI *LPFNICMPCREATEFILE)(VOID);
-	typedef BOOL   (WINAPI *LPFNICMPCLOSEHANDLE)(HANDLE);
-	typedef DWORD  (WINAPI *LPFNICMPSENDECHO)(HANDLE, u_long, LPVOID, WORD,
-	                                         LPVOID, LPVOID, DWORD, DWORD);
-
-	bool                valid_;
-	HINSTANCE           dll_;
-	HANDLE              handle_;
-	LPFNICMPCREATEFILE  fn_create_;
-	LPFNICMPCLOSEHANDLE fn_close_;
-	LPFNICMPSENDECHO    fn_send_;
-	LPCWSTR             last_error_;
+	bool    valid_;
+	HANDLE  v4_handle_;
+	HANDLE  v6_handle_;
+	HANDLE  echo_event_;
+	LPCWSTR last_error_;
 };
 
 #endif // ICMPIO_H_

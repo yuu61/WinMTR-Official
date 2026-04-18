@@ -18,6 +18,7 @@
 #include <afxwin.h>
 #include <memory>
 #include <string>
+#include <thread>
 
 class HopStatistics;
 class ISessionView;
@@ -71,24 +72,18 @@ private:
 		STOPPING_TO_EXIT
 	};
 
-	struct SessionWorkerArgs {
-		TraceSessionController* controller;
-		std::wstring            host;
-		TraceOptions            opts;
-	};
-
 	void Transit(State new_state);
 	void ApplyTransition();
 	void RestoreIdleUi();
 
-	void ExecuteSession(const std::wstring& host, const TraceOptions& opts);
-	static void SessionWorkerEntry(void* p);
+	void ExecuteSession(std::wstring host, TraceOptions opts);
 
 	ISessionView*                view_;
 	std::unique_ptr<TraceEngine> engine_;
 	State                        state_;
 	Transition                   transition_;
 	unsigned int                 tick_count_;
+	std::thread                  session_thread_;
 
 	std::wstring pending_host_;
 	TraceOptions pending_opts_{};

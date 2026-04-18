@@ -6,24 +6,57 @@
 
 #include "Global.h"
 #include "HostResolver.h"
-#include <algorithm>
-#include <string_view>
 
 namespace {
 
-bool ResolveByDns(LPCWSTR hostname, int* outAddr, CString& errorMessage)
+bool TryParseNumeric(LPCWSTR hostname, IpAddress& outAddr)
+{
+	in_addr  v4{};
+	in6_addr v6{};
+	if (InetPtonW(AF_INET, hostname, &v4) == 1) {
+		outAddr = IpAddress::FromIPv4(v4);
+		return true;
+	}
+	if (InetPtonW(AF_INET6, hostname, &v6) == 1) {
+		outAddr = IpAddress::FromIPv6(v6);
+		return true;
+	}
+	return false;
+}
+
+bool ResolveByDns(LPCWSTR hostname, IpAddress* outAddr, CString& errorMessage)
 {
 	ADDRINFOW hints = {};
-	hints.ai_family = AF_INET;
+	hints.ai_family   = AF_UNSPEC;
+	hints.ai_socktype = SOCK_RAW;
 	PADDRINFOW result = NULL;
 	if (GetAddrInfoW(hostname, NULL, &hints, &result) != 0 || result == NULL) {
 		errorMessage = L"Unable to resolve hostname.";
 		return false;
 	}
-	if (outAddr)
-		*outAddr = (int)((struct sockaddr_in*)result->ai_addr)->sin_addr.s_addr;
+
+	bool ok = false;
+	for (PADDRINFOW ai = result; ai != NULL; ai = ai->ai_next) {
+		if (ai->ai_family == AF_INET) {
+			if (outAddr) {
+				const auto* sa = reinterpret_cast<const sockaddr_in*>(ai->ai_addr);
+				*outAddr = IpAddress::FromIPv4(sa->sin_addr);
+			}
+			ok = true;
+			break;
+		}
+		if (ai->ai_family == AF_INET6) {
+			if (outAddr) {
+				const auto* sa = reinterpret_cast<const sockaddr_in6*>(ai->ai_addr);
+				*outAddr = IpAddress::FromIPv6(sa->sin6_addr);
+			}
+			ok = true;
+			break;
+		}
+	}
 	FreeAddrInfoW(result);
-	return true;
+	if (!ok) errorMessage = L"Unable to resolve hostname.";
+	return ok;
 }
 
 } // namespace
@@ -36,8 +69,8 @@ bool ResolveByDns(LPCWSTR hostname, int* outAddr, CString& errorMessage)
 bool HostResolver::LooksNumeric(LPCWSTR hostname)
 {
 	if (hostname == nullptr) return false;
-	return std::ranges::all_of(std::wstring_view{hostname},
-		[](wchar_t c) { return iswdigit(c) || c == L'.'; });
+	IpAddress tmp;
+	return TryParseNumeric(hostname, tmp);
 }
 
 
@@ -48,7 +81,8 @@ bool HostResolver::LooksNumeric(LPCWSTR hostname)
 bool HostResolver::Validate(LPCWSTR hostname, CString& errorMessage)
 {
 	if (hostname == NULL) hostname = L"localhost";
-	if (LooksNumeric(hostname)) return true;
+	IpAddress tmp;
+	if (TryParseNumeric(hostname, tmp)) return true;
 	return ResolveByDns(hostname, NULL, errorMessage);
 }
 
@@ -57,18 +91,10 @@ bool HostResolver::Validate(LPCWSTR hostname, CString& errorMessage)
 // HostResolver::Resolve
 //
 //*****************************************************************************
-bool HostResolver::Resolve(LPCWSTR hostname, int& outAddr, CString& errorMessage)
+bool HostResolver::Resolve(LPCWSTR hostname, IpAddress& outAddr, CString& errorMessage)
 {
 	if (hostname == NULL) hostname = L"localhost";
-	if (LooksNumeric(hostname)) {
-		struct in_addr addr{};
-		if (InetPtonW(AF_INET, hostname, &addr) != 1) {
-			errorMessage = L"Invalid IP address.";
-			return false;
-		}
-		outAddr = (int)addr.s_addr;
-		return true;
-	}
+	if (TryParseNumeric(hostname, outAddr)) return true;
 	return ResolveByDns(hostname, &outAddr, errorMessage);
 }
 
@@ -77,13 +103,39 @@ bool HostResolver::Resolve(LPCWSTR hostname, int& outAddr, CString& errorMessage
 // HostResolver::ReverseResolve
 //
 //*****************************************************************************
-bool HostResolver::ReverseResolve(int addr, wchar_t* outName, size_t outSize)
+bool HostResolver::ReverseResolve(const IpAddress& addr, wchar_t* outName, size_t outSize)
 {
-	struct sockaddr_in sa = {};
-	sa.sin_family      = AF_INET;
-	sa.sin_addr.s_addr = htonl(addr);
+	if (addr.family == AF_INET) {
+		sockaddr_in sa = {};
+		sa.sin_family = AF_INET;
+		sa.sin_addr   = addr.bytes.v4;
+		return GetNameInfoW(reinterpret_cast<const sockaddr*>(&sa), sizeof(sa),
+		                    outName, static_cast<DWORD>(outSize),
+		                    NULL, 0, NI_NAMEREQD) == 0;
+	}
+	if (addr.family == AF_INET6) {
+		sockaddr_in6 sa = {};
+		sa.sin6_family = AF_INET6;
+		sa.sin6_addr   = addr.bytes.v6;
+		return GetNameInfoW(reinterpret_cast<const sockaddr*>(&sa), sizeof(sa),
+		                    outName, static_cast<DWORD>(outSize),
+		                    NULL, 0, NI_NAMEREQD) == 0;
+	}
+	return false;
+}
 
-	return GetNameInfoW((struct sockaddr*)&sa, sizeof(sa),
-	                    outName, (DWORD)outSize,
-	                    NULL, 0, NI_NAMEREQD) == 0;
+
+//*****************************************************************************
+// HostResolver::FormatNumeric
+//
+//*****************************************************************************
+void HostResolver::FormatNumeric(const IpAddress& addr, wchar_t* outName, size_t outSize)
+{
+	if (outSize == 0) return;
+	outName[0] = L'\0';
+	if (addr.family == AF_INET) {
+		InetNtopW(AF_INET, &addr.bytes.v4, outName, outSize);
+	} else if (addr.family == AF_INET6) {
+		InetNtopW(AF_INET6, &addr.bytes.v6, outName, outSize);
+	}
 }

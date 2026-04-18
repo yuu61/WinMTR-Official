@@ -3,15 +3,17 @@
 //
 //
 // DESCRIPTION:
-//   
+//
 //
 // NOTES:
-//    
+//
 //
 //*****************************************************************************
 
 #ifndef PROPERTIES_H_
 #define PROPERTIES_H_
+
+#include <ws2tcpip.h>
 
 class HopStatistics;
 
@@ -31,7 +33,7 @@ public:
 	void PopulateFrom(const HopStatistics& stats, int hop);
 
 	wchar_t	host[255]{};
-	wchar_t	ip[16]{};
+	wchar_t	ip[INET6_ADDRSTRLEN]{};
 	wchar_t	comment[255]{};
 
 	float	ping_last  = 0.0f;
@@ -53,12 +55,12 @@ public:
 			m_editBest,
 			m_editWorst,
 			m_editAvrg;
-	
+
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);
 
 	virtual BOOL OnInitDialog();
-	
+
 	DECLARE_MESSAGE_MAP()
 };
 

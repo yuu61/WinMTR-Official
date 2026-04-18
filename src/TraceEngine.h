@@ -3,8 +3,8 @@
 //
 // DESCRIPTION:
 //   Orchestrates the ICMP trace lifecycle: spawns one TTL worker per hop,
-//   triggers DNS resolution when new addresses appear, and holds the owning
-//   IcmpIO and HopStatistics.
+//   triggers DNS resolution when new addresses appear, and holds the shared
+//   HopStatistics model.
 //
 //*****************************************************************************
 
@@ -14,37 +14,41 @@
 #include "IcmpIO.h"
 #include "HopStatistics.h"
 #include "TraceOptions.h"
+#include "IpAddress.h"
+
 #include <atomic>
+#include <thread>
+#include <vector>
 
 class TraceEngine {
 public:
 	TraceEngine();
-	~TraceEngine() = default;
+	~TraceEngine();
 	TraceEngine(const TraceEngine&)            = delete;
 	TraceEngine& operator=(const TraceEngine&) = delete;
 
-	[[nodiscard]] bool    IsValid()   const { return icmp_.IsValid(); }
-	[[nodiscard]] LPCWSTR LastError() const { return icmp_.LastError(); }
+	[[nodiscard]] bool    IsValid()   const { return probe_.IsValid(); }
+	[[nodiscard]] LPCWSTR LastError() const { return probe_.LastError(); }
 
 	[[nodiscard]] const HopStatistics& Stats() const { return stats_; }
 	[[nodiscard]] HopStatistics&       Stats()       { return stats_; }
 
 	// Blocks until every TTL worker has exited.
-	void Trace(int address, const TraceOptions& opts);
-	void Stop() { tracing_ = false; }
+	void Trace(const IpAddress& dest, const TraceOptions& opts);
+	void Stop();
 
 	[[nodiscard]] bool IsTracing() const { return tracing_.load(); }
 
 private:
-	void ExecuteTrace(int address, int ttl);
+	void ExecuteTrace(const IpAddress& dest, int ttl);
 	void ResolveHopName(int hop);
 
-	static void TraceWorkerEntry(void* p);
-
-	IcmpIO            icmp_;
+	// Used only to validate that ICMP is usable on this host.
+	IcmpIO            probe_;
 	HopStatistics     stats_;
 	TraceOptions      options_;
 	std::atomic<bool> tracing_;
+	HANDLE            stop_event_;
 };
 
 #endif // TRACEENGINE_H_

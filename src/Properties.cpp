@@ -7,6 +7,7 @@
 #include "Global.h"
 #include "Properties.h"
 #include "HopStatistics.h"
+#include "HostResolver.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -85,10 +86,11 @@ BOOL Properties::OnInitDialog()
 
 void Properties::PopulateFrom(const HopStatistics& stats, int hop)
 {
-	if (stats.GetAddr(hop) == 0) {
+	const IpAddress addr = stats.GetAddr(hop);
+	if (addr.IsUnspecified()) {
 		host[0] = L'\0';
 		ip[0]   = L'\0';
-		stats.GetName(hop, comment);
+		stats.GetName(hop, comment, _countof(comment));
 
 		pck_loss  = pck_sent  = pck_recv  = 0;
 		ping_avrg = ping_last = 0.0f;
@@ -96,13 +98,8 @@ void Properties::PopulateFrom(const HopStatistics& stats, int hop)
 		return;
 	}
 
-	stats.GetName(hop, host);
-	const int addr = stats.GetAddr(hop);
-	swprintf(ip, _countof(ip), L"%d.%d.%d.%d",
-		(addr >> 24) & 0xff,
-		(addr >> 16) & 0xff,
-		(addr >>  8) & 0xff,
-		addr         & 0xff);
+	stats.GetName(hop, host, _countof(host));
+	HostResolver::FormatNumeric(addr, ip, _countof(ip));
 	wcscpy_s(comment, L"Host alive.");
 
 	ping_avrg  = (float)stats.GetAvg(hop);

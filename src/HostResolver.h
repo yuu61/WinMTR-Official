@@ -3,7 +3,7 @@
 //
 //
 // DESCRIPTION:
-//   IPv4 hostname/address resolution helpers.
+//   Hostname/address resolution helpers. Dual-stack (IPv4 + IPv6).
 //
 //*****************************************************************************
 
@@ -11,6 +11,8 @@
 #define HOSTRESOLVER_H_
 
 #include <afxwin.h>
+
+#include "IpAddress.h"
 
 //*****************************************************************************
 // CLASS:  HostResolver
@@ -21,19 +23,22 @@
 class HostResolver
 {
 public:
+	// True if hostname is a valid numeric IPv4 or IPv6 literal.
 	[[nodiscard]] static bool LooksNumeric(LPCWSTR hostname);
 
-	// Validates that hostname can be resolved. For numeric IP strings, skips
-	// the DNS round-trip (legacy InitMTRNet behavior).
+	// Validates that hostname can be resolved (numeric IP strings skip the
+	// DNS round-trip).
 	[[nodiscard]] static bool Validate(LPCWSTR hostname, CString& errorMessage);
 
-	// Resolves hostname to an IPv4 address in network byte order.
-	// Numeric strings go through InetPtonW; otherwise GetAddrInfoW.
-	[[nodiscard]] static bool Resolve(LPCWSTR hostname, int& outAddr, CString& errorMessage);
+	// Resolves hostname to an IpAddress. Accepts both IPv4 and IPv6 forms.
+	[[nodiscard]] static bool Resolve(LPCWSTR hostname, IpAddress& outAddr, CString& errorMessage);
 
-	// Reverse-resolves an IPv4 address (host byte order, matching
-	// HopStatistics::GetAddr) to a hostname. Writes into outName on success.
-	[[nodiscard]] static bool ReverseResolve(int addr, wchar_t* outName, size_t outSize);
+	// Reverse-resolves an IpAddress to a hostname. Writes into outName on
+	// success.
+	[[nodiscard]] static bool ReverseResolve(const IpAddress& addr, wchar_t* outName, size_t outSize);
+
+	// Formats an IpAddress as its numeric string (InetNtopW).
+	static void FormatNumeric(const IpAddress& addr, wchar_t* outName, size_t outSize);
 };
 
 #endif // ifndef HOSTRESOLVER_H_

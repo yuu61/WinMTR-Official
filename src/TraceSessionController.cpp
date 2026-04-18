@@ -7,9 +7,10 @@
 #include "SessionView.h"
 #include "TraceEngine.h"
 #include "HostResolver.h"
-#include <memory>
-#include <process.h>
+#include "IpAddress.h"
+
 #include <sstream>
+#include <utility>
 
 #define TRACE_MSG(msg)                                       \
 	{                                                        \
@@ -27,7 +28,13 @@ TraceSessionController::TraceSessionController(ISessionView* view)
 {
 }
 
-TraceSessionController::~TraceSessionController() = default;
+TraceSessionController::~TraceSessionController()
+{
+	// The session worker always posts back via PostTrace*, which drives the
+	// state machine to IDLE / EXIT and the thread exits shortly after. Wait
+	// for it here so no worker thread outlives the controller.
+	if (session_thread_.joinable()) session_thread_.join();
+}
 
 const HopStatistics& TraceSessionController::Stats() const
 {
@@ -71,6 +78,10 @@ void TraceSessionController::Tick()
 
 void TraceSessionController::OnTraceCompleted()
 {
+	// Previous session worker has posted completion on the UI thread, so it
+	// is safe to join and reset for the next session.
+	if (session_thread_.joinable()) session_thread_.join();
+
 	switch (state_) {
 	case TRACING:
 	case STOPPING:
@@ -87,6 +98,8 @@ void TraceSessionController::OnTraceCompleted()
 
 void TraceSessionController::OnTraceFailed(const CString& error)
 {
+	if (session_thread_.joinable()) session_thread_.join();
+
 	switch (state_) {
 	case TRACING:
 	case STOPPING:
@@ -165,13 +178,17 @@ void TraceSessionController::ApplyTransition()
 		view_->SetOptionsEnabled(false);
 		view_->SetStatus(L"Double click on host name for more information.");
 
-		auto args = std::make_unique<SessionWorkerArgs>();
-		args->controller = this;
-		args->host       = pending_host_;
-		args->opts       = pending_opts_;
-		const uintptr_t h = _beginthread(SessionWorkerEntry, 0, args.get());
-		if (h != 0 && h != static_cast<uintptr_t>(-1)) {
-			args.release();
+		// Defensive: a stale completion message might still be queued, so
+		// ensure any previous worker is joined before overwriting the thread.
+		if (session_thread_.joinable()) session_thread_.join();
+
+		try {
+			session_thread_ = std::thread(&TraceSessionController::ExecuteSession,
+			                              this, pending_host_, pending_opts_);
+		} catch (const std::system_error&) {
+			view_->ShowError(L"Failed to start trace worker.");
+			Transit(IDLE);
+			return;
 		}
 
 		view_->SetStartEnabled(true);
@@ -229,17 +246,10 @@ void TraceSessionController::RestoreIdleUi()
 	view_->FocusHostCombo();
 }
 
-void TraceSessionController::SessionWorkerEntry(void* p)
+void TraceSessionController::ExecuteSession(std::wstring host, TraceOptions opts)
 {
-	std::unique_ptr<SessionWorkerArgs> args(static_cast<SessionWorkerArgs*>(p));
-	args->controller->ExecuteSession(args->host, args->opts);
-	_endthread();
-}
-
-void TraceSessionController::ExecuteSession(const std::wstring& host, const TraceOptions& opts)
-{
-	int     addr = 0;
-	CString err;
+	IpAddress addr;
+	CString   err;
 	if (!HostResolver::Resolve(host.c_str(), addr, err)) {
 		view_->PostTraceFailed(err);
 		return;

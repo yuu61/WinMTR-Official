@@ -4,7 +4,7 @@
 
 #include "Global.h"
 #include "HopStatistics.h"
-#include <ws2tcpip.h>
+#include "HostResolver.h"
 
 void HopStatistics::Reset()
 {
@@ -12,7 +12,7 @@ void HopStatistics::Reset()
 	host_.fill(s_nethost{});
 }
 
-void HopStatistics::SetLastRemoteAddr(int addr)
+void HopStatistics::SetLastRemoteAddr(const IpAddress& addr)
 {
 	std::lock_guard g(mutex_);
 	last_remote_addr_ = addr;
@@ -24,42 +24,39 @@ int HopStatistics::GetMax() const
 	int max = MAX_HOPS;
 
 	for (int i = 0; i < MAX_HOPS; ++i) {
-		if (host_[i].addr == last_remote_addr_) {
+		if (host_[i].addr.Equals(last_remote_addr_)) {
 			max = i + 1;
 			break;
 		}
 	}
 
 	if (max == MAX_HOPS) {
-		while ((max > 1) && (host_[max - 1].addr == host_[max - 2].addr)
-		                 && (host_[max - 1].addr != 0))
+		while ((max > 1) && host_[max - 1].addr.Equals(host_[max - 2].addr)
+		                 && !host_[max - 1].addr.IsUnspecified())
 			max--;
 	}
 	return max;
 }
 
-int HopStatistics::GetAddr(int at) const
+IpAddress HopStatistics::GetAddr(int at) const
 {
 	std::lock_guard g(mutex_);
-	return ntohl(host_[at].addr);
+	return host_[at].addr;
 }
 
-void HopStatistics::GetName(int at, wchar_t* out) const
+void HopStatistics::GetName(int at, wchar_t* out, size_t outSize) const
 {
 	std::lock_guard g(mutex_);
-	if (host_[at].name[0] == L'\0') {
-		if (host_[at].addr == 0) {
-			out[0] = L'\0';
-		} else {
-			const int a = ntohl(host_[at].addr);
-			const auto s = std::format(L"{}.{}.{}.{}",
-				(a >> 24) & 0xff, (a >> 16) & 0xff,
-				(a >>  8) & 0xff,  a        & 0xff);
-			wcsncpy_s(out, 255, s.c_str(), _TRUNCATE);
-		}
-	} else {
-		wcsncpy_s(out, 255, host_[at].name, _TRUNCATE);
+	if (outSize == 0) return;
+	if (host_[at].name[0] != L'\0') {
+		wcsncpy_s(out, outSize, host_[at].name, _TRUNCATE);
+		return;
 	}
+	if (host_[at].addr.IsUnspecified()) {
+		out[0] = L'\0';
+		return;
+	}
+	HostResolver::FormatNumeric(host_[at].addr, out, outSize);
 }
 
 int HopStatistics::GetBest(int at) const
@@ -105,10 +102,10 @@ int HopStatistics::GetXmit(int at) const
 	return host_[at].xmit;
 }
 
-bool HopStatistics::SetAddrIfNew(int at, int addr)
+bool HopStatistics::SetAddrIfNew(int at, const IpAddress& addr)
 {
 	std::lock_guard g(mutex_);
-	const bool is_new = (host_[at].addr == 0 && addr != 0);
+	const bool is_new = host_[at].addr.IsUnspecified() && !addr.IsUnspecified();
 	if (is_new) host_[at].addr = addr;
 	return is_new;
 }

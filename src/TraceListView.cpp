@@ -27,7 +27,7 @@ void Refresh(CListCtrl& list, const HopStatistics& stats)
 	};
 
 	for (int i = 0; i < nh; ++i) {
-		stats.GetName(i, buf);
+		stats.GetName(i, buf, _countof(buf));
 		if (buf[0] == L'\0') wcscpy_s(buf, L"No response from host");
 
 		if (list.GetItemCount() <= i)
