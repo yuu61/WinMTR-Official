@@ -3,10 +3,7 @@
 //
 //
 // DESCRIPTION:
-//   
-//
-// NOTES:
-//    
+//   ICMP trace engine and per-hop statistics store.
 //
 //*****************************************************************************
 
@@ -14,9 +11,9 @@
 #define WINMTRNET_H_
 
 #include "TraceConfig.h"
+#include "TraceOptions.h"
+#include <string>
 
-
-class WinMTRDialog;
 
 typedef ip_option_information IPINFO, *PIPINFO, FAR *LPIPINFO;
 
@@ -52,11 +49,19 @@ class WinMTRNet {
 
 public:
 
-	WinMTRNet(WinMTRDialog *wp);
+	WinMTRNet();
 	~WinMTRNet();
-	void	DoTrace(int address);
+
+	// Snapshots opts into the options member, then spawns per-TTL worker
+	// threads. Blocks until all workers exit.
+	void	DoTrace(int address, const TraceOptions& opts);
 	void	ResetHops();
 	void	StopTrace();
+
+	// Starts a worker that acquires externalMutex, resolves hostname, and
+	// invokes DoTrace. On resolution failure, shows AfxMessageBox and
+	// releases the mutex without tracing.
+	void	BeginTraceAsync(const std::string& hostname, const TraceOptions& opts, HANDLE externalMutex);
 
 	int		GetAddr(int at);
 	int		GetName(int at, char *n);
@@ -77,7 +82,7 @@ public:
 	void	AddReturned(int at);
 	void	AddXmit(int at);
 
-	WinMTRDialog		*wmtrdlg;
+	TraceOptions		options;
 	__int32				last_remote_addr;
 	bool				tracing;
 	bool				initialized;
@@ -89,7 +94,7 @@ private:
 	HINSTANCE			hICMP_DLL;
 
     struct s_nethost	host[MaxHost];
-	HANDLE				ghMutex; 
+	HANDLE				ghMutex;
 };
 
 #endif	// ifndef WINMTRNET_H_

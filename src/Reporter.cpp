@@ -85,7 +85,8 @@ CString WinMTRReporter::BuildHtmlReport(WinMTRNet* net)
 //*****************************************************************************
 bool WinMTRReporter::CopyToClipboard(CWnd* owner, const CString& content)
 {
-	if (!owner->OpenClipboard()) return false;
+	if (!owner->OpenClipboard())
+		return false;
 	EmptyClipboard();
 
 	HGLOBAL clipbuffer = GlobalAlloc(GMEM_DDESHARE, (SIZE_T)content.GetLength() + 1);

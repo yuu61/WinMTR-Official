@@ -4,10 +4,9 @@
 //*****************************************************************************
 #include "Global.h"
 #include "Net.h"
-#include "Dialog.h"
+#include "HostResolver.h"
 #include <iostream>
 #include <sstream>
-#include <vector>
 
 #define TRACE_MSG(msg)										\
 	{														\
@@ -30,15 +29,25 @@ struct dns_resolver_thread {
 	WinMTRNet	*winmtr;
 };
 
+struct ping_thread_args {
+	WinMTRNet*   net;
+	HANDLE       mutex;
+	std::string  hostname;
+	TraceOptions opts;
+};
+
 void TraceThread(void *p);
 void DnsResolverThread(void *p);
+void PingThreadWorker(void *p);
 
-WinMTRNet::WinMTRNet(WinMTRDialog *wp) {
-	
+WinMTRNet::WinMTRNet() {
+
 	ghMutex = CreateMutex(NULL, FALSE, NULL);
 	tracing=false;
 	initialized = false;
-	wmtrdlg = wp;
+	options.pingsize = DEFAULT_PING_SIZE;
+	options.interval = DEFAULT_INTERVAL;
+	options.useDNS = DEFAULT_DNS;
 	WSADATA wsaData;
 
     if( WSAStartup(MAKEWORD(2, 2), &wsaData) ) {
@@ -52,7 +61,7 @@ WinMTRNet::WinMTRNet(WinMTRDialog *wp) {
         return;
     }
 
-    /* 
+    /*
      * Get pointers to ICMP.DLL functions
      */
     lpfnIcmpCreateFile  = (LPFNICMPCREATEFILE)GetProcAddress(hICMP_DLL,"IcmpCreateFile");
@@ -90,7 +99,7 @@ WinMTRNet::~WinMTRNet()
 		FreeLibrary(hICMP_DLL);
 
 		WSACleanup();
-	
+
 		CloseHandle(ghMutex);
 	}
 }
@@ -109,9 +118,10 @@ void WinMTRNet::ResetHops()
 	}
 }
 
-void WinMTRNet::DoTrace(int address)
+void WinMTRNet::DoTrace(int address, const TraceOptions& opts)
 {
 	HANDLE hThreads[MAX_HOPS];
+	options = opts;
 	tracing = true;
 
 	ResetHops();
@@ -135,6 +145,35 @@ void WinMTRNet::StopTrace()
 	tracing = false;
 }
 
+void WinMTRNet::BeginTraceAsync(const std::string& hostname, const TraceOptions& opts, HANDLE externalMutex)
+{
+	ping_thread_args* args = new ping_thread_args;
+	args->net = this;
+	args->mutex = externalMutex;
+	args->hostname = hostname;
+	args->opts = opts;
+	_beginthread(PingThreadWorker, 0, args);
+}
+
+void PingThreadWorker(void* p)
+{
+	ping_thread_args* args = (ping_thread_args*)p;
+	WaitForSingleObject(args->mutex, INFINITE);
+
+	int traddr;
+	CString err;
+	if (!WinMTRHostResolver::Resolve(args->hostname.c_str(), traddr, err)) {
+		AfxMessageBox(err);
+	} else {
+		args->net->DoTrace(traddr, args->opts);
+	}
+
+	ReleaseMutex(args->mutex);
+	delete args;
+	_endthread();
+}
+
+#pragma warning(suppress: 6262) // legacy 16KB stack frame; default thread stack is 1MB
 void TraceThread(void *p)
 {
 	trace_thread* current = (trace_thread*)p;
@@ -143,9 +182,9 @@ void TraceThread(void *p)
 
     IPINFO			stIPInfo, *lpstIPInfo;
     DWORD			dwReplyCount;
-	std::vector<char> achReqData(8192);
-	int				nDataLen									= wmtrnet->wmtrdlg->pingsize;
-	std::vector<char> achRepData(sizeof(ICMPECHO) + 8192);
+	char			achReqData[8192];
+	int				nDataLen									= wmtrnet->options.pingsize;
+	char			achRepData[sizeof(ICMPECHO) + 8192];
 
 
     /*
@@ -161,7 +200,7 @@ void TraceThread(void *p)
     for (int i=0; i<nDataLen; i++) achReqData[i] = 32; //whitespaces
 
     while(wmtrnet->tracing) {
-	    
+
 		// For some strange reason, ICMP API is not filling the TTL for icmp echo reply
 		// Check if the current thread should be closed
 		if( current->ttl > wmtrnet->GetMax() ) break;
@@ -173,9 +212,9 @@ void TraceThread(void *p)
 		// - as soon as we get a hop, we start pinging directly that hop, with a greater TTL
 		// - a drawback would be that, some servers are configured to reply for TTL transit expire, but not to ping requests, so,
 		// for these servers we'll have 100% loss
-		dwReplyCount = wmtrnet->lpfnIcmpSendEcho(wmtrnet->hICMP, current->address, achReqData.data(), (WORD)nDataLen, lpstIPInfo, achRepData.data(), (DWORD)achRepData.size(), ECHO_REPLY_TIMEOUT);
+		dwReplyCount = wmtrnet->lpfnIcmpSendEcho(wmtrnet->hICMP, current->address, achReqData, (WORD)nDataLen, lpstIPInfo, achRepData, sizeof(achRepData), ECHO_REPLY_TIMEOUT);
 
-		PICMPECHO icmp_echo_reply = (PICMPECHO)achRepData.data();
+		PICMPECHO icmp_echo_reply = (PICMPECHO)achRepData;
 
 		wmtrnet->AddXmit(current->ttl - 1);
 		if (dwReplyCount != 0) {
@@ -248,8 +287,8 @@ void TraceThread(void *p)
 					wmtrnet->SetName(current->ttl - 1, "General failure.");
 			}
 
-			if(wmtrnet->wmtrdlg->interval * 1000 > icmp_echo_reply->RoundTripTime)
-				Sleep((DWORD)(wmtrnet->wmtrdlg->interval * 1000 - icmp_echo_reply->RoundTripTime));
+			if(wmtrnet->options.interval * 1000 > icmp_echo_reply->RoundTripTime)
+				Sleep((DWORD)(wmtrnet->options.interval * 1000 - icmp_echo_reply->RoundTripTime));
 		}
 
     } /* end ping loop */
@@ -273,10 +312,10 @@ int WinMTRNet::GetName(int at, char *n)
 	WaitForSingleObject(ghMutex, INFINITE);
 	if(!strcmp(host[at].name, "")) {
 		int addr = GetAddr(at);
-		sprintf (	n, "%d.%d.%d.%d", 
-							(addr >> 24) & 0xff, 
-							(addr >> 16) & 0xff, 
-							(addr >> 8) & 0xff, 
+		sprintf (	n, "%d.%d.%d.%d",
+							(addr >> 24) & 0xff,
+							(addr >> 16) & 0xff,
+							(addr >> 8) & 0xff,
 							addr & 0xff
 		);
 		if(addr==0)
@@ -329,7 +368,7 @@ int WinMTRNet::GetLast(int at)
 }
 
 int WinMTRNet::GetReturned(int at)
-{ 
+{
 	WaitForSingleObject(ghMutex, INFINITE);
 	int ret = host[at].returned;
 	ReleaseMutex(ghMutex);
@@ -337,7 +376,7 @@ int WinMTRNet::GetReturned(int at)
 }
 
 int WinMTRNet::GetXmit(int at)
-{ 
+{
 	WaitForSingleObject(ghMutex, INFINITE);
 	int ret = host[at].xmit;
 	ReleaseMutex(ghMutex);
@@ -375,7 +414,7 @@ void WinMTRNet::SetAddr(int at, __int32 addr)
 		dns_resolver_thread *dnt = new dns_resolver_thread;
 		dnt->index = at;
 		dnt->winmtr = this;
-		if(wmtrdlg->useDNS) _beginthread(DnsResolverThread, 0, dnt);
+		if(options.useDNS) _beginthread(DnsResolverThread, 0, dnt);
 	}
 
 	ReleaseMutex(ghMutex);
@@ -451,7 +490,7 @@ void DnsResolverThread(void *p)
 	} else {
 		wn->SetName(dnt->index, buf);
 	}
-	
+
 	delete p;
 	TRACE_MSG("DNS resolver thread stopped.");
 	_endthread();

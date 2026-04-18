@@ -33,8 +33,6 @@
 static	 char THIS_FILE[] = __FILE__;
 #endif
 
-void PingThread(void *p);
-
 //*****************************************************************************
 // BEGIN_MESSAGE_MAP
 //
@@ -85,7 +83,7 @@ WinMTRDialog::WinMTRDialog(CWnd* pParent)
 	hasUseDNSFromCmdLine = false;
 
 	traceThreadMutex = CreateMutex(NULL, FALSE, NULL);
-	wmtrnet = new WinMTRNet(this);
+	wmtrnet = new WinMTRNet();
 }
 
 WinMTRDialog::~WinMTRDialog()
@@ -202,8 +200,24 @@ BOOL WinMTRDialog::OnInitDialog()
 	RepositionBars(AFX_IDW_CONTROLBAR_FIRST, AFX_IDW_CONTROLBAR_LAST, 0);
 
 	{
+		LoadedSettings s;
+		s.pingsize = pingsize;
+		s.interval = interval;
+		s.maxLRU   = maxLRU;
+		s.useDNS   = useDNS;
+		s.nrLRU    = nrLRU;
+		LoadedSettingsFlags f;
+		f.hasPingsize = hasPingsizeFromCmdLine;
+		f.hasInterval = hasIntervalFromCmdLine;
+		f.hasMaxLRU   = hasMaxLRUFromCmdLine;
+		f.hasUseDNS   = hasUseDNSFromCmdLine;
 		std::vector<CString> lruHosts;
-		if (WinMTRSettings::InitAndLoad(this, lruHosts)) {
+		if (WinMTRSettings::InitAndLoad(s, f, lruHosts)) {
+			pingsize = s.pingsize;
+			interval = s.interval;
+			maxLRU   = s.maxLRU;
+			useDNS   = s.useDNS;
+			nrLRU    = s.nrLRU;
 			for (size_t i = 0; i < lruHosts.size(); ++i)
 				m_comboHost.AddString(lruHosts[i]);
 			m_comboHost.AddString(CString((LPCSTR)IDS_STRING_CLEAR_HISTORY));
@@ -465,13 +479,24 @@ void WinMTRDialog::OnRestart()
 
 	if(state == IDLE) {
 
-		if(InitMTRNet()) {
-			if(m_comboHost.FindString(-1, sHost) == CB_ERR) {
-				m_comboHost.InsertString(m_comboHost.GetCount() - 1,sHost);
-				WinMTRSettings::AppendLRUHost((LPCSTR)sHost, nrLRU, maxLRU);
-			}
-			Transit(TRACING);
+		if (!WinMTRHostResolver::LooksNumeric((LPCSTR)sHost)) {
+			char buf[255];
+			sprintf(buf, "Resolving host %s...", (LPCSTR)sHost);
+			statusBar.SetPaneText(0, buf);
 		}
+
+		CString err;
+		if (!WinMTRHostResolver::Validate((LPCSTR)sHost, err)) {
+			statusBar.SetPaneText(0, CString((LPCSTR)IDS_STRING_SB_NAME));
+			AfxMessageBox(err);
+			return;
+		}
+
+		if(m_comboHost.FindString(-1, sHost) == CB_ERR) {
+			m_comboHost.InsertString(m_comboHost.GetCount() - 1,sHost);
+			WinMTRSettings::AppendLRUHost((LPCSTR)sHost, nrLRU, maxLRU);
+		}
+		Transit(TRACING);
 	} else {
 		Transit(STOPPING);
 	}
@@ -633,61 +658,6 @@ int WinMTRDialog::DisplayRedraw()
 }
 
 
-//*****************************************************************************
-// WinMTRDialog::InitMTRNet
-//
-// 
-//*****************************************************************************
-int WinMTRDialog::InitMTRNet()
-{
-	char strtmp[255];
-	m_comboHost.GetWindowText(strtmp, 255);
-
-	if (!WinMTRHostResolver::LooksNumeric(strtmp)) {
-		char buf[255];
-		sprintf(buf, "Resolving host %s...", strtmp);
-		statusBar.SetPaneText(0, buf);
-	}
-
-	CString err;
-	if (!WinMTRHostResolver::Validate(strtmp, err)) {
-		statusBar.SetPaneText(0, CString((LPCSTR)IDS_STRING_SB_NAME));
-		AfxMessageBox(err);
-		return 0;
-	}
-	return 1;
-}
-
-
-//*****************************************************************************
-// PingThread
-//
-// 
-//*****************************************************************************
-void PingThread(void *p)
-{
-	WinMTRDialog *wmtrdlg = (WinMTRDialog *)p;
-	WaitForSingleObject(wmtrdlg->traceThreadMutex, INFINITE);
-
-	char strtmp[255];
-	wmtrdlg->m_comboHost.GetWindowText(strtmp, 255);
-
-	int traddr;
-	CString err;
-	if (!WinMTRHostResolver::Resolve(strtmp, traddr, err)) {
-		AfxMessageBox(err);
-		ReleaseMutex(wmtrdlg->traceThreadMutex);
-		return;
-	}
-
-	wmtrdlg->wmtrnet->DoTrace(traddr);
-
-	ReleaseMutex(wmtrdlg->traceThreadMutex);
-	_endthread();
-}
-
-
-
 void WinMTRDialog::OnCbnSelchangeComboHost()
 {
 }
@@ -783,15 +753,23 @@ void WinMTRDialog::Transit(STATES new_state)
 
 	// modify controls according to new state
 	switch(transition) {
-		case IDLE_TO_TRACING:
+		case IDLE_TO_TRACING: {
 			m_buttonStart.EnableWindow(FALSE);
 			m_buttonStart.SetWindowText("Stop");
 			m_comboHost.EnableWindow(FALSE);
 			m_buttonOptions.EnableWindow(FALSE);
 			statusBar.SetPaneText(0, "Double click on host name for more information.");
-			_beginthread(PingThread, 0 , this);
+
+			char strtmp[255];
+			m_comboHost.GetWindowText(strtmp, 255);
+			TraceOptions opts;
+			opts.pingsize = pingsize;
+			opts.interval = interval;
+			opts.useDNS   = useDNS;
+			wmtrnet->BeginTraceAsync(strtmp, opts, traceThreadMutex);
+
 			m_buttonStart.EnableWindow(TRUE);
-		break;
+		} break;
 		case IDLE_TO_IDLE:
 			// nothing to be done
 		break;

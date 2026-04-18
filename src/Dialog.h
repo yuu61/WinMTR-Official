@@ -67,8 +67,6 @@ public:
 
 	CButton	m_buttonExpT;
 	CButton	m_buttonExpH;
-	
-	int InitMTRNet();
 
 	int DisplayRedraw();
 	void Transit(STATES new_state);

@@ -16,6 +16,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\CommandLine.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
     <ClCompile Include="src\License.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -51,6 +54,12 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\CommandLine.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TraceOptions.h">
+      <Filter>Header</Filter>
+    </ClInclude>
     <ClInclude Include="src\License.h">
       <Filter>Header</Filter>
     </ClInclude>

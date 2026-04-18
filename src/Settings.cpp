@@ -6,7 +6,6 @@
 
 #include "Global.h"
 #include "Settings.h"
-#include "Dialog.h"
 #include "Version.h"
 
 namespace {
@@ -46,7 +45,7 @@ LONG OpenWinMTRSubKey(LPCSTR sub, REGSAM access, HKEY& outKey)
 // WinMTRSettings::InitAndLoad
 //
 //*****************************************************************************
-BOOL WinMTRSettings::InitAndLoad(WinMTRDialog* dlg, std::vector<CString>& outHosts)
+BOOL WinMTRSettings::InitAndLoad(LoadedSettings& io, const LoadedSettingsFlags& flags, std::vector<CString>& outHosts)
 {
 	HKEY hWinMTR = NULL;
 	if (OpenWinMTRRoot(KEY_ALL_ACCESS, hWinMTR) != ERROR_SUCCESS)
@@ -71,34 +70,34 @@ BOOL WinMTRSettings::InitAndLoad(WinMTRDialog* dlg, std::vector<CString>& outHos
 	DWORD tmp = 0;
 	DWORD sz = sizeof(DWORD);
 	if (RegQueryValueEx(hConfig, "PingSize", 0, NULL, (unsigned char*)&tmp, &sz) != ERROR_SUCCESS) {
-		tmp = (DWORD)dlg->pingsize;
+		tmp = (DWORD)io.pingsize;
 		RegSetValueEx(hConfig, "PingSize", 0, REG_DWORD, (const unsigned char*)&tmp, sizeof(DWORD));
 	} else {
-		if (!dlg->hasPingsizeFromCmdLine) dlg->pingsize = (int)tmp;
+		if (!flags.hasPingsize) io.pingsize = (int)tmp;
 	}
 
 	sz = sizeof(DWORD);
 	if (RegQueryValueEx(hConfig, "MaxLRU", 0, NULL, (unsigned char*)&tmp, &sz) != ERROR_SUCCESS) {
-		tmp = (DWORD)dlg->maxLRU;
+		tmp = (DWORD)io.maxLRU;
 		RegSetValueEx(hConfig, "MaxLRU", 0, REG_DWORD, (const unsigned char*)&tmp, sizeof(DWORD));
 	} else {
-		if (!dlg->hasMaxLRUFromCmdLine) dlg->maxLRU = (int)tmp;
+		if (!flags.hasMaxLRU) io.maxLRU = (int)tmp;
 	}
 
 	sz = sizeof(DWORD);
 	if (RegQueryValueEx(hConfig, "UseDNS", 0, NULL, (unsigned char*)&tmp, &sz) != ERROR_SUCCESS) {
-		tmp = dlg->useDNS ? 1 : 0;
+		tmp = io.useDNS ? 1 : 0;
 		RegSetValueEx(hConfig, "UseDNS", 0, REG_DWORD, (const unsigned char*)&tmp, sizeof(DWORD));
 	} else {
-		if (!dlg->hasUseDNSFromCmdLine) dlg->useDNS = (BOOL)tmp;
+		if (!flags.hasUseDNS) io.useDNS = (BOOL)tmp;
 	}
 
 	sz = sizeof(DWORD);
 	if (RegQueryValueEx(hConfig, "Interval", 0, NULL, (unsigned char*)&tmp, &sz) != ERROR_SUCCESS) {
-		tmp = (DWORD)(dlg->interval * 1000);
+		tmp = (DWORD)(io.interval * 1000);
 		RegSetValueEx(hConfig, "Interval", 0, REG_DWORD, (const unsigned char*)&tmp, sizeof(DWORD));
 	} else {
-		if (!dlg->hasIntervalFromCmdLine) dlg->interval = (double)tmp / 1000.0;
+		if (!flags.hasInterval) io.interval = (double)tmp / 1000.0;
 	}
 	RegCloseKey(hConfig);
 
@@ -112,13 +111,13 @@ BOOL WinMTRSettings::InitAndLoad(WinMTRDialog* dlg, std::vector<CString>& outHos
 
 	sz = sizeof(DWORD);
 	if (RegQueryValueEx(hLRU, "NrLRU", 0, NULL, (unsigned char*)&tmp, &sz) != ERROR_SUCCESS) {
-		tmp = (DWORD)dlg->nrLRU;
+		tmp = (DWORD)io.nrLRU;
 		RegSetValueEx(hLRU, "NrLRU", 0, REG_DWORD, (const unsigned char*)&tmp, sizeof(DWORD));
 	} else {
 		char keyName[20];
 		unsigned char hostBuf[255];
-		dlg->nrLRU = (int)tmp;
-		for (int i = 0; i < dlg->maxLRU; ++i) {
+		io.nrLRU = (int)tmp;
+		for (int i = 0; i < io.maxLRU; ++i) {
 			sprintf(keyName, "Host%d", i + 1);
 			DWORD hostSize = 0;
 			if (RegQueryValueEx(hLRU, keyName, 0, NULL, NULL, &hostSize) == ERROR_SUCCESS) {

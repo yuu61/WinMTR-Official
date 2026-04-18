@@ -338,6 +338,7 @@
     <ResourceCompile Include="resources\WinMTR.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\CommandLine.cpp" />
     <ClCompile Include="src\License.cpp" />
     <ClCompile Include="src\StatusBar.cpp" />
     <ClCompile Include="src\Dialog.cpp" />
@@ -351,6 +352,7 @@
     <ClCompile Include="src\Settings.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="src\CommandLine.h" />
     <ClInclude Include="src\License.h" />
     <ClInclude Include="src\StatusBar.h" />
     <ClInclude Include="resources\resource.h" />
@@ -359,6 +361,7 @@
     <ClInclude Include="src\Help.h" />
     <ClInclude Include="src\MtrColumns.h" />
     <ClInclude Include="src\TraceConfig.h" />
+    <ClInclude Include="src\TraceOptions.h" />
     <ClInclude Include="src\Version.h" />
     <ClInclude Include="src\HostResolver.h" />
     <ClInclude Include="src\Main.h" />
