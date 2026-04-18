@@ -71,3 +71,19 @@ bool HostResolver::Resolve(LPCWSTR hostname, int& outAddr, CString& errorMessage
 	}
 	return ResolveByDns(hostname, &outAddr, errorMessage);
 }
+
+
+//*****************************************************************************
+// HostResolver::ReverseResolve
+//
+//*****************************************************************************
+bool HostResolver::ReverseResolve(int addr, wchar_t* outName, size_t outSize)
+{
+	struct sockaddr_in sa = {};
+	sa.sin_family      = AF_INET;
+	sa.sin_addr.s_addr = htonl(addr);
+
+	return GetNameInfoW((struct sockaddr*)&sa, sizeof(sa),
+	                    outName, (DWORD)outSize,
+	                    NULL, 0, NI_NAMEREQD) == 0;
+}

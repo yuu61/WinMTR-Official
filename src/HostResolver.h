@@ -30,6 +30,10 @@ public:
 	// Resolves hostname to an IPv4 address in network byte order.
 	// Numeric strings go through InetPtonW; otherwise GetAddrInfoW.
 	[[nodiscard]] static bool Resolve(LPCWSTR hostname, int& outAddr, CString& errorMessage);
+
+	// Reverse-resolves an IPv4 address (host byte order, matching
+	// HopStatistics::GetAddr) to a hostname. Writes into outName on success.
+	[[nodiscard]] static bool ReverseResolve(int addr, wchar_t* outName, size_t outSize);
 };
 
 #endif // ifndef HOSTRESOLVER_H_

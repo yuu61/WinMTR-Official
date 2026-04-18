@@ -4,6 +4,7 @@
 
 #include "Global.h"
 #include "TraceEngine.h"
+#include "HostResolver.h"
 #include <memory>
 #include <process.h>
 #include <sstream>
@@ -162,19 +163,13 @@ void TraceEngine::ExecuteDnsResolve(int hop)
 	TRACE_MSG(L"DNS resolver thread started.");
 
 	const int addr = stats_.GetAddr(hop);
-	const auto numeric = std::format(L"{}.{}.{}.{}",
-		(addr >> 24) & 0xff, (addr >> 16) & 0xff,
-		(addr >>  8) & 0xff,  addr        & 0xff);
-
-	struct sockaddr_in sa = {};
-	sa.sin_family      = AF_INET;
-	sa.sin_addr.s_addr = htonl(addr);
-
 	wchar_t hostname[NI_MAXHOST];
-	if (GetNameInfoW((struct sockaddr*)&sa, sizeof(sa), hostname, NI_MAXHOST,
-	                 NULL, 0, NI_NAMEREQD) == 0) {
+	if (HostResolver::ReverseResolve(addr, hostname, NI_MAXHOST)) {
 		stats_.SetName(hop, hostname);
 	} else {
+		const auto numeric = std::format(L"{}.{}.{}.{}",
+			(addr >> 24) & 0xff, (addr >> 16) & 0xff,
+			(addr >>  8) & 0xff,  addr        & 0xff);
 		stats_.SetName(hop, numeric.c_str());
 	}
 
