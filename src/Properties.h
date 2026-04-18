@@ -13,7 +13,7 @@
 #ifndef PROPERTIES_H_
 #define PROPERTIES_H_
 
-
+class HopStatistics;
 
 //*****************************************************************************
 // CLASS:  Properties
@@ -26,8 +26,9 @@ class Properties : public CDialog
 public:
 	Properties(CWnd* pParent = NULL);
 
-	
 	enum { IDD = IDD_DIALOG_PROPERTIES };
+
+	void PopulateFrom(const HopStatistics& stats, int hop);
 
 	wchar_t	host[255]{};
 	wchar_t	ip[16]{};

@@ -1,12 +1,22 @@
 #ifndef STATUSBAR_H_
 #define STATUSBAR_H_
 
+class CMFCLinkCtrl;
+
 class StatusBar : public CStatusBar
 {
 // Construction
 public:
 
 	StatusBar();
+
+	// Create the status bar, set min height, install a single stretch indicator.
+	BOOL Setup(CWnd* parent, UINT titleStringId);
+
+	// Create the link ctrl as a child of this bar, add a pane of the given
+	// width, and register the ctrl as the pane body. Caller owns the CMFCLinkCtrl.
+	BOOL AddLinkPane(CMFCLinkCtrl& link, LPCWSTR text, LPCWSTR url,
+	                 UINT paneId, int width);
 
 // Attributes
 public:

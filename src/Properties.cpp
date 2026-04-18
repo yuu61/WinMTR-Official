@@ -6,6 +6,7 @@
 
 #include "Global.h"
 #include "Properties.h"
+#include "HopStatistics.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -79,5 +80,38 @@ BOOL Properties::OnInitDialog()
 	m_editAvrg.SetWindowText(std::format(L"{:.1f}", ping_avrg).c_str());
 
 	return FALSE;
+}
+
+
+void Properties::PopulateFrom(const HopStatistics& stats, int hop)
+{
+	if (stats.GetAddr(hop) == 0) {
+		host[0] = L'\0';
+		ip[0]   = L'\0';
+		stats.GetName(hop, comment);
+
+		pck_loss  = pck_sent  = pck_recv  = 0;
+		ping_avrg = ping_last = 0.0f;
+		ping_best = ping_worst = 0.0f;
+		return;
+	}
+
+	stats.GetName(hop, host);
+	const int addr = stats.GetAddr(hop);
+	swprintf(ip, _countof(ip), L"%d.%d.%d.%d",
+		(addr >> 24) & 0xff,
+		(addr >> 16) & 0xff,
+		(addr >>  8) & 0xff,
+		addr         & 0xff);
+	wcscpy_s(comment, L"Host alive.");
+
+	ping_avrg  = (float)stats.GetAvg(hop);
+	ping_last  = (float)stats.GetLast(hop);
+	ping_best  = (float)stats.GetBest(hop);
+	ping_worst = (float)stats.GetWorst(hop);
+
+	pck_loss = stats.GetPercent(hop);
+	pck_recv = stats.GetReturned(hop);
+	pck_sent = stats.GetXmit(hop);
 }
 

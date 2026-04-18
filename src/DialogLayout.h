@@ -23,6 +23,7 @@ struct ControlRefs {
 	CListCtrl& listMTR;
 };
 
+void AdjustInitialSize(CWnd& dialog);
 void ApplyClientSize(CWnd& dialog, const ControlRefs& refs);
 void ClampMinimum(LPRECT rect);
 

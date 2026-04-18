@@ -1,5 +1,6 @@
 #include "Global.h"
 #include "StatusBar.h"
+#include <afxlinkctrl.h>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -37,7 +38,31 @@ END_MESSAGE_MAP()
 // StatusBar message handlers
 //////////////////////////////////////////////////////////////////////////
 
-int StatusBar::OnCreate(LPCREATESTRUCT lpCreateStruct) 
+BOOL StatusBar::Setup(CWnd* parent, UINT titleStringId)
+{
+	if (!Create(parent)) return FALSE;
+	GetStatusBarCtrl().SetMinHeight(23);
+	UINT sbi[1]{};
+	sbi[0] = titleStringId;
+	SetIndicators(sbi, 1);
+	SetPaneInfo(0, GetItemID(0), SBPS_STRETCH, NULL);
+	return TRUE;
+}
+
+BOOL StatusBar::AddLinkPane(CMFCLinkCtrl& link, LPCWSTR text, LPCWSTR url,
+                            UINT paneId, int width)
+{
+	if (!link.Create(text, WS_CHILD | WS_VISIBLE | WS_TABSTOP,
+	                 CRect(0, 0, 0, 0), this, paneId)) {
+		return FALSE;
+	}
+	link.SetURL(url);
+	if (!AddPane(paneId, 1)) return FALSE;
+	SetPaneWidth(CommandToIndex(paneId), width);
+	return AddPaneControl(&link, paneId, FALSE);
+}
+
+int StatusBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
 	if( CStatusBar::OnCreate(lpCreateStruct) == -1 )
 		return -1;

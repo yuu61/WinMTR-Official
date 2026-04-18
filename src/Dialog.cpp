@@ -93,65 +93,22 @@ BOOL Dialog::OnInitDialog()
 	SetIcon(m_hIcon, TRUE);
 	SetIcon(m_hIcon, FALSE);
 
-	if (!statusBar.Create(this))
+	if (!statusBar.Setup(this, IDS_STRING_SB_NAME))
 		AfxMessageBox(L"Error creating status bar");
-	statusBar.GetStatusBarCtrl().SetMinHeight(23);
 
-	UINT sbi[1]{};
-	sbi[0] = IDS_STRING_SB_NAME;
-	statusBar.SetIndicators(sbi, 1);
-	statusBar.SetPaneInfo(0, statusBar.GetItemID(0), SBPS_STRETCH, NULL);
-
-	{
-		m_appnorLink.reset(new CMFCLinkCtrl);
-		if (!m_appnorLink->Create(L"www.appnor.com", WS_CHILD | WS_VISIBLE | WS_TABSTOP,
-			CRect(0, 0, 0, 0), &statusBar, 1234)) {
-			TRACE(L"Failed to create button control.\n");
-			return FALSE;
-		}
-
-		m_appnorLink->SetURL(L"http://www.appnor.com/?utm_source=winmtr&utm_medium=desktop&utm_campaign=software");
-
-		if (!statusBar.AddPane(1234, 1)) {
-			AfxMessageBox(L"Pane index out of range\nor pane with same ID already exists in the status bar", MB_ICONERROR);
-			return FALSE;
-		}
-
-		statusBar.SetPaneWidth(statusBar.CommandToIndex(1234), 100);
-		statusBar.AddPaneControl(m_appnorLink.get(), 1234, FALSE);
+	m_appnorLink.reset(new CMFCLinkCtrl);
+	if (!statusBar.AddLinkPane(*m_appnorLink, L"www.appnor.com",
+			L"http://www.appnor.com/?utm_source=winmtr&utm_medium=desktop&utm_campaign=software",
+			1234, 100)) {
+		AfxMessageBox(L"Failed to add status bar link pane", MB_ICONERROR);
+		return FALSE;
 	}
 
 	TraceListView::InitColumns(m_listMTR);
 
 	m_comboHost.SetFocus();
 
-	CRect rcClientStart;
-	CRect rcClientNow;
-	GetClientRect(rcClientStart);
-	RepositionBars(AFX_IDW_CONTROLBAR_FIRST, AFX_IDW_CONTROLBAR_LAST,
-	               0, reposQuery, rcClientNow);
-
-	CPoint ptOffset(rcClientNow.left - rcClientStart.left,
-	                rcClientNow.top - rcClientStart.top);
-
-	CRect rcChild;
-	CWnd* pwndChild = GetWindow(GW_CHILD);
-	while (pwndChild)
-	{
-		pwndChild->GetWindowRect(rcChild);
-		ScreenToClient(rcChild);
-		rcChild.OffsetRect(ptOffset);
-		pwndChild->MoveWindow(rcChild, FALSE);
-		pwndChild = pwndChild->GetNextWindow();
-	}
-
-	CRect rcWindow;
-	GetWindowRect(rcWindow);
-	rcWindow.right += rcClientStart.Width() - rcClientNow.Width();
-	rcWindow.bottom += rcClientStart.Height() - rcClientNow.Height();
-	MoveWindow(rcWindow, FALSE);
-
-	RepositionBars(AFX_IDW_CONTROLBAR_FIRST, AFX_IDW_CONTROLBAR_LAST, 0);
+	DialogLayout::AdjustInitialSize(*this);
 
 	{
 		std::vector<CString> lruHosts;
@@ -228,36 +185,7 @@ void Dialog::OnDblclkList(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 
 	int nItem = m_listMTR.GetNextSelectedItem(pos);
 	Properties wmtrprop;
-	const HopStatistics& stats = controller->Stats();
-
-	if (stats.GetAddr(nItem) == 0) {
-		wmtrprop.host[0] = L'\0';
-		wmtrprop.ip[0]   = L'\0';
-		stats.GetName(nItem, wmtrprop.comment);
-
-		wmtrprop.pck_loss  = wmtrprop.pck_sent  = wmtrprop.pck_recv  = 0;
-		wmtrprop.ping_avrg = wmtrprop.ping_last = 0.0;
-		wmtrprop.ping_best = wmtrprop.ping_worst = 0.0;
-	} else {
-		stats.GetName(nItem, wmtrprop.host);
-		int addr = stats.GetAddr(nItem);
-		swprintf(wmtrprop.ip, _countof(wmtrprop.ip), L"%d.%d.%d.%d",
-			(addr >> 24) & 0xff,
-			(addr >> 16) & 0xff,
-			(addr >>  8) & 0xff,
-			addr         & 0xff);
-		wcscpy_s(wmtrprop.comment, L"Host alive.");
-
-		wmtrprop.ping_avrg  = (float)stats.GetAvg(nItem);
-		wmtrprop.ping_last  = (float)stats.GetLast(nItem);
-		wmtrprop.ping_best  = (float)stats.GetBest(nItem);
-		wmtrprop.ping_worst = (float)stats.GetWorst(nItem);
-
-		wmtrprop.pck_loss = stats.GetPercent(nItem);
-		wmtrprop.pck_recv = stats.GetReturned(nItem);
-		wmtrprop.pck_sent = stats.GetXmit(nItem);
-	}
-
+	wmtrprop.PopulateFrom(controller->Stats(), nItem);
 	wmtrprop.DoModal();
 }
 

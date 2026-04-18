@@ -7,6 +7,36 @@
 
 namespace DialogLayout {
 
+void AdjustInitialSize(CWnd& dialog)
+{
+	CRect rcClientStart;
+	CRect rcClientNow;
+	dialog.GetClientRect(rcClientStart);
+	dialog.RepositionBars(AFX_IDW_CONTROLBAR_FIRST, AFX_IDW_CONTROLBAR_LAST,
+	                      0, CWnd::reposQuery, rcClientNow);
+
+	const CPoint ptOffset(rcClientNow.left - rcClientStart.left,
+	                      rcClientNow.top  - rcClientStart.top);
+
+	CRect rcChild;
+	CWnd* pwndChild = dialog.GetWindow(GW_CHILD);
+	while (pwndChild) {
+		pwndChild->GetWindowRect(rcChild);
+		dialog.ScreenToClient(rcChild);
+		rcChild.OffsetRect(ptOffset);
+		pwndChild->MoveWindow(rcChild, FALSE);
+		pwndChild = pwndChild->GetNextWindow();
+	}
+
+	CRect rcWindow;
+	dialog.GetWindowRect(rcWindow);
+	rcWindow.right  += rcClientStart.Width()  - rcClientNow.Width();
+	rcWindow.bottom += rcClientStart.Height() - rcClientNow.Height();
+	dialog.MoveWindow(rcWindow, FALSE);
+
+	dialog.RepositionBars(AFX_IDW_CONTROLBAR_FIRST, AFX_IDW_CONTROLBAR_LAST, 0);
+}
+
 void ApplyClientSize(CWnd& dialog, const ControlRefs& refs)
 {
 	CRect r;
