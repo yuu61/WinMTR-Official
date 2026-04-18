@@ -6,6 +6,7 @@
 #include "Net.h"
 #include "HostResolver.h"
 #include <iostream>
+#include <memory>
 #include <sstream>
 
 #define TRACE_MSG(msg)										\
@@ -15,8 +16,8 @@
 	OutputDebugStringW(dbg_msg.str().c_str());				\
 	}
 
-#define IPFLAG_DONT_FRAGMENT	0x02
-#define MAX_HOPS				30
+constexpr UCHAR IPFLAG_DONT_FRAGMENT = 0x02;
+constexpr int   MAX_HOPS             = 30;
 
 struct trace_thread {
 	int			address;
@@ -106,16 +107,7 @@ WinMTRNet::~WinMTRNet()
 
 void WinMTRNet::ResetHops()
 {
-	for(int i = 0; i < MaxHost;i++) {
-		host[i].addr = 0;
-		host[i].xmit = 0;
-		host[i].returned = 0;
-		host[i].total = 0;
-		host[i].last = 0;
-		host[i].best = 0;
-		host[i].worst = 0;
-		memset(host[i].name,0,sizeof(host[i].name));
-	}
+	host.fill(s_nethost{});
 }
 
 void WinMTRNet::DoTrace(int address, const TraceOptions& opts)
@@ -130,11 +122,18 @@ void WinMTRNet::DoTrace(int address, const TraceOptions& opts)
 
 	// one thread per TTL value
 	for(int i = 0; i < MAX_HOPS; i++) {
-		trace_thread *current = new trace_thread;
+		auto current = std::make_unique<trace_thread>();
 		current->address = address;
-		current->winmtr = this;
-		current->ttl = i + 1;
-		hThreads[i] = (HANDLE)_beginthread(TraceThread, 0 , current);
+		current->winmtr  = this;
+		current->ttl     = i + 1;
+		const uintptr_t h = _beginthread(TraceThread, 0, current.get());
+		if (h == 0 || h == static_cast<uintptr_t>(-1)) {
+			// thread creation failed: ownership stays with unique_ptr and is freed at scope exit
+			hThreads[i] = INVALID_HANDLE_VALUE;
+		} else {
+			hThreads[i] = reinterpret_cast<HANDLE>(h);
+			current.release();  // ownership transferred to TraceThread
+		}
 	}
 
 	WaitForMultipleObjects(MAX_HOPS, hThreads, TRUE, INFINITE);
@@ -147,17 +146,20 @@ void WinMTRNet::StopTrace()
 
 void WinMTRNet::BeginTraceAsync(const std::wstring& hostname, const TraceOptions& opts, HANDLE externalMutex)
 {
-	ping_thread_args* args = new ping_thread_args;
-	args->net = this;
-	args->mutex = externalMutex;
+	auto args = std::make_unique<ping_thread_args>();
+	args->net      = this;
+	args->mutex    = externalMutex;
 	args->hostname = hostname;
-	args->opts = opts;
-	_beginthread(PingThreadWorker, 0, args);
+	args->opts     = opts;
+	const uintptr_t h = _beginthread(PingThreadWorker, 0, args.get());
+	if (h != 0 && h != static_cast<uintptr_t>(-1)) {
+		args.release();  // ownership transferred to PingThreadWorker
+	}
 }
 
 void PingThreadWorker(void* p)
 {
-	ping_thread_args* args = (ping_thread_args*)p;
+	std::unique_ptr<ping_thread_args> args(static_cast<ping_thread_args*>(p));
 	WaitForSingleObject(args->mutex, INFINITE);
 
 	int traddr;
@@ -169,14 +171,13 @@ void PingThreadWorker(void* p)
 	}
 
 	ReleaseMutex(args->mutex);
-	delete args;
 	_endthread();
 }
 
 #pragma warning(suppress: 6262) // legacy 16KB stack frame; default thread stack is 1MB
 void TraceThread(void *p)
 {
-	trace_thread* current = (trace_thread*)p;
+	std::unique_ptr<trace_thread> current(static_cast<trace_thread*>(p));
 	WinMTRNet *wmtrnet = current->winmtr;
 	TRACE_MSG(L"Threaad with TTL=" << current->ttl << L" started.");
 
@@ -295,7 +296,6 @@ void TraceThread(void *p)
 
 	TRACE_MSG(L"Thread with TTL=" << current->ttl << L" stopped.");
 
-	delete p;
 	_endthread();
 }
 
@@ -310,18 +310,18 @@ int WinMTRNet::GetAddr(int at)
 int WinMTRNet::GetName(int at, wchar_t *n)
 {
 	WaitForSingleObject(ghMutex, INFINITE);
-	if(!wcscmp(host[at].name, L"")) {
-		int addr = GetAddr(at);
-		swprintf (	n, 255, L"%d.%d.%d.%d",
-							(addr >> 24) & 0xff,
-							(addr >> 16) & 0xff,
-							(addr >> 8) & 0xff,
-							addr & 0xff
-		);
-		if(addr==0)
-			wcscpy(n, L"");
+	if (host[at].name[0] == L'\0') {
+		const int addr = GetAddr(at);
+		if (addr == 0) {
+			n[0] = L'\0';
+		} else {
+			const auto s = std::format(L"{}.{}.{}.{}",
+				(addr >> 24) & 0xff, (addr >> 16) & 0xff,
+				(addr >> 8) & 0xff,  addr & 0xff);
+			wcsncpy_s(n, 255, s.c_str(), _TRUNCATE);
+		}
 	} else {
-		wcscpy(n, host[at].name);
+		wcsncpy_s(n, 255, host[at].name, _TRUNCATE);
 	}
 	ReleaseMutex(ghMutex);
 	return 0;
@@ -411,10 +411,15 @@ void WinMTRNet::SetAddr(int at, __int32 addr)
 	if(host[at].addr == 0 && addr != 0) {
 		TRACE_MSG(L"Start DnsResolverThread for new address " << addr << L". Old addr value was " << host[at].addr);
 		host[at].addr = addr;
-		dns_resolver_thread *dnt = new dns_resolver_thread;
-		dnt->index = at;
-		dnt->winmtr = this;
-		if(options.useDNS) _beginthread(DnsResolverThread, 0, dnt);
+		if (options.useDNS) {
+			auto dnt = std::make_unique<dns_resolver_thread>();
+			dnt->index  = at;
+			dnt->winmtr = this;
+			const uintptr_t h = _beginthread(DnsResolverThread, 0, dnt.get());
+			if (h != 0 && h != static_cast<uintptr_t>(-1)) {
+				dnt.release();  // ownership transferred to DnsResolverThread
+			}
+		}
 	}
 
 	ReleaseMutex(ghMutex);
@@ -423,7 +428,7 @@ void WinMTRNet::SetAddr(int at, __int32 addr)
 void WinMTRNet::SetName(int at, const wchar_t *n)
 {
 	WaitForSingleObject(ghMutex, INFINITE);
-	wcscpy(host[at].name, n);
+	wcsncpy_s(host[at].name, n, _TRUNCATE);
 	ReleaseMutex(ghMutex);
 }
 
@@ -473,12 +478,13 @@ void WinMTRNet::AddXmit(int at)
 void DnsResolverThread(void *p)
 {
 	TRACE_MSG(L"DNS resolver thread started.");
-	dns_resolver_thread *dnt = (dns_resolver_thread*)p;
+	std::unique_ptr<dns_resolver_thread> dnt(static_cast<dns_resolver_thread*>(p));
 	WinMTRNet* wn = dnt->winmtr;
 
-	wchar_t buf[100];
-	int addr = wn->GetAddr(dnt->index);
-	swprintf (buf, 100, L"%d.%d.%d.%d", (addr >> 24) & 0xff, (addr >> 16) & 0xff, (addr >> 8) & 0xff, addr & 0xff);
+	const int addr = wn->GetAddr(dnt->index);
+	const auto numeric = std::format(L"{}.{}.{}.{}",
+		(addr >> 24) & 0xff, (addr >> 16) & 0xff,
+		(addr >> 8) & 0xff,  addr & 0xff);
 
 	struct sockaddr_in sa = {};
 	sa.sin_family = AF_INET;
@@ -488,10 +494,9 @@ void DnsResolverThread(void *p)
 	if (GetNameInfoW((struct sockaddr*)&sa, sizeof(sa), hostname, NI_MAXHOST, NULL, 0, NI_NAMEREQD) == 0) {
 		wn->SetName(dnt->index, hostname);
 	} else {
-		wn->SetName(dnt->index, buf);
+		wn->SetName(dnt->index, numeric.c_str());
 	}
 
-	delete p;
 	TRACE_MSG(L"DNS resolver thread stopped.");
 	_endthread();
 }

@@ -13,11 +13,11 @@
 #ifndef WINMTRDIALOG_H_
 #define WINMTRDIALOG_H_
 
-#define WINMTR_DIALOG_TIMER 100
-
 #include "StatusBar.h"
 #include "Net.h"
 #include <memory>
+
+constexpr UINT WINMTR_DIALOG_TIMER = 100;
 
 class CMFCLinkCtrl;
 
@@ -83,7 +83,7 @@ public:
 	int					nrLRU;
 	BOOL				useDNS;
 	bool				hasUseDNSFromCmdLine;
-	WinMTRNet*			wmtrnet;
+	std::unique_ptr<WinMTRNet>    wmtrnet;
 	std::unique_ptr<CMFCLinkCtrl> m_appnorLink;
 
 	void SetHostName(const wchar_t *host);

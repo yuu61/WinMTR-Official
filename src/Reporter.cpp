@@ -27,7 +27,7 @@ CString WinMTRReporter::BuildTextReport(WinMTRNet* net)
 
 	for(int i=0;i <nh ; i++) {
 		net->GetName(i, buf);
-		if(wcscmp(buf, L"")==0) wcscpy(buf, L"No response from host");
+		if (buf[0] == L'\0') wcscpy_s(buf, L"No response from host");
 
 		CString line;
 		line.Format(L"|%40s - %4d | %4d | %4d | %4d | %4d | %4d | %4d |\r\n",
@@ -63,7 +63,7 @@ CString WinMTRReporter::BuildHtmlReport(WinMTRNet* net)
 
 	for(int i=0;i <nh ; i++) {
 		net->GetName(i, buf);
-		if( wcscmp(buf, L"")==0 ) wcscpy(buf, L"No response from host");
+		if (buf[0] == L'\0') wcscpy_s(buf, L"No response from host");
 
 		CString line;
 		line.Format(L"<tr><td>%s</td> <td>%4d</td> <td>%4d</td> <td>%4d</td> <td>%4d</td> <td>%4d</td> <td>%4d</td> <td>%4d</td></tr>\r\n",
@@ -101,7 +101,8 @@ bool WinMTRReporter::CopyToClipboard(CWnd* owner, const CString& content)
 		CloseClipboard();
 		return false;
 	}
-	wcscpy(buffer, (LPCWSTR)content);
+	const SIZE_T chars = bytes / sizeof(wchar_t);
+	wcscpy_s(buffer, chars, (LPCWSTR)content);
 	GlobalUnlock(clipbuffer);
 
 	SetClipboardData(CF_UNICODETEXT, clipbuffer);

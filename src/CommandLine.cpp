@@ -13,15 +13,12 @@ int GetParamValue(LPWSTR cmd, const wchar_t* param, wchar_t sparam, wchar_t* val
 {
 	wchar_t* p;
 
-	wchar_t p_long[1024];
-	wchar_t p_short[1024];
+	const std::wstring p_long  = std::format(L"--{} ", param);
+	const std::wstring p_short = std::format(L"-{} ", sparam);
 
-	swprintf(p_long, 1024, L"--%s ", param);
-	swprintf(p_short, 1024, L"-%c ", sparam);
-
-	if ((p = wcsstr(cmd, p_long))) ;
+	if ((p = wcsstr(cmd, p_long.c_str()))) ;
 	else
-		p = wcsstr(cmd, p_short);
+		p = wcsstr(cmd, p_short.c_str());
 
 	if (p == NULL)
 		return 0;

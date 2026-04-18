@@ -6,6 +6,8 @@
 
 #include "Global.h"
 #include "HostResolver.h"
+#include <algorithm>
+#include <string_view>
 
 namespace {
 
@@ -33,11 +35,9 @@ bool ResolveByDns(LPCWSTR hostname, int* outAddr, CString& errorMessage)
 //*****************************************************************************
 bool WinMTRHostResolver::LooksNumeric(LPCWSTR hostname)
 {
-	if (hostname == NULL) return false;
-	for (const wchar_t* t = hostname; *t; ++t) {
-		if (!iswdigit(*t) && *t != L'.') return false;
-	}
-	return true;
+	if (hostname == nullptr) return false;
+	return std::ranges::all_of(std::wstring_view{hostname},
+		[](wchar_t c) { return iswdigit(c) || c == L'.'; });
 }
 
 

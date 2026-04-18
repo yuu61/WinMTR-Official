@@ -64,27 +64,19 @@ void WinMTRProperties::DoDataExchange(CDataExchange* pDX)
 BOOL WinMTRProperties::OnInitDialog()
 {
 	CDialog::OnInitDialog();
-	wchar_t buf[255];
 
 	m_editIP.SetWindowText(ip);
 	m_editHost.SetWindowText(host);
 	m_editComment.SetWindowText(comment);
 
-	swprintf(buf, 255, L"%d", pck_loss);
-	m_editLoss.SetWindowText(buf);
-	swprintf(buf, 255, L"%d", pck_sent);
-	m_editSent.SetWindowText(buf);
-	swprintf(buf, 255, L"%d", pck_recv);
-	m_editRecv.SetWindowText(buf);
+	m_editLoss.SetWindowText(std::format(L"{}", pck_loss).c_str());
+	m_editSent.SetWindowText(std::format(L"{}", pck_sent).c_str());
+	m_editRecv.SetWindowText(std::format(L"{}", pck_recv).c_str());
 
-	swprintf(buf, 255, L"%.1f", ping_last);
-	m_editLast.SetWindowText(buf);
-	swprintf(buf, 255, L"%.1f", ping_best);
-	m_editBest.SetWindowText(buf);
-	swprintf(buf, 255, L"%.1f", ping_worst);
-	m_editWorst.SetWindowText(buf);
-	swprintf(buf, 255, L"%.1f", ping_avrg);
-	m_editAvrg.SetWindowText(buf);
+	m_editLast.SetWindowText(std::format(L"{:.1f}", ping_last).c_str());
+	m_editBest.SetWindowText(std::format(L"{:.1f}", ping_best).c_str());
+	m_editWorst.SetWindowText(std::format(L"{:.1f}", ping_worst).c_str());
+	m_editAvrg.SetWindowText(std::format(L"{:.1f}", ping_avrg).c_str());
 
 	return FALSE;
 }

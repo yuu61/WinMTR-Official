@@ -1,9 +1,11 @@
 #ifndef MTRCOLUMNS_H_
 #define MTRCOLUMNS_H_
 
-#define MTR_NR_COLS 9
+#include <array>
 
-const wchar_t MTR_COLS[ MTR_NR_COLS ][10] = {
+constexpr int MTR_NR_COLS = 9;
+
+constexpr std::array<const wchar_t*, MTR_NR_COLS> MTR_COLS = {
         L"Hostname",
         L"Nr",
         L"Loss %",
@@ -15,7 +17,7 @@ const wchar_t MTR_COLS[ MTR_NR_COLS ][10] = {
         L"Last"
 };
 
-const int MTR_COL_LENGTH[ MTR_NR_COLS ] = {
+constexpr std::array<int, MTR_NR_COLS> MTR_COL_LENGTH = {
         190, 30, 50, 40, 40, 50, 50, 50, 50
 };
 

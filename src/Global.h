@@ -41,6 +41,8 @@
 #include <sys/timeb.h>
 #include <sys/stat.h>
 
+#include <format>
+
 #include "resource.h"
 
 #endif // GLOBAL_H_

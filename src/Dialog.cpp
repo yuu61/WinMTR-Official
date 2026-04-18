@@ -83,12 +83,11 @@ WinMTRDialog::WinMTRDialog(CWnd* pParent)
 	hasUseDNSFromCmdLine = false;
 
 	traceThreadMutex = CreateMutex(NULL, FALSE, NULL);
-	wmtrnet = new WinMTRNet();
+	wmtrnet = std::make_unique<WinMTRNet>();
 }
 
 WinMTRDialog::~WinMTRDialog()
 {
-	delete wmtrnet;
 	CloseHandle(traceThreadMutex);
 }
 
@@ -218,8 +217,8 @@ BOOL WinMTRDialog::OnInitDialog()
 			maxLRU   = s.maxLRU;
 			useDNS   = s.useDNS;
 			nrLRU    = s.nrLRU;
-			for (size_t i = 0; i < lruHosts.size(); ++i)
-				m_comboHost.AddString(lruHosts[i]);
+			for (const auto& h : lruHosts)
+				m_comboHost.AddString(h);
 			m_comboHost.AddString(CString((LPCWSTR)IDS_STRING_CLEAR_HISTORY));
 		}
 	}
@@ -362,8 +361,8 @@ void WinMTRDialog::OnDblclkList(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 			WinMTRProperties wmtrprop;
 
 			if(wmtrnet->GetAddr(nItem)==0) {
-				wcscpy(wmtrprop.host, L"");
-				wcscpy(wmtrprop.ip, L"");
+				wmtrprop.host[0] = L'\0';
+				wmtrprop.ip[0]   = L'\0';
 				wmtrnet->GetName(nItem, wmtrprop.comment);
 
 				wmtrprop.pck_loss = wmtrprop.pck_sent = wmtrprop.pck_recv = 0;
@@ -379,7 +378,7 @@ void WinMTRDialog::OnDblclkList(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 							(addr >> 8) & 0xff,
 							addr & 0xff
 				);
-				wcscpy(wmtrprop.comment, L"Host alive.");
+				wcscpy_s(wmtrprop.comment, L"Host alive.");
 
 				wmtrprop.ping_avrg = (float)wmtrnet->GetAvg(nItem); 
 				wmtrprop.ping_last = (float)wmtrnet->GetLast(nItem); 
@@ -404,8 +403,7 @@ void WinMTRDialog::OnDblclkList(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 void WinMTRDialog::SetHostName(const wchar_t *host)
 {
 	m_autostart = 1;
-	wcsncpy(msz_defaulthostname, host, _countof(msz_defaulthostname) - 1);
-	msz_defaulthostname[_countof(msz_defaulthostname) - 1] = L'\0';
+	wcsncpy_s(msz_defaulthostname, host, _TRUNCATE);
 }
 
 
@@ -480,9 +478,8 @@ void WinMTRDialog::OnRestart()
 	if(state == IDLE) {
 
 		if (!WinMTRHostResolver::LooksNumeric((LPCWSTR)sHost)) {
-			wchar_t buf[255];
-			swprintf(buf, 255, L"Resolving host %s...", (LPCWSTR)sHost);
-			statusBar.SetPaneText(0, buf);
+			statusBar.SetPaneText(0,
+				std::format(L"Resolving host {}...", (LPCWSTR)sHost).c_str());
 		}
 
 		CString err;
@@ -538,7 +535,7 @@ void WinMTRDialog::OnOptions()
 //*****************************************************************************
 void WinMTRDialog::OnCTTC()
 {
-	WinMTRReporter::CopyToClipboard(this, WinMTRReporter::BuildTextReport(wmtrnet));
+	WinMTRReporter::CopyToClipboard(this, WinMTRReporter::BuildTextReport(wmtrnet.get()));
 }
 
 
@@ -549,7 +546,7 @@ void WinMTRDialog::OnCTTC()
 //*****************************************************************************
 void WinMTRDialog::OnCHTC()
 {
-	WinMTRReporter::CopyToClipboard(this, WinMTRReporter::BuildHtmlReport(wmtrnet));
+	WinMTRReporter::CopyToClipboard(this, WinMTRReporter::BuildHtmlReport(wmtrnet.get()));
 }
 
 
@@ -569,7 +566,7 @@ void WinMTRDialog::OnEXPT()
                    szFilter,
                    this);
 	if(dlg.DoModal() == IDOK) {
-		WinMTRReporter::SaveToFile(dlg.GetPathName(), WinMTRReporter::BuildTextReport(wmtrnet));
+		WinMTRReporter::SaveToFile(dlg.GetPathName(), WinMTRReporter::BuildTextReport(wmtrnet.get()));
 	}
 }
 
@@ -591,7 +588,7 @@ void WinMTRDialog::OnEXPH()
                    this);
 
 	if(dlg.DoModal() == IDOK) {
-		WinMTRReporter::SaveToFile(dlg.GetPathName(), WinMTRReporter::BuildHtmlReport(wmtrnet));
+		WinMTRReporter::SaveToFile(dlg.GetPathName(), WinMTRReporter::BuildHtmlReport(wmtrnet.get()));
 	}
 }
 
@@ -613,45 +610,32 @@ void WinMTRDialog::OnCancel()
 //*****************************************************************************
 int WinMTRDialog::DisplayRedraw()
 {
-	wchar_t buf[255], nr_crt[255];
-	int nh = wmtrnet->GetMax();
+	wchar_t buf[255];
+	const int nh = wmtrnet->GetMax();
 	while( m_listMTR.GetItemCount() > nh ) m_listMTR.DeleteItem(m_listMTR.GetItemCount() - 1);
 
-	for(int i=0;i <nh ; i++) {
+	const auto setCol = [&](int row, int col, const std::wstring& s) {
+		m_listMTR.SetItem(row, col, LVIF_TEXT, s.c_str(), 0, 0, 0, 0);
+	};
+
+	for(int i = 0; i < nh; i++) {
 
 		wmtrnet->GetName(i, buf);
-		if( wcscmp(buf, L"")==0 ) wcscpy(buf, L"No response from host");
+		if (buf[0] == L'\0') wcscpy_s(buf, L"No response from host");
 
-		swprintf(nr_crt, 255, L"%d", i+1);
-		if(m_listMTR.GetItemCount() <= i )
+		if (m_listMTR.GetItemCount() <= i)
 			m_listMTR.InsertItem(i, buf);
 		else
 			m_listMTR.SetItem(i, 0, LVIF_TEXT, buf, 0, 0, 0, 0);
 
-		m_listMTR.SetItem(i, 1, LVIF_TEXT, nr_crt, 0, 0, 0, 0);
-
-		swprintf(buf, 255, L"%d", wmtrnet->GetPercent(i));
-		m_listMTR.SetItem(i, 2, LVIF_TEXT, buf, 0, 0, 0, 0);
-
-		swprintf(buf, 255, L"%d", wmtrnet->GetXmit(i));
-		m_listMTR.SetItem(i, 3, LVIF_TEXT, buf, 0, 0, 0, 0);
-
-		swprintf(buf, 255, L"%d", wmtrnet->GetReturned(i));
-		m_listMTR.SetItem(i, 4, LVIF_TEXT, buf, 0, 0, 0, 0);
-
-		swprintf(buf, 255, L"%d", wmtrnet->GetBest(i));
-		m_listMTR.SetItem(i, 5, LVIF_TEXT, buf, 0, 0, 0, 0);
-
-		swprintf(buf, 255, L"%d", wmtrnet->GetAvg(i));
-		m_listMTR.SetItem(i, 6, LVIF_TEXT, buf, 0, 0, 0, 0);
-
-		swprintf(buf, 255, L"%d", wmtrnet->GetWorst(i));
-		m_listMTR.SetItem(i, 7, LVIF_TEXT, buf, 0, 0, 0, 0);
-
-		swprintf(buf, 255, L"%d", wmtrnet->GetLast(i));
-		m_listMTR.SetItem(i, 8, LVIF_TEXT, buf, 0, 0, 0, 0);
-
-
+		setCol(i, 1, std::format(L"{}", i + 1));
+		setCol(i, 2, std::format(L"{}", wmtrnet->GetPercent(i)));
+		setCol(i, 3, std::format(L"{}", wmtrnet->GetXmit(i)));
+		setCol(i, 4, std::format(L"{}", wmtrnet->GetReturned(i)));
+		setCol(i, 5, std::format(L"{}", wmtrnet->GetBest(i)));
+		setCol(i, 6, std::format(L"{}", wmtrnet->GetAvg(i)));
+		setCol(i, 7, std::format(L"{}", wmtrnet->GetWorst(i)));
+		setCol(i, 8, std::format(L"{}", wmtrnet->GetLast(i)));
 	}
 
 	return 0;

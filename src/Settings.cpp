@@ -114,13 +114,12 @@ BOOL WinMTRSettings::InitAndLoad(LoadedSettings& io, const LoadedSettingsFlags& 
 		tmp = (DWORD)io.nrLRU;
 		RegSetValueExW(hLRU, L"NrLRU", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
 	} else {
-		wchar_t keyName[20];
 		wchar_t hostBuf[255];
 		io.nrLRU = (int)tmp;
 		for (int i = 0; i < io.maxLRU; ++i) {
-			swprintf(keyName, 20, L"Host%d", i + 1);
+			const auto keyName = std::format(L"Host{}", i + 1);
 			DWORD hostSize = sizeof(hostBuf);
-			if (RegQueryValueExW(hLRU, keyName, 0, NULL, (BYTE*)hostBuf, &hostSize) == ERROR_SUCCESS) {
+			if (RegQueryValueExW(hLRU, keyName.c_str(), 0, NULL, (BYTE*)hostBuf, &hostSize) == ERROR_SUCCESS) {
 				DWORD chars = hostSize / sizeof(wchar_t);
 				if (chars > 0 && chars <= _countof(hostBuf))
 					hostBuf[chars - 1] = L'\0';
@@ -169,9 +168,8 @@ void WinMTRSettings::AppendLRUHost(LPCWSTR host, int& nrLRU, int maxLRU)
 
 	if (nrLRU >= maxLRU) nrLRU = 0;
 	nrLRU++;
-	wchar_t keyName[20];
-	swprintf(keyName, 20, L"Host%d", nrLRU);
-	RegSetValueExW(hLRU, keyName, 0, REG_SZ,
+	const auto keyName = std::format(L"Host{}", nrLRU);
+	RegSetValueExW(hLRU, keyName.c_str(), 0, REG_SZ,
 				   (const BYTE*)host,
 				   (DWORD)((wcslen(host) + 1) * sizeof(wchar_t)));
 	DWORD tmp = (DWORD)nrLRU;
@@ -191,10 +189,8 @@ void WinMTRSettings::TrimLRU(int maxLRU, int& nrLRU)
 	if (OpenWinMTRSubKey(L"LRU", KEY_ALL_ACCESS, hLRU) != ERROR_SUCCESS)
 		return;
 
-	wchar_t keyName[20];
 	for (int i = maxLRU; i <= nrLRU; ++i) {
-		swprintf(keyName, 20, L"Host%d", i);
-		RegDeleteValueW(hLRU, keyName);
+		RegDeleteValueW(hLRU, std::format(L"Host{}", i).c_str());
 	}
 	nrLRU = maxLRU;
 	DWORD tmp = (DWORD)nrLRU;
@@ -215,10 +211,8 @@ void WinMTRSettings::ClearLRU(int& nrLRU)
 	if (OpenWinMTRSubKey(L"LRU", KEY_ALL_ACCESS, hLRU) != ERROR_SUCCESS)
 		return;
 
-	wchar_t keyName[20];
 	for (int i = 0; i <= nrLRU; ++i) {
-		swprintf(keyName, 20, L"Host%d", i);
-		RegDeleteValueW(hLRU, keyName);
+		RegDeleteValueW(hLRU, std::format(L"Host{}", i).c_str());
 	}
 	nrLRU = 0;
 	DWORD tmp = 0;

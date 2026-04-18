@@ -12,6 +12,7 @@
 
 #include "TraceConfig.h"
 #include "TraceOptions.h"
+#include <array>
 #include <string>
 #include <cwchar>
 
@@ -24,17 +25,17 @@ typedef icmp_echo_reply32 ICMPECHO, *PICMPECHO, FAR *LPICMPECHO;
 typedef icmp_echo_reply ICMPECHO, *PICMPECHO, FAR *LPICMPECHO;
 #endif
 
-#define ECHO_REPLY_TIMEOUT 5000
+constexpr DWORD ECHO_REPLY_TIMEOUT = 5000;
 
 struct s_nethost {
-  __int32 addr;		// IP as a decimal, big endian
-  int xmit;			// number of PING packets sent
-  int returned;		// number of ICMP echo replies received
-  unsigned long total;	// total time
-  int last;				// last time
-  int best;				// best time
-  int worst;			// worst time
-  wchar_t name[255];
+  __int32 addr = 0;              // IP as a decimal, big endian
+  int xmit = 0;                  // number of PING packets sent
+  int returned = 0;              // number of ICMP echo replies received
+  unsigned long total = 0;       // total time
+  int last = 0;                  // last time
+  int best = 0;                  // best time
+  int worst = 0;                 // worst time
+  wchar_t name[255] = {};
 };
 
 //*****************************************************************************
@@ -64,16 +65,16 @@ public:
 	// releases the mutex without tracing.
 	void	BeginTraceAsync(const std::wstring& hostname, const TraceOptions& opts, HANDLE externalMutex);
 
-	int		GetAddr(int at);
-	int		GetName(int at, wchar_t *n);
-	int		GetBest(int at);
-	int		GetWorst(int at);
-	int		GetAvg(int at);
-	int		GetPercent(int at);
-	int		GetLast(int at);
-	int		GetReturned(int at);
-	int		GetXmit(int at);
-	int		GetMax();
+	[[nodiscard]] int GetAddr(int at);
+	int               GetName(int at, wchar_t *n);
+	[[nodiscard]] int GetBest(int at);
+	[[nodiscard]] int GetWorst(int at);
+	[[nodiscard]] int GetAvg(int at);
+	[[nodiscard]] int GetPercent(int at);
+	[[nodiscard]] int GetLast(int at);
+	[[nodiscard]] int GetReturned(int at);
+	[[nodiscard]] int GetXmit(int at);
+	[[nodiscard]] int GetMax();
 
 	void	SetAddr(int at, __int32 addr);
 	void	SetName(int at, const wchar_t *n);
@@ -94,7 +95,7 @@ public:
 private:
 	HINSTANCE			hICMP_DLL;
 
-    struct s_nethost	host[MaxHost];
+    std::array<s_nethost, MaxHost> host;
 	HANDLE				ghMutex;
 };
 

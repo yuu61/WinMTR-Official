@@ -59,16 +59,9 @@ BOOL WinMTROptions::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
-	wchar_t strtmp[20];
-
-	swprintf(strtmp, 20, L"%.1f", interval);
-	m_editInterval.SetWindowText(strtmp);
-
-	swprintf(strtmp, 20, L"%d", pingsize);
-	m_editSize.SetWindowText(strtmp);
-
-	swprintf(strtmp, 20, L"%d", maxLRU);
-	m_editMaxLRU.SetWindowText(strtmp);
+	m_editInterval.SetWindowText(std::format(L"{:.1f}", interval).c_str());
+	m_editSize.SetWindowText(std::format(L"{}", pingsize).c_str());
+	m_editMaxLRU.SetWindowText(std::format(L"{}", maxLRU).c_str());
 
 	m_checkDNS.SetCheck(useDNS);
 

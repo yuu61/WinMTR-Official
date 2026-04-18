@@ -31,10 +31,10 @@ public:
 	void SetPingSize(int ps)		{ pingsize = ps;  };
 	void SetMaxLRU(int mlru)		{ maxLRU = mlru;  };
 
-	double GetInterval()			{ return interval;   };
-	int GetPingSize()				{ return pingsize;   };
-	int GetMaxLRU()					{ return maxLRU;   };
-	BOOL GetUseDNS()				{ return useDNS;     };
+	[[nodiscard]] double GetInterval() const { return interval; }
+	[[nodiscard]] int    GetPingSize() const { return pingsize; }
+	[[nodiscard]] int    GetMaxLRU()   const { return maxLRU;   }
+	[[nodiscard]] BOOL   GetUseDNS()   const { return useDNS;   }
 
 	enum { IDD = IDD_DIALOG_OPTIONS };
 	CEdit	m_editSize;
