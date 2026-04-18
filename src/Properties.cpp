@@ -61,29 +61,29 @@ void WinMTRProperties::DoDataExchange(CDataExchange* pDX)
 //
 // 
 //*****************************************************************************
-BOOL WinMTRProperties::OnInitDialog() 
+BOOL WinMTRProperties::OnInitDialog()
 {
 	CDialog::OnInitDialog();
-	char buf[255];
-	
+	wchar_t buf[255];
+
 	m_editIP.SetWindowText(ip);
 	m_editHost.SetWindowText(host);
 	m_editComment.SetWindowText(comment);
 
-	sprintf(buf, "%d", pck_loss);
+	swprintf(buf, 255, L"%d", pck_loss);
 	m_editLoss.SetWindowText(buf);
-	sprintf(buf, "%d", pck_sent);
+	swprintf(buf, 255, L"%d", pck_sent);
 	m_editSent.SetWindowText(buf);
-	sprintf(buf, "%d", pck_recv);
+	swprintf(buf, 255, L"%d", pck_recv);
 	m_editRecv.SetWindowText(buf);
 
-	sprintf(buf, "%.1f", ping_last);
+	swprintf(buf, 255, L"%.1f", ping_last);
 	m_editLast.SetWindowText(buf);
-	sprintf(buf, "%.1f", ping_best);
+	swprintf(buf, 255, L"%.1f", ping_best);
 	m_editBest.SetWindowText(buf);
-	sprintf(buf, "%.1f", ping_worst);
+	swprintf(buf, 255, L"%.1f", ping_worst);
 	m_editWorst.SetWindowText(buf);
-	sprintf(buf, "%.1f", ping_avrg);
+	swprintf(buf, 255, L"%.1f", ping_avrg);
 	m_editAvrg.SetWindowText(buf);
 
 	return FALSE;

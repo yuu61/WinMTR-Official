@@ -22,9 +22,9 @@
 
 #define TRACE_MSG(msg)										\
 	{														\
-	std::ostringstream dbg_msg(std::ostringstream::out);	\
+	std::wostringstream dbg_msg(std::wostringstream::out);	\
 	dbg_msg << msg << std::endl;							\
-	OutputDebugString(dbg_msg.str().c_str());				\
+	OutputDebugStringW(dbg_msg.str().c_str());				\
 	}
 
 #ifdef _DEBUG
@@ -122,19 +122,19 @@ BOOL WinMTRDialog::OnInitDialog()
 	CDialog::OnInitDialog();
 
 	#ifndef  _WIN64
-	char caption[] = "WinMTR v" WINMTR_VERSION " 32 bit by Appnor MSP - www.winmtr.net";
+	wchar_t caption[] = L"WinMTR v" WINMTR_VERSION L" 32 bit by Appnor MSP - www.winmtr.net";
 	#else
-	char caption[] = "WinMTR v" WINMTR_VERSION " 64 bit by Appnor MSP - www.winmtr.net";
+	wchar_t caption[] = L"WinMTR v" WINMTR_VERSION L" 64 bit by Appnor MSP - www.winmtr.net";
 	#endif
 
 	SetTimer(1, WINMTR_DIALOG_TIMER, NULL);
 	SetWindowText(caption);
 
-	SetIcon(m_hIcon, TRUE);			
+	SetIcon(m_hIcon, TRUE);
 	SetIcon(m_hIcon, FALSE);
-	
+
 	if(!statusBar.Create( this ))
-		AfxMessageBox("Error creating status bar");
+		AfxMessageBox(L"Error creating status bar");
 	statusBar.GetStatusBarCtrl().SetMinHeight(23);
 		
 	UINT sbi[1];
@@ -143,15 +143,15 @@ BOOL WinMTRDialog::OnInitDialog()
 	statusBar.SetPaneInfo(0, statusBar.GetItemID(0),SBPS_STRETCH, NULL );
 	{ // Add appnor URL
 		m_appnorLink.reset(new CMFCLinkCtrl);
-		if (!m_appnorLink->Create(_T("www.appnor.com"), WS_CHILD|WS_VISIBLE|WS_TABSTOP, CRect(0,0,0,0), &statusBar, 1234)) {
-			TRACE(_T("Failed to create button control.\n"));
+		if (!m_appnorLink->Create(L"www.appnor.com", WS_CHILD|WS_VISIBLE|WS_TABSTOP, CRect(0,0,0,0), &statusBar, 1234)) {
+			TRACE(L"Failed to create button control.\n");
 			return FALSE;
 		}
 
-		m_appnorLink->SetURL("http://www.appnor.com/?utm_source=winmtr&utm_medium=desktop&utm_campaign=software");
+		m_appnorLink->SetURL(L"http://www.appnor.com/?utm_source=winmtr&utm_medium=desktop&utm_campaign=software");
 
 		if(!statusBar.AddPane(1234,1)) {
-			AfxMessageBox(_T("Pane index out of range\nor pane with same ID already exists in the status bar"), MB_ICONERROR);
+			AfxMessageBox(L"Pane index out of range\nor pane with same ID already exists in the status bar", MB_ICONERROR);
 			return FALSE;
 		}
 
@@ -220,7 +220,7 @@ BOOL WinMTRDialog::OnInitDialog()
 			nrLRU    = s.nrLRU;
 			for (size_t i = 0; i < lruHosts.size(); ++i)
 				m_comboHost.AddString(lruHosts[i]);
-			m_comboHost.AddString(CString((LPCSTR)IDS_STRING_CLEAR_HISTORY));
+			m_comboHost.AddString(CString((LPCWSTR)IDS_STRING_CLEAR_HISTORY));
 		}
 	}
 
@@ -362,8 +362,8 @@ void WinMTRDialog::OnDblclkList(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 			WinMTRProperties wmtrprop;
 
 			if(wmtrnet->GetAddr(nItem)==0) {
-				strcpy(wmtrprop.host,"");
-				strcpy(wmtrprop.ip,"");
+				wcscpy(wmtrprop.host, L"");
+				wcscpy(wmtrprop.ip, L"");
 				wmtrnet->GetName(nItem, wmtrprop.comment);
 
 				wmtrprop.pck_loss = wmtrprop.pck_sent = wmtrprop.pck_recv = 0;
@@ -373,13 +373,13 @@ void WinMTRDialog::OnDblclkList(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 			} else {
 				wmtrnet->GetName(nItem, wmtrprop.host);
 				int addr = wmtrnet->GetAddr(nItem);
-				sprintf (	wmtrprop.ip , "%d.%d.%d.%d", 
-							(addr >> 24) & 0xff, 
-							(addr >> 16) & 0xff, 
-							(addr >> 8) & 0xff, 
+				swprintf (	wmtrprop.ip , _countof(wmtrprop.ip), L"%d.%d.%d.%d",
+							(addr >> 24) & 0xff,
+							(addr >> 16) & 0xff,
+							(addr >> 8) & 0xff,
 							addr & 0xff
 				);
-				strcpy(wmtrprop.comment , "Host alive.");
+				wcscpy(wmtrprop.comment, L"Host alive.");
 
 				wmtrprop.ping_avrg = (float)wmtrnet->GetAvg(nItem); 
 				wmtrprop.ping_last = (float)wmtrnet->GetLast(nItem); 
@@ -401,11 +401,11 @@ void WinMTRDialog::OnDblclkList(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 // WinMTRDialog::SetHostName
 //
 //*****************************************************************************
-void WinMTRDialog::SetHostName(const char *host)
+void WinMTRDialog::SetHostName(const wchar_t *host)
 {
 	m_autostart = 1;
-	strncpy(msz_defaulthostname, host, sizeof(msz_defaulthostname) - 1);
-	msz_defaulthostname[sizeof(msz_defaulthostname) - 1] = '\0';
+	wcsncpy(msz_defaulthostname, host, _countof(msz_defaulthostname) - 1);
+	msz_defaulthostname[_countof(msz_defaulthostname) - 1] = L'\0';
 }
 
 
@@ -470,7 +470,7 @@ void WinMTRDialog::OnRestart()
 		sHost.TrimLeft();
       
 		if(sHost.IsEmpty()) {
-			AfxMessageBox("No host specified!");
+			AfxMessageBox(L"No host specified!");
 			m_comboHost.SetFocus();
 			return ;
 		}
@@ -479,22 +479,22 @@ void WinMTRDialog::OnRestart()
 
 	if(state == IDLE) {
 
-		if (!WinMTRHostResolver::LooksNumeric((LPCSTR)sHost)) {
-			char buf[255];
-			sprintf(buf, "Resolving host %s...", (LPCSTR)sHost);
+		if (!WinMTRHostResolver::LooksNumeric((LPCWSTR)sHost)) {
+			wchar_t buf[255];
+			swprintf(buf, 255, L"Resolving host %s...", (LPCWSTR)sHost);
 			statusBar.SetPaneText(0, buf);
 		}
 
 		CString err;
-		if (!WinMTRHostResolver::Validate((LPCSTR)sHost, err)) {
-			statusBar.SetPaneText(0, CString((LPCSTR)IDS_STRING_SB_NAME));
+		if (!WinMTRHostResolver::Validate((LPCWSTR)sHost, err)) {
+			statusBar.SetPaneText(0, CString((LPCWSTR)IDS_STRING_SB_NAME));
 			AfxMessageBox(err);
 			return;
 		}
 
 		if(m_comboHost.FindString(-1, sHost) == CB_ERR) {
 			m_comboHost.InsertString(m_comboHost.GetCount() - 1,sHost);
-			WinMTRSettings::AppendLRUHost((LPCSTR)sHost, nrLRU, maxLRU);
+			WinMTRSettings::AppendLRUHost((LPCWSTR)sHost, nrLRU, maxLRU);
 		}
 		Transit(TRACING);
 	} else {
@@ -560,10 +560,10 @@ void WinMTRDialog::OnCHTC()
 //*****************************************************************************
 void WinMTRDialog::OnEXPT()
 {
-	TCHAR BASED_CODE szFilter[] = _T("Text Files (*.txt)|*.txt|All Files (*.*)|*.*||");
+	wchar_t BASED_CODE szFilter[] = L"Text Files (*.txt)|*.txt|All Files (*.*)|*.*||";
 
 	CFileDialog dlg(FALSE,
-                   _T("TXT"),
+                   L"TXT",
                    NULL,
                    OFN_HIDEREADONLY | OFN_EXPLORER,
                    szFilter,
@@ -581,10 +581,10 @@ void WinMTRDialog::OnEXPT()
 //*****************************************************************************
 void WinMTRDialog::OnEXPH()
 {
-   TCHAR BASED_CODE szFilter[] = _T("HTML Files (*.htm, *.html)|*.htm;*.html|All Files (*.*)|*.*||");
+   wchar_t BASED_CODE szFilter[] = L"HTML Files (*.htm, *.html)|*.htm;*.html|All Files (*.*)|*.*||";
 
    CFileDialog dlg(FALSE,
-                   _T("HTML"),
+                   L"HTML",
                    NULL,
                    OFN_HIDEREADONLY | OFN_EXPLORER,
                    szFilter,
@@ -613,45 +613,45 @@ void WinMTRDialog::OnCancel()
 //*****************************************************************************
 int WinMTRDialog::DisplayRedraw()
 {
-	char buf[255], nr_crt[255];
+	wchar_t buf[255], nr_crt[255];
 	int nh = wmtrnet->GetMax();
 	while( m_listMTR.GetItemCount() > nh ) m_listMTR.DeleteItem(m_listMTR.GetItemCount() - 1);
 
 	for(int i=0;i <nh ; i++) {
 
 		wmtrnet->GetName(i, buf);
-		if( strcmp(buf,"")==0 ) strcpy(buf,"No response from host");
-		
-		sprintf(nr_crt, "%d", i+1);
+		if( wcscmp(buf, L"")==0 ) wcscpy(buf, L"No response from host");
+
+		swprintf(nr_crt, 255, L"%d", i+1);
 		if(m_listMTR.GetItemCount() <= i )
 			m_listMTR.InsertItem(i, buf);
 		else
-			m_listMTR.SetItem(i, 0, LVIF_TEXT, buf, 0, 0, 0, 0); 
-		
-		m_listMTR.SetItem(i, 1, LVIF_TEXT, nr_crt, 0, 0, 0, 0); 
+			m_listMTR.SetItem(i, 0, LVIF_TEXT, buf, 0, 0, 0, 0);
 
-		sprintf(buf, "%d", wmtrnet->GetPercent(i));
+		m_listMTR.SetItem(i, 1, LVIF_TEXT, nr_crt, 0, 0, 0, 0);
+
+		swprintf(buf, 255, L"%d", wmtrnet->GetPercent(i));
 		m_listMTR.SetItem(i, 2, LVIF_TEXT, buf, 0, 0, 0, 0);
 
-		sprintf(buf, "%d", wmtrnet->GetXmit(i));
+		swprintf(buf, 255, L"%d", wmtrnet->GetXmit(i));
 		m_listMTR.SetItem(i, 3, LVIF_TEXT, buf, 0, 0, 0, 0);
 
-		sprintf(buf, "%d", wmtrnet->GetReturned(i));
+		swprintf(buf, 255, L"%d", wmtrnet->GetReturned(i));
 		m_listMTR.SetItem(i, 4, LVIF_TEXT, buf, 0, 0, 0, 0);
 
-		sprintf(buf, "%d", wmtrnet->GetBest(i));
+		swprintf(buf, 255, L"%d", wmtrnet->GetBest(i));
 		m_listMTR.SetItem(i, 5, LVIF_TEXT, buf, 0, 0, 0, 0);
 
-		sprintf(buf, "%d", wmtrnet->GetAvg(i));
+		swprintf(buf, 255, L"%d", wmtrnet->GetAvg(i));
 		m_listMTR.SetItem(i, 6, LVIF_TEXT, buf, 0, 0, 0, 0);
 
-		sprintf(buf, "%d", wmtrnet->GetWorst(i));
+		swprintf(buf, 255, L"%d", wmtrnet->GetWorst(i));
 		m_listMTR.SetItem(i, 7, LVIF_TEXT, buf, 0, 0, 0, 0);
 
-		sprintf(buf, "%d", wmtrnet->GetLast(i));
+		swprintf(buf, 255, L"%d", wmtrnet->GetLast(i));
 		m_listMTR.SetItem(i, 8, LVIF_TEXT, buf, 0, 0, 0, 0);
 
-   
+
 	}
 
 	return 0;
@@ -668,7 +668,7 @@ void WinMTRDialog::ClearHistory()
 
 	m_comboHost.Clear();
 	m_comboHost.ResetContent();
-	m_comboHost.AddString(CString((LPCSTR)IDS_STRING_CLEAR_HISTORY));
+	m_comboHost.AddString(CString((LPCWSTR)IDS_STRING_CLEAR_HISTORY));
 }
 
 void WinMTRDialog::OnCbnSelendokComboHost()
@@ -695,7 +695,7 @@ void WinMTRDialog::Transit(STATES new_state)
 					transition = IDLE_TO_IDLE;
 				break;
 				default:
-					TRACE_MSG("Received state IDLE after " << state);
+					TRACE_MSG(L"Received state IDLE after " << state);
 					return;
 			}
 			state = IDLE;
@@ -709,7 +709,7 @@ void WinMTRDialog::Transit(STATES new_state)
 					transition = TRACING_TO_TRACING;
 				break;
 				default:
-					TRACE_MSG("Received state TRACING after " << state);
+					TRACE_MSG(L"Received state TRACING after " << state);
 					return;
 			}
 			state = TRACING;
@@ -723,7 +723,7 @@ void WinMTRDialog::Transit(STATES new_state)
 					transition = TRACING_TO_STOPPING;
 				break;
 				default:
-					TRACE_MSG("Received state STOPPING after " << state);
+					TRACE_MSG(L"Received state STOPPING after " << state);
 					return;
 			}
 			state = STOPPING;
@@ -742,25 +742,25 @@ void WinMTRDialog::Transit(STATES new_state)
 				case EXIT:
 				break;
 				default:
-					TRACE_MSG("Received state EXIT after " << state);
+					TRACE_MSG(L"Received state EXIT after " << state);
 					return;
 			}
 			state = EXIT;
 		break;
 		default:
-			TRACE_MSG("Received state " << state);
+			TRACE_MSG(L"Received state " << state);
 	}
 
 	// modify controls according to new state
 	switch(transition) {
 		case IDLE_TO_TRACING: {
 			m_buttonStart.EnableWindow(FALSE);
-			m_buttonStart.SetWindowText("Stop");
+			m_buttonStart.SetWindowText(L"Stop");
 			m_comboHost.EnableWindow(FALSE);
 			m_buttonOptions.EnableWindow(FALSE);
-			statusBar.SetPaneText(0, "Double click on host name for more information.");
+			statusBar.SetPaneText(0, L"Double click on host name for more information.");
 
-			char strtmp[255];
+			wchar_t strtmp[255];
 			m_comboHost.GetWindowText(strtmp, 255);
 			TraceOptions opts;
 			opts.pingsize = pingsize;
@@ -775,8 +775,8 @@ void WinMTRDialog::Transit(STATES new_state)
 		break;
 		case STOPPING_TO_IDLE:
 			m_buttonStart.EnableWindow(TRUE);
-			statusBar.SetPaneText(0, CString((LPCSTR)IDS_STRING_SB_NAME) );
-			m_buttonStart.SetWindowText("Start");
+			statusBar.SetPaneText(0, CString((LPCWSTR)IDS_STRING_SB_NAME) );
+			m_buttonStart.SetWindowText(L"Start");
 			m_comboHost.EnableWindow(TRUE);
 			m_buttonOptions.EnableWindow(TRUE);
 			m_comboHost.SetFocus();
@@ -792,7 +792,7 @@ void WinMTRDialog::Transit(STATES new_state)
 			m_comboHost.EnableWindow(FALSE);
 			m_buttonOptions.EnableWindow(FALSE);
 			wmtrnet->StopTrace();
-			statusBar.SetPaneText(0, "Waiting for last packets in order to stop trace ...");
+			statusBar.SetPaneText(0, L"Waiting for last packets in order to stop trace ...");
 			DisplayRedraw();
 		break;
 		case IDLE_TO_EXIT:
@@ -805,7 +805,7 @@ void WinMTRDialog::Transit(STATES new_state)
 			m_comboHost.EnableWindow(FALSE);
 			m_buttonOptions.EnableWindow(FALSE);
 			wmtrnet->StopTrace();
-			statusBar.SetPaneText(0, "Waiting for last packets in order to stop trace ...");
+			statusBar.SetPaneText(0, L"Waiting for last packets in order to stop trace ...");
 		break;
 		case STOPPING_TO_EXIT:
 			m_buttonStart.EnableWindow(FALSE);
@@ -813,7 +813,7 @@ void WinMTRDialog::Transit(STATES new_state)
 			m_buttonOptions.EnableWindow(FALSE);
 		break;
 		default:
-			TRACE_MSG("Unknown transition " << transition);
+			TRACE_MSG(L"Unknown transition " << transition);
 	}
 }
 

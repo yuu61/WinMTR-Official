@@ -9,18 +9,18 @@
 
 namespace {
 
-bool ResolveByDns(LPCSTR hostname, int* outAddr, CString& errorMessage)
+bool ResolveByDns(LPCWSTR hostname, int* outAddr, CString& errorMessage)
 {
-	struct addrinfo hints = {};
+	ADDRINFOW hints = {};
 	hints.ai_family = AF_INET;
-	struct addrinfo* result = NULL;
-	if (getaddrinfo(hostname, NULL, &hints, &result) != 0 || result == NULL) {
-		errorMessage = "Unable to resolve hostname.";
+	PADDRINFOW result = NULL;
+	if (GetAddrInfoW(hostname, NULL, &hints, &result) != 0 || result == NULL) {
+		errorMessage = L"Unable to resolve hostname.";
 		return false;
 	}
 	if (outAddr)
 		*outAddr = (int)((struct sockaddr_in*)result->ai_addr)->sin_addr.s_addr;
-	freeaddrinfo(result);
+	FreeAddrInfoW(result);
 	return true;
 }
 
@@ -31,11 +31,11 @@ bool ResolveByDns(LPCSTR hostname, int* outAddr, CString& errorMessage)
 // WinMTRHostResolver::LooksNumeric
 //
 //*****************************************************************************
-bool WinMTRHostResolver::LooksNumeric(LPCSTR hostname)
+bool WinMTRHostResolver::LooksNumeric(LPCWSTR hostname)
 {
 	if (hostname == NULL) return false;
-	for (const char* t = hostname; *t; ++t) {
-		if (!isdigit((unsigned char)*t) && *t != '.') return false;
+	for (const wchar_t* t = hostname; *t; ++t) {
+		if (!iswdigit(*t) && *t != L'.') return false;
 	}
 	return true;
 }
@@ -45,9 +45,9 @@ bool WinMTRHostResolver::LooksNumeric(LPCSTR hostname)
 // WinMTRHostResolver::Validate
 //
 //*****************************************************************************
-bool WinMTRHostResolver::Validate(LPCSTR hostname, CString& errorMessage)
+bool WinMTRHostResolver::Validate(LPCWSTR hostname, CString& errorMessage)
 {
-	if (hostname == NULL) hostname = "localhost";
+	if (hostname == NULL) hostname = L"localhost";
 	if (LooksNumeric(hostname)) return true;
 	return ResolveByDns(hostname, NULL, errorMessage);
 }
@@ -57,13 +57,13 @@ bool WinMTRHostResolver::Validate(LPCSTR hostname, CString& errorMessage)
 // WinMTRHostResolver::Resolve
 //
 //*****************************************************************************
-bool WinMTRHostResolver::Resolve(LPCSTR hostname, int& outAddr, CString& errorMessage)
+bool WinMTRHostResolver::Resolve(LPCWSTR hostname, int& outAddr, CString& errorMessage)
 {
-	if (hostname == NULL) hostname = "localhost";
+	if (hostname == NULL) hostname = L"localhost";
 	if (LooksNumeric(hostname)) {
 		struct in_addr addr;
-		if (inet_pton(AF_INET, hostname, &addr) != 1) {
-			errorMessage = "Invalid IP address.";
+		if (InetPtonW(AF_INET, hostname, &addr) != 1) {
+			errorMessage = L"Invalid IP address.";
 			return false;
 		}
 		outAddr = (int)addr.s_addr;

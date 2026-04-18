@@ -71,8 +71,8 @@ BOOL WinMTRMain::InitInstance()
 	WinMTRDialog mtrDialog;
 	m_pMainWnd = &mtrDialog;
 
-	if (strlen(m_lpCmdLine)) {
-		strcat(m_lpCmdLine, " ");
+	if (wcslen(m_lpCmdLine)) {
+		wcscat(m_lpCmdLine, L" ");
 		if (WinMTRCommandLine::Parse(m_lpCmdLine, &mtrDialog)) {
 			WinMTRHelp mtrHelp;
 			m_pMainWnd = &mtrHelp;

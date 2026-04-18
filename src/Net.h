@@ -13,6 +13,7 @@
 #include "TraceConfig.h"
 #include "TraceOptions.h"
 #include <string>
+#include <cwchar>
 
 
 typedef ip_option_information IPINFO, *PIPINFO, FAR *LPIPINFO;
@@ -33,7 +34,7 @@ struct s_nethost {
   int last;				// last time
   int best;				// best time
   int worst;			// worst time
-  char name[255];
+  wchar_t name[255];
 };
 
 //*****************************************************************************
@@ -61,10 +62,10 @@ public:
 	// Starts a worker that acquires externalMutex, resolves hostname, and
 	// invokes DoTrace. On resolution failure, shows AfxMessageBox and
 	// releases the mutex without tracing.
-	void	BeginTraceAsync(const std::string& hostname, const TraceOptions& opts, HANDLE externalMutex);
+	void	BeginTraceAsync(const std::wstring& hostname, const TraceOptions& opts, HANDLE externalMutex);
 
 	int		GetAddr(int at);
-	int		GetName(int at, char *n);
+	int		GetName(int at, wchar_t *n);
 	int		GetBest(int at);
 	int		GetWorst(int at);
 	int		GetAvg(int at);
@@ -75,7 +76,7 @@ public:
 	int		GetMax();
 
 	void	SetAddr(int at, __int32 addr);
-	void	SetName(int at, const char *n);
+	void	SetName(int at, const wchar_t *n);
 	void	SetBest(int at, int current);
 	void	SetWorst(int at, int current);
 	void	SetLast(int at, int last);

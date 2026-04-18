@@ -28,7 +28,7 @@ public:
 	static CString BuildHtmlReport(WinMTRNet* net);
 
 	static bool CopyToClipboard(CWnd* owner, const CString& content);
-	static bool SaveToFile(LPCTSTR path, const CString& content);
+	static bool SaveToFile(LPCWSTR path, const CString& content);
 };
 
 #endif // ifndef WINMTRREPORTER_H_

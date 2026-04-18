@@ -3,16 +3,16 @@
 
 #define MTR_NR_COLS 9
 
-const char MTR_COLS[ MTR_NR_COLS ][10] = {
-        "Hostname",
-        "Nr",
-        "Loss %",
-        "Sent",
-        "Recv",
-        "Best",
-        "Avrg",
-        "Worst",
-        "Last"
+const wchar_t MTR_COLS[ MTR_NR_COLS ][10] = {
+        L"Hostname",
+        L"Nr",
+        L"Loss %",
+        L"Sent",
+        L"Recv",
+        L"Best",
+        L"Avrg",
+        L"Worst",
+        L"Last"
 };
 
 const int MTR_COL_LENGTH[ MTR_NR_COLS ] = {

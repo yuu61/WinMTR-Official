@@ -10,9 +10,9 @@
 
 #define TRACE_MSG(msg)										\
 	{														\
-	std::ostringstream dbg_msg(std::ostringstream::out);	\
+	std::wostringstream dbg_msg(std::wostringstream::out);	\
 	dbg_msg << msg << std::endl;							\
-	OutputDebugString(dbg_msg.str().c_str());				\
+	OutputDebugStringW(dbg_msg.str().c_str());				\
 	}
 
 #define IPFLAG_DONT_FRAGMENT	0x02
@@ -32,7 +32,7 @@ struct dns_resolver_thread {
 struct ping_thread_args {
 	WinMTRNet*   net;
 	HANDLE       mutex;
-	std::string  hostname;
+	std::wstring hostname;
 	TraceOptions opts;
 };
 
@@ -51,13 +51,13 @@ WinMTRNet::WinMTRNet() {
 	WSADATA wsaData;
 
     if( WSAStartup(MAKEWORD(2, 2), &wsaData) ) {
-        AfxMessageBox("Failed initializing windows sockets library!");
+        AfxMessageBox(L"Failed initializing windows sockets library!");
 		return;
     }
 
-    hICMP_DLL =  LoadLibrary(_T("ICMP.DLL"));
+    hICMP_DLL =  LoadLibraryW(L"ICMP.DLL");
     if (hICMP_DLL == 0) {
-        AfxMessageBox("Failed: Unable to locate ICMP.DLL!");
+        AfxMessageBox(L"Failed: Unable to locate ICMP.DLL!");
         return;
     }
 
@@ -68,7 +68,7 @@ WinMTRNet::WinMTRNet() {
     lpfnIcmpCloseHandle = (LPFNICMPCLOSEHANDLE)GetProcAddress(hICMP_DLL,"IcmpCloseHandle");
     lpfnIcmpSendEcho    = (LPFNICMPSENDECHO)GetProcAddress(hICMP_DLL,"IcmpSendEcho");
     if ((!lpfnIcmpCreateFile) || (!lpfnIcmpCloseHandle) || (!lpfnIcmpSendEcho)) {
-        AfxMessageBox("Wrong ICMP.DLL system library !");
+        AfxMessageBox(L"Wrong ICMP.DLL system library !");
         return;
     }
 
@@ -77,7 +77,7 @@ WinMTRNet::WinMTRNet() {
      */
     hICMP = (HANDLE) lpfnIcmpCreateFile();
     if (hICMP == INVALID_HANDLE_VALUE) {
-        AfxMessageBox("Error in ICMP.DLL !");
+        AfxMessageBox(L"Error in ICMP.DLL !");
         return;
     }
 
@@ -145,7 +145,7 @@ void WinMTRNet::StopTrace()
 	tracing = false;
 }
 
-void WinMTRNet::BeginTraceAsync(const std::string& hostname, const TraceOptions& opts, HANDLE externalMutex)
+void WinMTRNet::BeginTraceAsync(const std::wstring& hostname, const TraceOptions& opts, HANDLE externalMutex)
 {
 	ping_thread_args* args = new ping_thread_args;
 	args->net = this;
@@ -178,7 +178,7 @@ void TraceThread(void *p)
 {
 	trace_thread* current = (trace_thread*)p;
 	WinMTRNet *wmtrnet = current->winmtr;
-	TRACE_MSG("Threaad with TTL=" << current->ttl << " started.");
+	TRACE_MSG(L"Threaad with TTL=" << current->ttl << L" started.");
 
     IPINFO			stIPInfo, *lpstIPInfo;
     DWORD			dwReplyCount;
@@ -218,7 +218,7 @@ void TraceThread(void *p)
 
 		wmtrnet->AddXmit(current->ttl - 1);
 		if (dwReplyCount != 0) {
-			TRACE_MSG("TTL " << current->ttl << " reply TTL " << icmp_echo_reply->Options.Ttl << " Status " << icmp_echo_reply->Status << " Reply count " << dwReplyCount);
+			TRACE_MSG(L"TTL " << current->ttl << L" reply TTL " << icmp_echo_reply->Options.Ttl << L" Status " << icmp_echo_reply->Status << L" Reply count " << dwReplyCount);
 
 			switch(icmp_echo_reply->Status) {
 				case IP_SUCCESS:
@@ -230,61 +230,61 @@ void TraceThread(void *p)
 					wmtrnet->SetAddr(current->ttl - 1, icmp_echo_reply->Address);
 				break;
 				case IP_BUF_TOO_SMALL:
-					wmtrnet->SetName(current->ttl - 1, "Reply buffer too small.");
+					wmtrnet->SetName(current->ttl - 1, L"Reply buffer too small.");
 				break;
 				case IP_DEST_NET_UNREACHABLE:
-					wmtrnet->SetName(current->ttl - 1, "Destination network unreachable.");
+					wmtrnet->SetName(current->ttl - 1, L"Destination network unreachable.");
 				break;
 				case IP_DEST_HOST_UNREACHABLE:
-					wmtrnet->SetName(current->ttl - 1, "Destination host unreachable.");
+					wmtrnet->SetName(current->ttl - 1, L"Destination host unreachable.");
 				break;
 				case IP_DEST_PROT_UNREACHABLE:
-					wmtrnet->SetName(current->ttl - 1, "Destination protocol unreachable.");
+					wmtrnet->SetName(current->ttl - 1, L"Destination protocol unreachable.");
 				break;
 				case IP_DEST_PORT_UNREACHABLE:
-					wmtrnet->SetName(current->ttl - 1, "Destination port unreachable.");
+					wmtrnet->SetName(current->ttl - 1, L"Destination port unreachable.");
 				break;
 				case IP_NO_RESOURCES:
-					wmtrnet->SetName(current->ttl - 1, "Insufficient IP resources were available.");
+					wmtrnet->SetName(current->ttl - 1, L"Insufficient IP resources were available.");
 				break;
 				case IP_BAD_OPTION:
-					wmtrnet->SetName(current->ttl - 1, "Bad IP option was specified.");
+					wmtrnet->SetName(current->ttl - 1, L"Bad IP option was specified.");
 				break;
 				case IP_HW_ERROR:
-					wmtrnet->SetName(current->ttl - 1, "Hardware error occurred.");
+					wmtrnet->SetName(current->ttl - 1, L"Hardware error occurred.");
 				break;
 				case IP_PACKET_TOO_BIG:
-					wmtrnet->SetName(current->ttl - 1, "Packet was too big.");
+					wmtrnet->SetName(current->ttl - 1, L"Packet was too big.");
 				break;
 				case IP_REQ_TIMED_OUT:
-					wmtrnet->SetName(current->ttl - 1, "Request timed out.");
+					wmtrnet->SetName(current->ttl - 1, L"Request timed out.");
 				break;
 				case IP_BAD_REQ:
-					wmtrnet->SetName(current->ttl - 1, "Bad request.");
+					wmtrnet->SetName(current->ttl - 1, L"Bad request.");
 				break;
 				case IP_BAD_ROUTE:
-					wmtrnet->SetName(current->ttl - 1, "Bad route.");
+					wmtrnet->SetName(current->ttl - 1, L"Bad route.");
 				break;
 				case IP_TTL_EXPIRED_REASSEM:
-					wmtrnet->SetName(current->ttl - 1, "The time to live expired during fragment reassembly.");
+					wmtrnet->SetName(current->ttl - 1, L"The time to live expired during fragment reassembly.");
 				break;
 				case IP_PARAM_PROBLEM:
-					wmtrnet->SetName(current->ttl - 1, "Parameter problem.");
+					wmtrnet->SetName(current->ttl - 1, L"Parameter problem.");
 				break;
 				case IP_SOURCE_QUENCH:
-					wmtrnet->SetName(current->ttl - 1, "Datagrams are arriving too fast to be processed and datagrams may have been discarded.");
+					wmtrnet->SetName(current->ttl - 1, L"Datagrams are arriving too fast to be processed and datagrams may have been discarded.");
 				break;
 				case IP_OPTION_TOO_BIG:
-					wmtrnet->SetName(current->ttl - 1, "An IP option was too big.");
+					wmtrnet->SetName(current->ttl - 1, L"An IP option was too big.");
 				break;
 				case IP_BAD_DESTINATION:
-					wmtrnet->SetName(current->ttl - 1, "Bad destination.");
+					wmtrnet->SetName(current->ttl - 1, L"Bad destination.");
 				break;
 				case IP_GENERAL_FAILURE:
-					wmtrnet->SetName(current->ttl - 1, "General failure.");
+					wmtrnet->SetName(current->ttl - 1, L"General failure.");
 				break;
 				default:
-					wmtrnet->SetName(current->ttl - 1, "General failure.");
+					wmtrnet->SetName(current->ttl - 1, L"General failure.");
 			}
 
 			if(wmtrnet->options.interval * 1000 > icmp_echo_reply->RoundTripTime)
@@ -293,7 +293,7 @@ void TraceThread(void *p)
 
     } /* end ping loop */
 
-	TRACE_MSG("Thread with TTL=" << current->ttl << " stopped.");
+	TRACE_MSG(L"Thread with TTL=" << current->ttl << L" stopped.");
 
 	delete p;
 	_endthread();
@@ -307,21 +307,21 @@ int WinMTRNet::GetAddr(int at)
 	return addr;
 }
 
-int WinMTRNet::GetName(int at, char *n)
+int WinMTRNet::GetName(int at, wchar_t *n)
 {
 	WaitForSingleObject(ghMutex, INFINITE);
-	if(!strcmp(host[at].name, "")) {
+	if(!wcscmp(host[at].name, L"")) {
 		int addr = GetAddr(at);
-		sprintf (	n, "%d.%d.%d.%d",
+		swprintf (	n, 255, L"%d.%d.%d.%d",
 							(addr >> 24) & 0xff,
 							(addr >> 16) & 0xff,
 							(addr >> 8) & 0xff,
 							addr & 0xff
 		);
 		if(addr==0)
-			strcpy(n,"");
+			wcscpy(n, L"");
 	} else {
-		strcpy(n, host[at].name);
+		wcscpy(n, host[at].name);
 	}
 	ReleaseMutex(ghMutex);
 	return 0;
@@ -409,7 +409,7 @@ void WinMTRNet::SetAddr(int at, __int32 addr)
 {
 	WaitForSingleObject(ghMutex, INFINITE);
 	if(host[at].addr == 0 && addr != 0) {
-		TRACE_MSG("Start DnsResolverThread for new address " << addr << ". Old addr value was " << host[at].addr);
+		TRACE_MSG(L"Start DnsResolverThread for new address " << addr << L". Old addr value was " << host[at].addr);
 		host[at].addr = addr;
 		dns_resolver_thread *dnt = new dns_resolver_thread;
 		dnt->index = at;
@@ -420,10 +420,10 @@ void WinMTRNet::SetAddr(int at, __int32 addr)
 	ReleaseMutex(ghMutex);
 }
 
-void WinMTRNet::SetName(int at, const char *n)
+void WinMTRNet::SetName(int at, const wchar_t *n)
 {
 	WaitForSingleObject(ghMutex, INFINITE);
-	strcpy(host[at].name, n);
+	wcscpy(host[at].name, n);
 	ReleaseMutex(ghMutex);
 }
 
@@ -472,26 +472,26 @@ void WinMTRNet::AddXmit(int at)
 
 void DnsResolverThread(void *p)
 {
-	TRACE_MSG("DNS resolver thread started.");
+	TRACE_MSG(L"DNS resolver thread started.");
 	dns_resolver_thread *dnt = (dns_resolver_thread*)p;
 	WinMTRNet* wn = dnt->winmtr;
 
-	char buf[100];
+	wchar_t buf[100];
 	int addr = wn->GetAddr(dnt->index);
-	sprintf (buf, "%d.%d.%d.%d", (addr >> 24) & 0xff, (addr >> 16) & 0xff, (addr >> 8) & 0xff, addr & 0xff);
+	swprintf (buf, 100, L"%d.%d.%d.%d", (addr >> 24) & 0xff, (addr >> 16) & 0xff, (addr >> 8) & 0xff, addr & 0xff);
 
 	struct sockaddr_in sa = {};
 	sa.sin_family = AF_INET;
 	sa.sin_addr.s_addr = htonl(addr);
 
-	char hostname[NI_MAXHOST];
-	if (getnameinfo((struct sockaddr*)&sa, sizeof(sa), hostname, sizeof(hostname), NULL, 0, NI_NAMEREQD) == 0) {
+	wchar_t hostname[NI_MAXHOST];
+	if (GetNameInfoW((struct sockaddr*)&sa, sizeof(sa), hostname, NI_MAXHOST, NULL, 0, NI_NAMEREQD) == 0) {
 		wn->SetName(dnt->index, hostname);
 	} else {
 		wn->SetName(dnt->index, buf);
 	}
 
 	delete p;
-	TRACE_MSG("DNS resolver thread stopped.");
+	TRACE_MSG(L"DNS resolver thread stopped.");
 	_endthread();
 }

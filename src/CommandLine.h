@@ -18,7 +18,7 @@ namespace WinMTRCommandLine {
 
 	// Parses cmd and applies settings onto dlg. Returns true if --help was
 	// requested (the caller is expected to show the help dialog and exit).
-	bool Parse(LPTSTR cmd, WinMTRDialog* dlg);
+	bool Parse(LPWSTR cmd, WinMTRDialog* dlg);
 
 } // namespace WinMTRCommandLine
 

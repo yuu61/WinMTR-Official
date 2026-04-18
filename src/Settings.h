@@ -47,7 +47,7 @@ public:
 
 	static void SaveOptions(int pingsize, int maxLRU, BOOL useDNS, double interval);
 
-	static void AppendLRUHost(LPCSTR host, int& nrLRU, int maxLRU);
+	static void AppendLRUHost(LPCWSTR host, int& nrLRU, int maxLRU);
 
 	static void TrimLRU(int maxLRU, int& nrLRU);
 
