@@ -18,37 +18,37 @@ static char THIS_FILE[] = __FILE__;
 //
 //
 //*****************************************************************************
-BEGIN_MESSAGE_MAP(WinMTRLicense, CDialog)
+BEGIN_MESSAGE_MAP(License, CDialog)
 END_MESSAGE_MAP()
 
 
 //*****************************************************************************
-// WinMTRLicense::WinMTRLicense
+// License::License
 //
 //
 //*****************************************************************************
-WinMTRLicense::WinMTRLicense(CWnd* pParent) : CDialog(WinMTRLicense::IDD, pParent)
+License::License(CWnd* pParent) : CDialog(License::IDD, pParent)
 {
 }
 
 
 //*****************************************************************************
-// WinMTRLicense::DoDataExchange
+// License::DoDataExchange
 //
 //
 //*****************************************************************************
-void WinMTRLicense::DoDataExchange(CDataExchange* pDX)
+void License::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 }
 
 
 //*****************************************************************************
-// WinMTRLicense::OnInitDialog
+// License::OnInitDialog
 //
 //
 //*****************************************************************************
-BOOL WinMTRLicense::OnInitDialog()
+BOOL License::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 	return FALSE;

@@ -7,8 +7,8 @@
 //
 //*****************************************************************************
 
-#ifndef WINMTRSETTINGS_H_
-#define WINMTRSETTINGS_H_
+#ifndef SETTINGS_H_
+#define SETTINGS_H_
 
 #include "CommandLineOverrides.h"
 #include <afxwin.h>
@@ -24,12 +24,12 @@ struct LoadedSettings {
 };
 
 //*****************************************************************************
-// CLASS:  WinMTRSettings
+// CLASS:  Settings
 //
 //
 //*****************************************************************************
 
-class WinMTRSettings
+class Settings
 {
 public:
 	// Seed io with caller's current values. Applies cmdline overrides up-front,
@@ -47,4 +47,4 @@ public:
 	static void ClearLRU(int& nrLRU);
 };
 
-#endif // ifndef WINMTRSETTINGS_H_
+#endif // ifndef SETTINGS_H_

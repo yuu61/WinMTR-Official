@@ -42,10 +42,10 @@ LONG OpenWinMTRSubKey(LPCWSTR sub, REGSAM access, HKEY& outKey)
 
 
 //*****************************************************************************
-// WinMTRSettings::InitAndLoad
+// Settings::InitAndLoad
 //
 //*****************************************************************************
-BOOL WinMTRSettings::InitAndLoad(LoadedSettings& io, const CommandLineOverrides& overrides, std::vector<CString>& outHosts)
+BOOL Settings::InitAndLoad(LoadedSettings& io, const CommandLineOverrides& overrides, std::vector<CString>& outHosts)
 {
 	// Apply cmdline overrides first so registry writes below (first-run path)
 	// seed from the cmdline value, and registry reads correctly skip
@@ -142,10 +142,10 @@ BOOL WinMTRSettings::InitAndLoad(LoadedSettings& io, const CommandLineOverrides&
 
 
 //*****************************************************************************
-// WinMTRSettings::SaveOptions
+// Settings::SaveOptions
 //
 //*****************************************************************************
-void WinMTRSettings::SaveOptions(int pingsize, int maxLRU, BOOL useDNS, double interval)
+void Settings::SaveOptions(int pingsize, int maxLRU, BOOL useDNS, double interval)
 {
 	HKEY hConfig = NULL;
 	if (OpenWinMTRSubKey(L"Config", KEY_ALL_ACCESS, hConfig) != ERROR_SUCCESS)
@@ -165,10 +165,10 @@ void WinMTRSettings::SaveOptions(int pingsize, int maxLRU, BOOL useDNS, double i
 
 
 //*****************************************************************************
-// WinMTRSettings::AppendLRUHost
+// Settings::AppendLRUHost
 //
 //*****************************************************************************
-void WinMTRSettings::AppendLRUHost(LPCWSTR host, int& nrLRU, int maxLRU)
+void Settings::AppendLRUHost(LPCWSTR host, int& nrLRU, int maxLRU)
 {
 	HKEY hLRU = NULL;
 	if (OpenWinMTRSubKey(L"LRU", KEY_ALL_ACCESS, hLRU) != ERROR_SUCCESS)
@@ -187,11 +187,11 @@ void WinMTRSettings::AppendLRUHost(LPCWSTR host, int& nrLRU, int maxLRU)
 
 
 //*****************************************************************************
-// WinMTRSettings::TrimLRU
+// Settings::TrimLRU
 //
 // Mirrors legacy off-by-one in OnOptions: deletes Host{maxLRU}..Host{nrLRU}.
 //*****************************************************************************
-void WinMTRSettings::TrimLRU(int maxLRU, int& nrLRU)
+void Settings::TrimLRU(int maxLRU, int& nrLRU)
 {
 	HKEY hLRU = NULL;
 	if (OpenWinMTRSubKey(L"LRU", KEY_ALL_ACCESS, hLRU) != ERROR_SUCCESS)
@@ -208,12 +208,12 @@ void WinMTRSettings::TrimLRU(int maxLRU, int& nrLRU)
 
 
 //*****************************************************************************
-// WinMTRSettings::ClearLRU
+// Settings::ClearLRU
 //
 // Mirrors legacy ClearHistory: starts at Host0 (which never exists) and
 // continues through Host{nrLRU}.
 //*****************************************************************************
-void WinMTRSettings::ClearLRU(int& nrLRU)
+void Settings::ClearLRU(int& nrLRU)
 {
 	HKEY hLRU = NULL;
 	if (OpenWinMTRSubKey(L"LRU", KEY_ALL_ACCESS, hLRU) != ERROR_SUCCESS)

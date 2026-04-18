@@ -33,32 +33,32 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-WinMTRMain WinMTR;
+Main WinMTR;
 
 //*****************************************************************************
 // BEGIN_MESSAGE_MAP
 //
 //
 //*****************************************************************************
-BEGIN_MESSAGE_MAP(WinMTRMain, CWinApp)
+BEGIN_MESSAGE_MAP(Main, CWinApp)
 	ON_COMMAND(ID_HELP, CWinApp::OnHelp)
 END_MESSAGE_MAP()
 
 //*****************************************************************************
-// WinMTRMain::WinMTRMain
+// Main::Main
 //
 //
 //*****************************************************************************
-WinMTRMain::WinMTRMain()
+Main::Main()
 {
 }
 
 //*****************************************************************************
-// WinMTRMain::InitInstance
+// Main::InitInstance
 //
 //
 //*****************************************************************************
-BOOL WinMTRMain::InitInstance()
+BOOL Main::InitInstance()
 {
 	if (!AfxSocketInit())
 	{
@@ -68,14 +68,14 @@ BOOL WinMTRMain::InitInstance()
 
 	AfxEnableControlContainer();
 
-	WinMTRDialog mtrDialog;
+	Dialog mtrDialog;
 	m_pMainWnd = &mtrDialog;
 
 	if (wcslen(m_lpCmdLine)) {
 		wcscat(m_lpCmdLine, L" ");
-		auto parsed = WinMTRCommandLine::Parse(m_lpCmdLine);
+		auto parsed = CommandLine::Parse(m_lpCmdLine);
 		if (parsed.helpRequested) {
-			WinMTRHelp mtrHelp;
+			Help mtrHelp;
 			m_pMainWnd = &mtrHelp;
 			mtrHelp.DoModal();
 			return FALSE;

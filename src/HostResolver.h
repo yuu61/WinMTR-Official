@@ -7,18 +7,18 @@
 //
 //*****************************************************************************
 
-#ifndef WINMTRHOSTRESOLVER_H_
-#define WINMTRHOSTRESOLVER_H_
+#ifndef HOSTRESOLVER_H_
+#define HOSTRESOLVER_H_
 
 #include <afxwin.h>
 
 //*****************************************************************************
-// CLASS:  WinMTRHostResolver
+// CLASS:  HostResolver
 //
 //
 //*****************************************************************************
 
-class WinMTRHostResolver
+class HostResolver
 {
 public:
 	[[nodiscard]] static bool LooksNumeric(LPCWSTR hostname);
@@ -32,4 +32,4 @@ public:
 	[[nodiscard]] static bool Resolve(LPCWSTR hostname, int& outAddr, CString& errorMessage);
 };
 
-#endif // ifndef WINMTRHOSTRESOLVER_H_
+#endif // ifndef HOSTRESOLVER_H_

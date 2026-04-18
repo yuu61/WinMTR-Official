@@ -15,7 +15,7 @@ BOOL TraceConfigState::LoadAtInit(const CommandLineOverrides& overrides, std::ve
 	s.useDNS   = useDNS;
 	s.nrLRU    = nrLRU;
 
-	if (!WinMTRSettings::InitAndLoad(s, overrides, outHosts))
+	if (!Settings::InitAndLoad(s, overrides, outHosts))
 		return FALSE;
 
 	pingsize = s.pingsize;
@@ -28,7 +28,7 @@ BOOL TraceConfigState::LoadAtInit(const CommandLineOverrides& overrides, std::ve
 
 void TraceConfigState::SaveOptions() const
 {
-	WinMTRSettings::SaveOptions(pingsize, maxLRU, useDNS, interval);
+	Settings::SaveOptions(pingsize, maxLRU, useDNS, interval);
 }
 
 TraceOptions TraceConfigState::Snapshot() const

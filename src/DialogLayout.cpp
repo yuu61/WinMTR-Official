@@ -5,7 +5,7 @@
 #include "Global.h"
 #include "DialogLayout.h"
 
-namespace WinMTRDialogLayout {
+namespace DialogLayout {
 
 void ApplyClientSize(CWnd& dialog, const ControlRefs& refs)
 {
@@ -74,4 +74,4 @@ void ClampMinimum(LPRECT rect)
 	if (iHeight < 250) rect->bottom = rect->top  + 250;
 }
 
-} // namespace WinMTRDialogLayout
+} // namespace DialogLayout

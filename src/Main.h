@@ -10,26 +10,26 @@
 //
 //*****************************************************************************
 
-#ifndef WINMTRMAIN_H_
-#define WINMTRMAIN_H_
+#ifndef MAIN_H_
+#define MAIN_H_
 
 #include "Dialog.h"
 
 
 //*****************************************************************************
-// CLASS:  WinMTRMain
+// CLASS:  Main
 //
 //
 //*****************************************************************************
 
-class WinMTRMain : public CWinApp
+class Main : public CWinApp
 {
 public:
-	WinMTRMain();
+	Main();
 
 	virtual BOOL InitInstance();
 
 	DECLARE_MESSAGE_MAP()
 };
 
-#endif // ifndef WINMTRMAIN_H_
+#endif // ifndef MAIN_H_

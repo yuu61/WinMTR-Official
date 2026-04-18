@@ -8,15 +8,15 @@
 //
 //*****************************************************************************
 
-#ifndef WINMTRCOMMANDLINE_H_
-#define WINMTRCOMMANDLINE_H_
+#ifndef COMMANDLINE_H_
+#define COMMANDLINE_H_
 
 #include "CommandLineOverrides.h"
 #include <afxwin.h>
 #include <optional>
 #include <string>
 
-namespace WinMTRCommandLine {
+namespace CommandLine {
 
 struct ParseResult {
 	bool                        helpRequested = false;
@@ -28,6 +28,6 @@ struct ParseResult {
 // skips remaining parsing.
 ParseResult Parse(LPWSTR cmd);
 
-} // namespace WinMTRCommandLine
+} // namespace CommandLine
 
-#endif // WINMTRCOMMANDLINE_H_
+#endif // COMMANDLINE_H_

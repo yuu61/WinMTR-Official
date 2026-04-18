@@ -30,10 +30,10 @@ bool ResolveByDns(LPCWSTR hostname, int* outAddr, CString& errorMessage)
 
 
 //*****************************************************************************
-// WinMTRHostResolver::LooksNumeric
+// HostResolver::LooksNumeric
 //
 //*****************************************************************************
-bool WinMTRHostResolver::LooksNumeric(LPCWSTR hostname)
+bool HostResolver::LooksNumeric(LPCWSTR hostname)
 {
 	if (hostname == nullptr) return false;
 	return std::ranges::all_of(std::wstring_view{hostname},
@@ -42,10 +42,10 @@ bool WinMTRHostResolver::LooksNumeric(LPCWSTR hostname)
 
 
 //*****************************************************************************
-// WinMTRHostResolver::Validate
+// HostResolver::Validate
 //
 //*****************************************************************************
-bool WinMTRHostResolver::Validate(LPCWSTR hostname, CString& errorMessage)
+bool HostResolver::Validate(LPCWSTR hostname, CString& errorMessage)
 {
 	if (hostname == NULL) hostname = L"localhost";
 	if (LooksNumeric(hostname)) return true;
@@ -54,10 +54,10 @@ bool WinMTRHostResolver::Validate(LPCWSTR hostname, CString& errorMessage)
 
 
 //*****************************************************************************
-// WinMTRHostResolver::Resolve
+// HostResolver::Resolve
 //
 //*****************************************************************************
-bool WinMTRHostResolver::Resolve(LPCWSTR hostname, int& outAddr, CString& errorMessage)
+bool HostResolver::Resolve(LPCWSTR hostname, int& outAddr, CString& errorMessage)
 {
 	if (hostname == NULL) hostname = L"localhost";
 	if (LooksNumeric(hostname)) {

@@ -10,21 +10,21 @@
 //
 //*****************************************************************************
 
-#ifndef WINMTRPROPERTIES_H_
-#define WINMTRPROPERTIES_H_
+#ifndef PROPERTIES_H_
+#define PROPERTIES_H_
 
 
 
 //*****************************************************************************
-// CLASS:  WinMTRLicense
+// CLASS:  Properties
 //
 //
 //*****************************************************************************
 
-class WinMTRProperties : public CDialog
+class Properties : public CDialog
 {
 public:
-	WinMTRProperties(CWnd* pParent = NULL);
+	Properties(CWnd* pParent = NULL);
 
 	
 	enum { IDD = IDD_DIALOG_PROPERTIES };
@@ -61,4 +61,4 @@ protected:
 	DECLARE_MESSAGE_MAP()
 };
 
-#endif // ifndef WINMTRLICENSE_H_
+#endif // ifndef PROPERTIES_H_

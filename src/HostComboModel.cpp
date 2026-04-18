@@ -14,7 +14,7 @@ inline CString SentinelText()
 
 } // namespace
 
-namespace WinMTRHostComboModel {
+namespace HostComboModel {
 
 void Populate(CComboBox& combo, const std::vector<CString>& hosts)
 {
@@ -43,4 +43,4 @@ bool IsSentinelSelected(CComboBox& combo)
 	return combo.GetCurSel() == combo.GetCount() - 1;
 }
 
-} // namespace WinMTRHostComboModel
+} // namespace HostComboModel

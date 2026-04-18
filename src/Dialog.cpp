@@ -26,7 +26,7 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-BEGIN_MESSAGE_MAP(WinMTRDialog, CDialog)
+BEGIN_MESSAGE_MAP(Dialog, CDialog)
 	ON_WM_PAINT()
 	ON_WM_SIZE()
 	ON_WM_SIZING()
@@ -38,31 +38,31 @@ BEGIN_MESSAGE_MAP(WinMTRDialog, CDialog)
 	ON_BN_CLICKED(ID_EXPT, OnEXPT)
 	ON_BN_CLICKED(ID_EXPH, OnEXPH)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_MTR, OnDblclkList)
-	ON_CBN_SELCHANGE(IDC_COMBO_HOST, &WinMTRDialog::OnCbnSelchangeComboHost)
-	ON_CBN_SELENDOK(IDC_COMBO_HOST, &WinMTRDialog::OnCbnSelendokComboHost)
-	ON_CBN_CLOSEUP(IDC_COMBO_HOST, &WinMTRDialog::OnCbnCloseupComboHost)
+	ON_CBN_SELCHANGE(IDC_COMBO_HOST, &Dialog::OnCbnSelchangeComboHost)
+	ON_CBN_SELENDOK(IDC_COMBO_HOST, &Dialog::OnCbnSelendokComboHost)
+	ON_CBN_CLOSEUP(IDC_COMBO_HOST, &Dialog::OnCbnCloseupComboHost)
 	ON_WM_TIMER()
 	ON_WM_CLOSE()
-	ON_BN_CLICKED(IDCANCEL, &WinMTRDialog::OnBnClickedCancel)
-	ON_MESSAGE(WM_WINMTR_TRACE_COMPLETED, &WinMTRDialog::OnTraceCompletedMsg)
-	ON_MESSAGE(WM_WINMTR_TRACE_FAILED,    &WinMTRDialog::OnTraceFailedMsg)
+	ON_BN_CLICKED(IDCANCEL, &Dialog::OnBnClickedCancel)
+	ON_MESSAGE(WM_WINMTR_TRACE_COMPLETED, &Dialog::OnTraceCompletedMsg)
+	ON_MESSAGE(WM_WINMTR_TRACE_FAILED,    &Dialog::OnTraceFailedMsg)
 END_MESSAGE_MAP()
 
 
-WinMTRDialog::WinMTRDialog(CWnd* pParent)
-	: CDialog(WinMTRDialog::IDD, pParent)
+Dialog::Dialog(CWnd* pParent)
+	: CDialog(Dialog::IDD, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_autostart = 0;
 	controller = std::make_unique<TraceSessionController>(this);
 }
 
-WinMTRDialog::~WinMTRDialog()
+Dialog::~Dialog()
 {
 }
 
 
-void WinMTRDialog::DoDataExchange(CDataExchange* pDX)
+void Dialog::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, ID_OPTIONS, m_buttonOptions);
@@ -77,7 +77,7 @@ void WinMTRDialog::DoDataExchange(CDataExchange* pDX)
 }
 
 
-BOOL WinMTRDialog::OnInitDialog()
+BOOL Dialog::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
@@ -121,7 +121,7 @@ BOOL WinMTRDialog::OnInitDialog()
 		statusBar.AddPaneControl(m_appnorLink.get(), 1234, FALSE);
 	}
 
-	WinMTRTraceListView::InitColumns(m_listMTR);
+	TraceListView::InitColumns(m_listMTR);
 
 	m_comboHost.SetFocus();
 
@@ -156,7 +156,7 @@ BOOL WinMTRDialog::OnInitDialog()
 	{
 		std::vector<CString> lruHosts;
 		if (config.LoadAtInit(cmdline_overrides, lruHosts))
-			WinMTRHostComboModel::Populate(m_comboHost, lruHosts);
+			HostComboModel::Populate(m_comboHost, lruHosts);
 	}
 
 	if (m_autostart) {
@@ -168,24 +168,24 @@ BOOL WinMTRDialog::OnInitDialog()
 }
 
 
-void WinMTRDialog::OnSizing(UINT fwSide, LPRECT pRect)
+void Dialog::OnSizing(UINT fwSide, LPRECT pRect)
 {
 	CDialog::OnSizing(fwSide, pRect);
-	WinMTRDialogLayout::ClampMinimum(pRect);
+	DialogLayout::ClampMinimum(pRect);
 }
 
 
-void WinMTRDialog::OnSize(UINT nType, int cx, int cy)
+void Dialog::OnSize(UINT nType, int cx, int cy)
 {
 	CDialog::OnSize(nType, cx, cy);
-	WinMTRDialogLayout::ControlRefs refs{
+	DialogLayout::ControlRefs refs{
 		m_staticS, m_staticJ, m_buttonExit, m_buttonExpH, m_buttonExpT, m_listMTR
 	};
-	WinMTRDialogLayout::ApplyClientSize(*this, refs);
+	DialogLayout::ApplyClientSize(*this, refs);
 }
 
 
-void WinMTRDialog::OnPaint()
+void Dialog::OnPaint()
 {
 	if (IsIconic())
 	{
@@ -209,13 +209,13 @@ void WinMTRDialog::OnPaint()
 }
 
 
-HCURSOR WinMTRDialog::OnQueryDragIcon()
+HCURSOR Dialog::OnQueryDragIcon()
 {
 	return (HCURSOR) m_hIcon;
 }
 
 
-void WinMTRDialog::OnDblclkList(NMHDR* /*pNMHDR*/, LRESULT* pResult)
+void Dialog::OnDblclkList(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 {
 	*pResult = 0;
 
@@ -227,7 +227,7 @@ void WinMTRDialog::OnDblclkList(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 		return;
 
 	int nItem = m_listMTR.GetNextSelectedItem(pos);
-	WinMTRProperties wmtrprop;
+	Properties wmtrprop;
 	const HopStatistics& stats = controller->Stats();
 
 	if (stats.GetAddr(nItem) == 0) {
@@ -262,16 +262,16 @@ void WinMTRDialog::OnDblclkList(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 }
 
 
-void WinMTRDialog::SetHostName(const wchar_t* host)
+void Dialog::SetHostName(const wchar_t* host)
 {
 	m_autostart = 1;
 	wcsncpy_s(msz_defaulthostname, host, _TRUNCATE);
 }
 
 
-void WinMTRDialog::OnRestart()
+void Dialog::OnRestart()
 {
-	if (WinMTRHostComboModel::IsSentinelSelected(m_comboHost)) {
+	if (HostComboModel::IsSentinelSelected(m_comboHost)) {
 		ClearHistory();
 		return;
 	}
@@ -288,7 +288,7 @@ void WinMTRDialog::OnRestart()
 	CString preview = raw;
 	preview.TrimLeft();
 	preview.TrimRight();
-	if (!preview.IsEmpty() && !WinMTRHostResolver::LooksNumeric(preview)) {
+	if (!preview.IsEmpty() && !HostResolver::LooksNumeric(preview)) {
 		statusBar.SetPaneText(0,
 			std::format(L"Resolving host {}...", (LPCWSTR)preview).c_str());
 	}
@@ -309,16 +309,16 @@ void WinMTRDialog::OnRestart()
 		break;
 	}
 
-	if (WinMTRHostComboModel::AppendBeforeSentinel(m_comboHost, result.normalizedHost))
-		WinMTRSettings::AppendLRUHost((LPCWSTR)result.normalizedHost, config.nrLRU, config.maxLRU);
+	if (HostComboModel::AppendBeforeSentinel(m_comboHost, result.normalizedHost))
+		Settings::AppendLRUHost((LPCWSTR)result.normalizedHost, config.nrLRU, config.maxLRU);
 
 	controller->RequestStart((LPCWSTR)result.normalizedHost, config.Snapshot());
 }
 
 
-void WinMTRDialog::OnOptions()
+void Dialog::OnOptions()
 {
-	WinMTROptions optDlg;
+	Options optDlg;
 
 	optDlg.SetPingSize(config.pingsize);
 	optDlg.SetInterval(config.interval);
@@ -333,152 +333,152 @@ void WinMTRDialog::OnOptions()
 
 		config.SaveOptions();
 		if (config.maxLRU < config.nrLRU)
-			WinMTRSettings::TrimLRU(config.maxLRU, config.nrLRU);
+			Settings::TrimLRU(config.maxLRU, config.nrLRU);
 	}
 }
 
 
-void WinMTRDialog::OnCTTC()
+void Dialog::OnCTTC()
 {
-	WinMTRReporter::CopyToClipboard(this, WinMTRReporter::BuildTextReport(controller->Stats()));
+	Reporter::CopyToClipboard(this, Reporter::BuildTextReport(controller->Stats()));
 }
 
 
-void WinMTRDialog::OnCHTC()
+void Dialog::OnCHTC()
 {
-	WinMTRReporter::CopyToClipboard(this, WinMTRReporter::BuildHtmlReport(controller->Stats()));
+	Reporter::CopyToClipboard(this, Reporter::BuildHtmlReport(controller->Stats()));
 }
 
 
-void WinMTRDialog::OnEXPT()
+void Dialog::OnEXPT()
 {
 	wchar_t BASED_CODE szFilter[] = L"Text Files (*.txt)|*.txt|All Files (*.*)|*.*||";
 
 	CFileDialog dlg(FALSE, L"TXT", NULL, OFN_HIDEREADONLY | OFN_EXPLORER, szFilter, this);
 	if (dlg.DoModal() == IDOK)
-		WinMTRReporter::SaveToFile(dlg.GetPathName(), WinMTRReporter::BuildTextReport(controller->Stats()));
+		Reporter::SaveToFile(dlg.GetPathName(), Reporter::BuildTextReport(controller->Stats()));
 }
 
 
-void WinMTRDialog::OnEXPH()
+void Dialog::OnEXPH()
 {
 	wchar_t BASED_CODE szFilter[] = L"HTML Files (*.htm, *.html)|*.htm;*.html|All Files (*.*)|*.*||";
 
 	CFileDialog dlg(FALSE, L"HTML", NULL, OFN_HIDEREADONLY | OFN_EXPLORER, szFilter, this);
 	if (dlg.DoModal() == IDOK)
-		WinMTRReporter::SaveToFile(dlg.GetPathName(), WinMTRReporter::BuildHtmlReport(controller->Stats()));
+		Reporter::SaveToFile(dlg.GetPathName(), Reporter::BuildHtmlReport(controller->Stats()));
 }
 
 
-void WinMTRDialog::OnCancel()
+void Dialog::OnCancel()
 {
 }
 
 
-void WinMTRDialog::OnCbnSelchangeComboHost()
+void Dialog::OnCbnSelchangeComboHost()
 {
 }
 
 
-void WinMTRDialog::ClearHistory()
+void Dialog::ClearHistory()
 {
-	WinMTRSettings::ClearLRU(config.nrLRU);
-	WinMTRHostComboModel::ClearAndResetSentinel(m_comboHost);
+	Settings::ClearLRU(config.nrLRU);
+	HostComboModel::ClearAndResetSentinel(m_comboHost);
 }
 
 
-void WinMTRDialog::OnCbnSelendokComboHost()
+void Dialog::OnCbnSelendokComboHost()
 {
 }
 
 
-void WinMTRDialog::OnCbnCloseupComboHost()
+void Dialog::OnCbnCloseupComboHost()
 {
-	if (WinMTRHostComboModel::IsSentinelSelected(m_comboHost))
+	if (HostComboModel::IsSentinelSelected(m_comboHost))
 		ClearHistory();
 }
 
 
-void WinMTRDialog::OnTimer(UINT_PTR nIDEvent)
+void Dialog::OnTimer(UINT_PTR nIDEvent)
 {
 	controller->Tick();
 	CDialog::OnTimer(nIDEvent);
 }
 
 
-void WinMTRDialog::OnClose()
+void Dialog::OnClose()
 {
 	controller->RequestExit();
 }
 
 
-void WinMTRDialog::OnBnClickedCancel()
+void Dialog::OnBnClickedCancel()
 {
 	controller->RequestExit();
 }
 
 
-void WinMTRDialog::SetStartEnabled(bool enabled)
+void Dialog::SetStartEnabled(bool enabled)
 {
 	m_buttonStart.EnableWindow(enabled ? TRUE : FALSE);
 }
 
 
-void WinMTRDialog::SetStartText(LPCWSTR text)
+void Dialog::SetStartText(LPCWSTR text)
 {
 	m_buttonStart.SetWindowText(text);
 }
 
 
-void WinMTRDialog::SetHostComboEnabled(bool enabled)
+void Dialog::SetHostComboEnabled(bool enabled)
 {
 	m_comboHost.EnableWindow(enabled ? TRUE : FALSE);
 }
 
 
-void WinMTRDialog::SetOptionsEnabled(bool enabled)
+void Dialog::SetOptionsEnabled(bool enabled)
 {
 	m_buttonOptions.EnableWindow(enabled ? TRUE : FALSE);
 }
 
 
-void WinMTRDialog::SetStatus(LPCWSTR text)
+void Dialog::SetStatus(LPCWSTR text)
 {
 	statusBar.SetPaneText(0, text);
 }
 
 
-void WinMTRDialog::RefreshList()
+void Dialog::RefreshList()
 {
-	WinMTRTraceListView::Refresh(m_listMTR, controller->Stats());
+	TraceListView::Refresh(m_listMTR, controller->Stats());
 }
 
 
-void WinMTRDialog::FocusHostCombo()
+void Dialog::FocusHostCombo()
 {
 	m_comboHost.SetFocus();
 }
 
 
-void WinMTRDialog::RequestClose()
+void Dialog::RequestClose()
 {
 	OnOK();
 }
 
 
-void WinMTRDialog::ShowError(const CString& error)
+void Dialog::ShowError(const CString& error)
 {
 	AfxMessageBox(error);
 }
 
 
-void WinMTRDialog::PostTraceCompleted()
+void Dialog::PostTraceCompleted()
 {
 	PostMessage(WM_WINMTR_TRACE_COMPLETED);
 }
 
 
-void WinMTRDialog::PostTraceFailed(const CString& error)
+void Dialog::PostTraceFailed(const CString& error)
 {
 	auto* copy = new CString(error);
 	if (!PostMessage(WM_WINMTR_TRACE_FAILED, 0, reinterpret_cast<LPARAM>(copy))) {
@@ -487,14 +487,14 @@ void WinMTRDialog::PostTraceFailed(const CString& error)
 }
 
 
-LRESULT WinMTRDialog::OnTraceCompletedMsg(WPARAM, LPARAM)
+LRESULT Dialog::OnTraceCompletedMsg(WPARAM, LPARAM)
 {
 	controller->OnTraceCompleted();
 	return 0;
 }
 
 
-LRESULT WinMTRDialog::OnTraceFailedMsg(WPARAM, LPARAM lParam)
+LRESULT Dialog::OnTraceFailedMsg(WPARAM, LPARAM lParam)
 {
 	std::unique_ptr<CString> err(reinterpret_cast<CString*>(lParam));
 	controller->OnTraceFailed(*err);

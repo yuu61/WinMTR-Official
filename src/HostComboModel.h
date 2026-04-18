@@ -13,7 +13,7 @@
 #include <afxwin.h>
 #include <vector>
 
-namespace WinMTRHostComboModel {
+namespace HostComboModel {
 
 // Adds all hosts then appends the "Clear History" sentinel.
 void Populate(CComboBox& combo, const std::vector<CString>& hosts);
@@ -27,6 +27,6 @@ bool AppendBeforeSentinel(CComboBox& combo, const CString& host);
 // True if the combo's current selection is the sentinel row.
 bool IsSentinelSelected(CComboBox& combo);
 
-} // namespace WinMTRHostComboModel
+} // namespace HostComboModel
 
 #endif // HOSTCOMBOMODEL_H_

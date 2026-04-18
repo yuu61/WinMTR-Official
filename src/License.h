@@ -10,21 +10,21 @@
 //
 //*****************************************************************************
 
-#ifndef WINMTRLICENSE_H_
-#define WINMTRLICENSE_H_
+#ifndef LICENSE_H_
+#define LICENSE_H_
 
 
 
 //*****************************************************************************
-// CLASS:  WinMTRLicense
+// CLASS:  License
 //
 //
 //*****************************************************************************
 
-class WinMTRLicense : public CDialog
+class License : public CDialog
 {
 public:
-	WinMTRLicense(CWnd* pParent = NULL);
+	License(CWnd* pParent = NULL);
 
 	
 	enum { IDD = IDD_DIALOG_LICENSE };
@@ -37,4 +37,4 @@ protected:
 	DECLARE_MESSAGE_MAP()
 };
 
-#endif // ifndef WINMTRLICENSE_H_
+#endif // ifndef LICENSE_H_

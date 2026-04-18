@@ -1,12 +1,12 @@
-#ifndef WINMTRSTATUSBAR_H_
-#define WINMTRSTATUSBAR_H_
+#ifndef STATUSBAR_H_
+#define STATUSBAR_H_
 
-class WinMTRStatusBar : public CStatusBar
+class StatusBar : public CStatusBar
 {
 // Construction
 public:
 
-	WinMTRStatusBar();
+	StatusBar();
 
 // Attributes
 public:
@@ -70,12 +70,12 @@ public:
 	
 // Overrides
 	// ClassWizard generated virtual function overrides
-	//{{AFX_VIRTUAL(WinMTRStatusBar)
+	//{{AFX_VIRTUAL(StatusBar)
 	//}}AFX_VIRTUAL
 
 // Implementation
 public:
-	virtual ~WinMTRStatusBar();
+	virtual ~StatusBar();
 
 protected:
 
@@ -116,11 +116,11 @@ protected:
 	
 	// Generated message map functions
 protected:
-	//{{AFX_MSG(WinMTRStatusBar)
+	//{{AFX_MSG(StatusBar)
 	afx_msg int OnCreate(LPCREATESTRUCT lpCreateStruct);
 	//}}AFX_MSG
 	DECLARE_MESSAGE_MAP()
 	virtual LRESULT WindowProc(UINT message, WPARAM wParam, LPARAM lParam);
 };
 
-#endif // WINMTRSTATUSBAR_H_
+#endif // STATUSBAR_H_

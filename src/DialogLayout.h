@@ -12,7 +12,7 @@
 #include <afxwin.h>
 #include <afxcmn.h>
 
-namespace WinMTRDialogLayout {
+namespace DialogLayout {
 
 struct ControlRefs {
 	CStatic&   staticS;
@@ -26,6 +26,6 @@ struct ControlRefs {
 void ApplyClientSize(CWnd& dialog, const ControlRefs& refs);
 void ClampMinimum(LPRECT rect);
 
-} // namespace WinMTRDialogLayout
+} // namespace DialogLayout
 
 #endif // DIALOGLAYOUT_H_

@@ -20,7 +20,7 @@ Result Validate(const CString& rawHost)
 		return r;
 	}
 
-	if (!WinMTRHostResolver::Validate(r.normalizedHost, r.error)) {
+	if (!HostResolver::Validate(r.normalizedHost, r.error)) {
 		r.validation = Validation::ResolutionFailed;
 		return r;
 	}

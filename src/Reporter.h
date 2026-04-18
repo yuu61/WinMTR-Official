@@ -8,20 +8,20 @@
 //
 //*****************************************************************************
 
-#ifndef WINMTRREPORTER_H_
-#define WINMTRREPORTER_H_
+#ifndef REPORTER_H_
+#define REPORTER_H_
 
 #include <afxwin.h>
 
 class HopStatistics;
 
 //*****************************************************************************
-// CLASS:  WinMTRReporter
+// CLASS:  Reporter
 //
 //
 //*****************************************************************************
 
-class WinMTRReporter
+class Reporter
 {
 public:
 	static CString BuildTextReport(const HopStatistics& stats);
@@ -31,4 +31,4 @@ public:
 	static bool SaveToFile(LPCWSTR path, const CString& content);
 };
 
-#endif // ifndef WINMTRREPORTER_H_
+#endif // ifndef REPORTER_H_

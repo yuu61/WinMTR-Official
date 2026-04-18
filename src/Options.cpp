@@ -20,27 +20,27 @@ static char THIS_FILE[] = __FILE__;
 //
 // 
 //*****************************************************************************
-BEGIN_MESSAGE_MAP(WinMTROptions, CDialog)
+BEGIN_MESSAGE_MAP(Options, CDialog)
 	ON_BN_CLICKED(ID_LICENSE, OnLicense)
 END_MESSAGE_MAP()
 
 
 //*****************************************************************************
-// WinMTROptions::WinMTROptions
+// Options::Options
 //
 // 
 //*****************************************************************************
-WinMTROptions::WinMTROptions(CWnd* pParent) : CDialog(WinMTROptions::IDD, pParent)
+Options::Options(CWnd* pParent) : CDialog(Options::IDD, pParent)
 {
 }
 
 
 //*****************************************************************************
-// WinMTROptions::DoDataExchange
+// Options::DoDataExchange
 //
 // 
 //*****************************************************************************
-void WinMTROptions::DoDataExchange(CDataExchange* pDX)
+void Options::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_EDIT_SIZE, m_editSize);
@@ -51,11 +51,11 @@ void WinMTROptions::DoDataExchange(CDataExchange* pDX)
 
 
 //*****************************************************************************
-// WinMTROptions::OnInitDialog
+// Options::OnInitDialog
 //
 // 
 //*****************************************************************************
-BOOL WinMTROptions::OnInitDialog()
+BOOL Options::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
@@ -71,11 +71,11 @@ BOOL WinMTROptions::OnInitDialog()
 
 
 //*****************************************************************************
-// WinMTROptions::OnOK
+// Options::OnOK
 //
 // 
 //*****************************************************************************
-void WinMTROptions::OnOK()
+void Options::OnOK()
 {
 	wchar_t tmpstr[20];
 
@@ -94,12 +94,12 @@ void WinMTROptions::OnOK()
 }
 
 //*****************************************************************************
-// WinMTROptions::OnLicense
+// Options::OnLicense
 //
 // 
 //*****************************************************************************
-void WinMTROptions::OnLicense() 
+void Options::OnLicense() 
 {
-	WinMTRLicense mtrlicense;
+	License mtrlicense;
 	mtrlicense.DoModal();
 }

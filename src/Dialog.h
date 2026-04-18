@@ -7,8 +7,8 @@
 //
 //*****************************************************************************
 
-#ifndef WINMTRDIALOG_H_
-#define WINMTRDIALOG_H_
+#ifndef DIALOG_H_
+#define DIALOG_H_
 
 #include "CommandLineOverrides.h"
 #include "StatusBar.h"
@@ -24,18 +24,18 @@ class CMFCLinkCtrl;
 class TraceSessionController;
 
 //*****************************************************************************
-// CLASS:  WinMTRDialog
+// CLASS:  Dialog
 //*****************************************************************************
 
-class WinMTRDialog : public CDialog, public ISessionView
+class Dialog : public CDialog, public ISessionView
 {
 public:
-	WinMTRDialog(CWnd* pParent = NULL);
-	~WinMTRDialog() override;
+	Dialog(CWnd* pParent = NULL);
+	~Dialog() override;
 
 	enum { IDD = IDD_WINMTR_DIALOG };
 
-	WinMTRStatusBar statusBar;
+	StatusBar statusBar;
 
 	CButton   m_buttonOptions;
 	CButton   m_buttonExit;
@@ -112,4 +112,4 @@ public:
 	afx_msg LRESULT OnTraceFailedMsg(WPARAM wParam, LPARAM lParam);
 };
 
-#endif // WINMTRDIALOG_H_
+#endif // DIALOG_H_

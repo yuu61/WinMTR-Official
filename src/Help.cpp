@@ -1,4 +1,4 @@
-// WinMTRHelp.cpp : implementation file
+// Help.cpp : implementation file
 //
 
 #include "Global.h"
@@ -6,35 +6,35 @@
 #include "afxdialogex.h"
 
 
-// WinMTRHelp dialog
+// Help dialog
 
-IMPLEMENT_DYNAMIC(WinMTRHelp, CDialog)
+IMPLEMENT_DYNAMIC(Help, CDialog)
 
-WinMTRHelp::WinMTRHelp(CWnd* pParent /*=NULL*/)
-	: CDialog(WinMTRHelp::IDD, pParent)
+Help::Help(CWnd* pParent /*=NULL*/)
+	: CDialog(Help::IDD, pParent)
 {
 
 }
 
-WinMTRHelp::~WinMTRHelp()
+Help::~Help()
 {
 }
 
-void WinMTRHelp::DoDataExchange(CDataExchange* pDX)
+void Help::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 }
 
 
-BEGIN_MESSAGE_MAP(WinMTRHelp, CDialog)
-	ON_BN_CLICKED(IDOK, &WinMTRHelp::OnBnClickedOk)
+BEGIN_MESSAGE_MAP(Help, CDialog)
+	ON_BN_CLICKED(IDOK, &Help::OnBnClickedOk)
 END_MESSAGE_MAP()
 
 
-// WinMTRHelp message handlers
+// Help message handlers
 
 
-void WinMTRHelp::OnBnClickedOk()
+void Help::OnBnClickedOk()
 {
 	// TODO: Add your control notification handler code here
 	CDialog::OnOK();

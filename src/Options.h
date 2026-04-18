@@ -10,21 +10,21 @@
 //
 //*****************************************************************************
 
-#ifndef WINMTROPTIONS_H_
-#define WINMTROPTIONS_H_
+#ifndef OPTIONS_H_
+#define OPTIONS_H_
 
 
 
 //*****************************************************************************
-// CLASS:  WinMTROptions
+// CLASS:  Options
 //
 //
 //*****************************************************************************
 
-class WinMTROptions : public CDialog
+class Options : public CDialog
 {
 public:
-	WinMTROptions(CWnd* pParent = NULL);
+	Options(CWnd* pParent = NULL);
 
 	void SetUseDNS(BOOL udns)		{ useDNS = udns;  };
 	void SetInterval(double i)		{ interval = i;   };
@@ -59,4 +59,4 @@ private:
 	BOOL     useDNS;
 };
 
-#endif // ifndef WINMTROPTIONS_H_
+#endif // ifndef OPTIONS_H_

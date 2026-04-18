@@ -1,14 +1,14 @@
 #pragma once
 
-// WinMTRHelp dialog
+// Help dialog
 
-class WinMTRHelp : public CDialog
+class Help : public CDialog
 {
-	DECLARE_DYNAMIC(WinMTRHelp)
+	DECLARE_DYNAMIC(Help)
 
 public:
-	WinMTRHelp(CWnd* pParent = NULL);   // standard constructor
-	virtual ~WinMTRHelp();
+	Help(CWnd* pParent = NULL);   // standard constructor
+	virtual ~Help();
 
 // Dialog Data
 	enum { IDD = IDD_DIALOG_HELP };

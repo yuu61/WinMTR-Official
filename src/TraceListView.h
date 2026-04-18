@@ -14,11 +14,11 @@
 
 class HopStatistics;
 
-namespace WinMTRTraceListView {
+namespace TraceListView {
 
 void InitColumns(CListCtrl& list);
 void Refresh(CListCtrl& list, const HopStatistics& stats);
 
-} // namespace WinMTRTraceListView
+} // namespace TraceListView
 
 #endif // TRACELISTVIEW_H_

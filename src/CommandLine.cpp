@@ -81,7 +81,7 @@ int GetHostNameParamValue(LPWSTR cmd, std::wstring& host_name)
 } // namespace
 
 
-WinMTRCommandLine::ParseResult WinMTRCommandLine::Parse(LPWSTR cmd)
+CommandLine::ParseResult CommandLine::Parse(LPWSTR cmd)
 {
 	ParseResult result;
 	wchar_t value[1024];

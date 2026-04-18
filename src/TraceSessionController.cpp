@@ -230,7 +230,7 @@ void TraceSessionController::ExecuteSession(const std::wstring& host, const Trac
 {
 	int     addr = 0;
 	CString err;
-	if (!WinMTRHostResolver::Resolve(host.c_str(), addr, err)) {
+	if (!HostResolver::Resolve(host.c_str(), addr, err)) {
 		view_->PostTraceFailed(err);
 		return;
 	}

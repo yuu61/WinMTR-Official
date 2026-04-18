@@ -7,11 +7,11 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-WinMTRStatusBar::WinMTRStatusBar()
+StatusBar::StatusBar()
 {
 }
 
-WinMTRStatusBar::~WinMTRStatusBar()
+StatusBar::~StatusBar()
 {
 	for ( int i = 0; i < m_arrPaneControls.GetSize(); i++ ){
 		if( m_arrPaneControls[i]->hWnd && ::IsWindow(m_arrPaneControls[i]->hWnd) ) {
@@ -26,18 +26,18 @@ WinMTRStatusBar::~WinMTRStatusBar()
 	}
 }
 
-BEGIN_MESSAGE_MAP(WinMTRStatusBar, CStatusBar)
-	//{{AFX_MSG_MAP(WinMTRStatusBar)
+BEGIN_MESSAGE_MAP(StatusBar, CStatusBar)
+	//{{AFX_MSG_MAP(StatusBar)
 	ON_WM_CREATE()
 	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 
 /////////////////////////////////////////////////////////////////////////////
-// WinMTRStatusBar message handlers
+// StatusBar message handlers
 //////////////////////////////////////////////////////////////////////////
 
-int WinMTRStatusBar::OnCreate(LPCREATESTRUCT lpCreateStruct) 
+int StatusBar::OnCreate(LPCREATESTRUCT lpCreateStruct) 
 {
 	if( CStatusBar::OnCreate(lpCreateStruct) == -1 )
 		return -1;
@@ -47,7 +47,7 @@ int WinMTRStatusBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 
 //////////////////////////////////////////////////////////////////////////
 
-LRESULT WinMTRStatusBar::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
+LRESULT StatusBar::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT lResult =CStatusBar::WindowProc(message, wParam, lParam);
 	if( message == WM_SIZE ){
@@ -58,7 +58,7 @@ LRESULT WinMTRStatusBar::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 
 //////////////////////////////////////////////////////////////////////////
 
-void WinMTRStatusBar::RepositionControls()
+void StatusBar::RepositionControls()
 {
 	HDWP _hDWP = ::BeginDeferWindowPos( (int)m_arrPaneControls.GetSize() );
 	
@@ -131,7 +131,7 @@ void WinMTRStatusBar::RepositionControls()
 
 //////////////////////////////////////////////////////////////////////////
 
-BOOL WinMTRStatusBar::AddPane(
+BOOL StatusBar::AddPane(
 	 UINT nID,	// ID of the  pane
 	 int nIndex	// index of the pane
 	 )
@@ -197,7 +197,7 @@ BOOL WinMTRStatusBar::AddPane(
 
 //////////////////////////////////////////////////////////////////////////
 
-BOOL WinMTRStatusBar::RemovePane(
+BOOL StatusBar::RemovePane(
 	UINT nID	// ID of the pane
 	)
 {
@@ -267,7 +267,7 @@ BOOL WinMTRStatusBar::RemovePane(
 
 //////////////////////////////////////////////////////////////////////////
 
-BOOL WinMTRStatusBar::AddPaneControl(HWND hWnd, UINT nID, BOOL bAutoDestroy)
+BOOL StatusBar::AddPaneControl(HWND hWnd, UINT nID, BOOL bAutoDestroy)
 {
 	if (CommandToIndex (nID) == -1) {
 		return FALSE;
@@ -286,7 +286,7 @@ BOOL WinMTRStatusBar::AddPaneControl(HWND hWnd, UINT nID, BOOL bAutoDestroy)
 
 //////////////////////////////////////////////////////////////////////////
 
-BOOL WinMTRStatusBar::PaneInfoGet(int nIndex, _STATUSBAR_PANE_* pPane)
+BOOL StatusBar::PaneInfoGet(int nIndex, _STATUSBAR_PANE_* pPane)
 {
 	if( nIndex < m_nCount  && nIndex >= 0 )
 	{
@@ -301,7 +301,7 @@ BOOL WinMTRStatusBar::PaneInfoGet(int nIndex, _STATUSBAR_PANE_* pPane)
 
 //////////////////////////////////////////////////////////////////////////
 
-BOOL WinMTRStatusBar::PaneInfoSet(int nIndex, _STATUSBAR_PANE_* pPane)
+BOOL StatusBar::PaneInfoSet(int nIndex, _STATUSBAR_PANE_* pPane)
 {
 	if( nIndex < m_nCount  && nIndex >= 0 ){
 		SetPaneInfo( nIndex, pPane->nID, pPane->nStyle, pPane->cxText );

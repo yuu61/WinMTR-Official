@@ -8,7 +8,7 @@
 #include "MtrColumns.h"
 #include <string>
 
-namespace WinMTRTraceListView {
+namespace TraceListView {
 
 void InitColumns(CListCtrl& list)
 {
@@ -46,4 +46,4 @@ void Refresh(CListCtrl& list, const HopStatistics& stats)
 	}
 }
 
-} // namespace WinMTRTraceListView
+} // namespace TraceListView

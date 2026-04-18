@@ -10,10 +10,10 @@
 
 
 //*****************************************************************************
-// WinMTRReporter::BuildTextReport
+// Reporter::BuildTextReport
 //
 //*****************************************************************************
-CString WinMTRReporter::BuildTextReport(const HopStatistics& stats)
+CString Reporter::BuildTextReport(const HopStatistics& stats)
 {
 	wchar_t buf[255];
 	CString result;
@@ -46,10 +46,10 @@ CString WinMTRReporter::BuildTextReport(const HopStatistics& stats)
 
 
 //*****************************************************************************
-// WinMTRReporter::BuildHtmlReport
+// Reporter::BuildHtmlReport
 //
 //*****************************************************************************
-CString WinMTRReporter::BuildHtmlReport(const HopStatistics& stats)
+CString Reporter::BuildHtmlReport(const HopStatistics& stats)
 {
 	wchar_t buf[255];
 	CString result;
@@ -80,10 +80,10 @@ CString WinMTRReporter::BuildHtmlReport(const HopStatistics& stats)
 
 
 //*****************************************************************************
-// WinMTRReporter::CopyToClipboard
+// Reporter::CopyToClipboard
 //
 //*****************************************************************************
-bool WinMTRReporter::CopyToClipboard(CWnd* owner, const CString& content)
+bool Reporter::CopyToClipboard(CWnd* owner, const CString& content)
 {
 	if (!owner->OpenClipboard())
 		return false;
@@ -112,10 +112,10 @@ bool WinMTRReporter::CopyToClipboard(CWnd* owner, const CString& content)
 
 
 //*****************************************************************************
-// WinMTRReporter::SaveToFile
+// Reporter::SaveToFile
 //
 //*****************************************************************************
-bool WinMTRReporter::SaveToFile(LPCWSTR path, const CString& content)
+bool Reporter::SaveToFile(LPCWSTR path, const CString& content)
 {
 	FILE* fp = _wfopen(path, L"w, ccs=UTF-8");
 	if (fp == NULL) return false;

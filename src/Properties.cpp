@@ -19,16 +19,16 @@ static char THIS_FILE[] = __FILE__;
 //
 // 
 //*****************************************************************************
-BEGIN_MESSAGE_MAP(WinMTRProperties, CDialog)
+BEGIN_MESSAGE_MAP(Properties, CDialog)
 END_MESSAGE_MAP()
 
 
 //*****************************************************************************
-// WinMTRProperties::WinMTRProperties
+// Properties::Properties
 //
 // 
 //*****************************************************************************
-WinMTRProperties::WinMTRProperties(CWnd* pParent) : CDialog(WinMTRProperties::IDD, pParent)
+Properties::Properties(CWnd* pParent) : CDialog(Properties::IDD, pParent)
 {
 }
 
@@ -38,7 +38,7 @@ WinMTRProperties::WinMTRProperties(CWnd* pParent) : CDialog(WinMTRProperties::ID
 //
 // 
 //*****************************************************************************
-void WinMTRProperties::DoDataExchange(CDataExchange* pDX)
+void Properties::DoDataExchange(CDataExchange* pDX)
 {
 	CDialog::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_EDIT_PHOST, m_editHost);
@@ -57,11 +57,11 @@ void WinMTRProperties::DoDataExchange(CDataExchange* pDX)
 
 
 //*****************************************************************************
-// WinMTRProperties::OnInitDialog
+// Properties::OnInitDialog
 //
 // 
 //*****************************************************************************
-BOOL WinMTRProperties::OnInitDialog()
+BOOL Properties::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
