@@ -37,7 +37,13 @@
     <ClCompile Include="src\Main.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="src\Net.cpp">
+    <ClCompile Include="src\IcmpIO.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HopStatistics.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TraceEngine.cpp">
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="src\Options.cpp">
@@ -93,7 +99,13 @@
     <ClInclude Include="src\Main.h">
       <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="src\Net.h">
+    <ClInclude Include="src\IcmpIO.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HopStatistics.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TraceEngine.h">
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="src\Options.h">

@@ -13,7 +13,7 @@
 
 #include <afxwin.h>
 
-class WinMTRNet;
+class HopStatistics;
 
 //*****************************************************************************
 // CLASS:  WinMTRReporter
@@ -24,8 +24,8 @@ class WinMTRNet;
 class WinMTRReporter
 {
 public:
-	static CString BuildTextReport(WinMTRNet* net);
-	static CString BuildHtmlReport(WinMTRNet* net);
+	static CString BuildTextReport(const HopStatistics& stats);
+	static CString BuildHtmlReport(const HopStatistics& stats);
 
 	static bool CopyToClipboard(CWnd* owner, const CString& content);
 	static bool SaveToFile(LPCWSTR path, const CString& content);

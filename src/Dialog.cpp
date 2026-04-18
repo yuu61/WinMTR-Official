@@ -6,7 +6,7 @@
 #include "Dialog.h"
 #include "Options.h"
 #include "Properties.h"
-#include "Net.h"
+#include "HopStatistics.h"
 #include "Settings.h"
 #include "Reporter.h"
 #include "HostResolver.h"
@@ -15,6 +15,7 @@
 #include "HostComboModel.h"
 #include "TraceListView.h"
 #include "TraceSessionController.h"
+#include <memory>
 #include <vector>
 #include "afxlinkctrl.h"
 
@@ -42,6 +43,8 @@ BEGIN_MESSAGE_MAP(WinMTRDialog, CDialog)
 	ON_WM_TIMER()
 	ON_WM_CLOSE()
 	ON_BN_CLICKED(IDCANCEL, &WinMTRDialog::OnBnClickedCancel)
+	ON_MESSAGE(WM_WINMTR_TRACE_COMPLETED, &WinMTRDialog::OnTraceCompletedMsg)
+	ON_MESSAGE(WM_WINMTR_TRACE_FAILED,    &WinMTRDialog::OnTraceFailedMsg)
 END_MESSAGE_MAP()
 
 
@@ -224,19 +227,19 @@ void WinMTRDialog::OnDblclkList(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 
 	int nItem = m_listMTR.GetNextSelectedItem(pos);
 	WinMTRProperties wmtrprop;
-	WinMTRNet& net = controller->Net();
+	const HopStatistics& stats = controller->Stats();
 
-	if (net.GetAddr(nItem) == 0) {
+	if (stats.GetAddr(nItem) == 0) {
 		wmtrprop.host[0] = L'\0';
 		wmtrprop.ip[0]   = L'\0';
-		net.GetName(nItem, wmtrprop.comment);
+		stats.GetName(nItem, wmtrprop.comment);
 
 		wmtrprop.pck_loss  = wmtrprop.pck_sent  = wmtrprop.pck_recv  = 0;
 		wmtrprop.ping_avrg = wmtrprop.ping_last = 0.0;
 		wmtrprop.ping_best = wmtrprop.ping_worst = 0.0;
 	} else {
-		net.GetName(nItem, wmtrprop.host);
-		int addr = net.GetAddr(nItem);
+		stats.GetName(nItem, wmtrprop.host);
+		int addr = stats.GetAddr(nItem);
 		swprintf(wmtrprop.ip, _countof(wmtrprop.ip), L"%d.%d.%d.%d",
 			(addr >> 24) & 0xff,
 			(addr >> 16) & 0xff,
@@ -244,14 +247,14 @@ void WinMTRDialog::OnDblclkList(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 			addr         & 0xff);
 		wcscpy_s(wmtrprop.comment, L"Host alive.");
 
-		wmtrprop.ping_avrg  = (float)net.GetAvg(nItem);
-		wmtrprop.ping_last  = (float)net.GetLast(nItem);
-		wmtrprop.ping_best  = (float)net.GetBest(nItem);
-		wmtrprop.ping_worst = (float)net.GetWorst(nItem);
+		wmtrprop.ping_avrg  = (float)stats.GetAvg(nItem);
+		wmtrprop.ping_last  = (float)stats.GetLast(nItem);
+		wmtrprop.ping_best  = (float)stats.GetBest(nItem);
+		wmtrprop.ping_worst = (float)stats.GetWorst(nItem);
 
-		wmtrprop.pck_loss = net.GetPercent(nItem);
-		wmtrprop.pck_recv = net.GetReturned(nItem);
-		wmtrprop.pck_sent = net.GetXmit(nItem);
+		wmtrprop.pck_loss = stats.GetPercent(nItem);
+		wmtrprop.pck_recv = stats.GetReturned(nItem);
+		wmtrprop.pck_sent = stats.GetXmit(nItem);
 	}
 
 	wmtrprop.DoModal();
@@ -331,13 +334,13 @@ void WinMTRDialog::OnOptions()
 
 void WinMTRDialog::OnCTTC()
 {
-	WinMTRReporter::CopyToClipboard(this, WinMTRReporter::BuildTextReport(&controller->Net()));
+	WinMTRReporter::CopyToClipboard(this, WinMTRReporter::BuildTextReport(controller->Stats()));
 }
 
 
 void WinMTRDialog::OnCHTC()
 {
-	WinMTRReporter::CopyToClipboard(this, WinMTRReporter::BuildHtmlReport(&controller->Net()));
+	WinMTRReporter::CopyToClipboard(this, WinMTRReporter::BuildHtmlReport(controller->Stats()));
 }
 
 
@@ -347,7 +350,7 @@ void WinMTRDialog::OnEXPT()
 
 	CFileDialog dlg(FALSE, L"TXT", NULL, OFN_HIDEREADONLY | OFN_EXPLORER, szFilter, this);
 	if (dlg.DoModal() == IDOK)
-		WinMTRReporter::SaveToFile(dlg.GetPathName(), WinMTRReporter::BuildTextReport(&controller->Net()));
+		WinMTRReporter::SaveToFile(dlg.GetPathName(), WinMTRReporter::BuildTextReport(controller->Stats()));
 }
 
 
@@ -357,7 +360,7 @@ void WinMTRDialog::OnEXPH()
 
 	CFileDialog dlg(FALSE, L"HTML", NULL, OFN_HIDEREADONLY | OFN_EXPLORER, szFilter, this);
 	if (dlg.DoModal() == IDOK)
-		WinMTRReporter::SaveToFile(dlg.GetPathName(), WinMTRReporter::BuildHtmlReport(&controller->Net()));
+		WinMTRReporter::SaveToFile(dlg.GetPathName(), WinMTRReporter::BuildHtmlReport(controller->Stats()));
 }
 
 
@@ -441,7 +444,7 @@ void WinMTRDialog::SetStatus(LPCWSTR text)
 
 void WinMTRDialog::RefreshList()
 {
-	WinMTRTraceListView::Refresh(m_listMTR, controller->Net());
+	WinMTRTraceListView::Refresh(m_listMTR, controller->Stats());
 }
 
 
@@ -454,4 +457,40 @@ void WinMTRDialog::FocusHostCombo()
 void WinMTRDialog::RequestClose()
 {
 	OnOK();
+}
+
+
+void WinMTRDialog::ShowError(const CString& error)
+{
+	AfxMessageBox(error);
+}
+
+
+void WinMTRDialog::PostTraceCompleted()
+{
+	PostMessage(WM_WINMTR_TRACE_COMPLETED);
+}
+
+
+void WinMTRDialog::PostTraceFailed(const CString& error)
+{
+	auto* copy = new CString(error);
+	if (!PostMessage(WM_WINMTR_TRACE_FAILED, 0, reinterpret_cast<LPARAM>(copy))) {
+		delete copy;
+	}
+}
+
+
+LRESULT WinMTRDialog::OnTraceCompletedMsg(WPARAM, LPARAM)
+{
+	controller->OnTraceCompleted();
+	return 0;
+}
+
+
+LRESULT WinMTRDialog::OnTraceFailedMsg(WPARAM, LPARAM lParam)
+{
+	std::unique_ptr<CString> err(reinterpret_cast<CString*>(lParam));
+	controller->OnTraceFailed(*err);
+	return 0;
 }

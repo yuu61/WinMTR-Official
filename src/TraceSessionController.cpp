@@ -5,34 +5,33 @@
 #include "Global.h"
 #include "TraceSessionController.h"
 #include "SessionView.h"
-#include "Net.h"
+#include "TraceEngine.h"
+#include "HostResolver.h"
+#include <memory>
+#include <process.h>
 #include <sstream>
 
-#define TRACE_MSG(msg)                                      \
-	{                                                       \
-		std::wostringstream dbg(std::wostringstream::out);  \
-		dbg << msg << std::endl;                            \
-		OutputDebugStringW(dbg.str().c_str());              \
+#define TRACE_MSG(msg)                                       \
+	{                                                        \
+		std::wostringstream dbg(std::wostringstream::out);   \
+		dbg << msg << std::endl;                             \
+		OutputDebugStringW(dbg.str().c_str());               \
 	}
 
 TraceSessionController::TraceSessionController(ISessionView* view)
 	: view_(view),
-	  net_(std::make_unique<WinMTRNet>()),
-	  mutex_(CreateMutex(NULL, FALSE, NULL)),
+	  engine_(std::make_unique<TraceEngine>()),
 	  state_(IDLE),
 	  transition_(IDLE_TO_IDLE),
 	  tick_count_(0)
 {
 }
 
-TraceSessionController::~TraceSessionController()
-{
-	CloseHandle(mutex_);
-}
+TraceSessionController::~TraceSessionController() = default;
 
-WinMTRNet& TraceSessionController::Net()
+const HopStatistics& TraceSessionController::Stats() const
 {
-	return *net_;
+	return engine_->Stats();
 }
 
 void TraceSessionController::RequestStart(const std::wstring& host, const TraceOptions& opts)
@@ -55,19 +54,40 @@ void TraceSessionController::RequestExit()
 void TraceSessionController::Tick()
 {
 	tick_count_ += 1;
-
-	if (state_ == EXIT && WaitForSingleObject(mutex_, 0) == WAIT_OBJECT_0) {
-		ReleaseMutex(mutex_);
-		view_->RequestClose();
+	if ((tick_count_ % 10 == 0) && (state_ == TRACING || state_ == STOPPING)) {
+		view_->RefreshList();
 	}
+}
 
-	if (WaitForSingleObject(mutex_, 0) == WAIT_OBJECT_0) {
-		ReleaseMutex(mutex_);
+void TraceSessionController::OnTraceCompleted()
+{
+	switch (state_) {
+	case TRACING:
+	case STOPPING:
 		Transit(IDLE);
-	} else if ((tick_count_ % 10 == 0) && (WaitForSingleObject(mutex_, 0) == WAIT_TIMEOUT)) {
-		ReleaseMutex(mutex_);
-		if      (state_ == TRACING)  Transit(TRACING);
-		else if (state_ == STOPPING) Transit(STOPPING);
+		break;
+	case EXIT:
+		view_->RequestClose();
+		break;
+	case IDLE:
+		// Not expected; benign.
+		break;
+	}
+}
+
+void TraceSessionController::OnTraceFailed(const CString& error)
+{
+	switch (state_) {
+	case TRACING:
+	case STOPPING:
+		view_->ShowError(error);
+		Transit(IDLE);
+		break;
+	case EXIT:
+		view_->RequestClose();
+		break;
+	case IDLE:
+		break;
 	}
 }
 
@@ -77,6 +97,7 @@ void TraceSessionController::Transit(State new_state)
 	case IDLE:
 		switch (state_) {
 		case STOPPING: transition_ = STOPPING_TO_IDLE; break;
+		case TRACING:  transition_ = TRACING_TO_IDLE;  break;
 		case IDLE:     transition_ = IDLE_TO_IDLE;     break;
 		default:
 			TRACE_MSG(L"Received state IDLE after " << state_);
@@ -118,31 +139,41 @@ void TraceSessionController::Transit(State new_state)
 		break;
 	default:
 		TRACE_MSG(L"Received state " << state_);
+		return;
 	}
 
+	ApplyTransition();
+}
+
+void TraceSessionController::ApplyTransition()
+{
 	switch (transition_) {
-	case IDLE_TO_TRACING:
+	case IDLE_TO_TRACING: {
 		view_->SetStartEnabled(false);
 		view_->SetStartText(L"Stop");
 		view_->SetHostComboEnabled(false);
 		view_->SetOptionsEnabled(false);
 		view_->SetStatus(L"Double click on host name for more information.");
-		net_->BeginTraceAsync(pending_host_, pending_opts_, mutex_);
+
+		auto args = std::make_unique<SessionWorkerArgs>();
+		args->controller = this;
+		args->host       = pending_host_;
+		args->opts       = pending_opts_;
+		const uintptr_t h = _beginthread(SessionWorkerEntry, 0, args.get());
+		if (h != 0 && h != static_cast<uintptr_t>(-1)) {
+			args.release();
+		}
+
 		view_->SetStartEnabled(true);
 		break;
+	}
 	case IDLE_TO_IDLE:
 		break;
 	case STOPPING_TO_IDLE:
-		view_->SetStartEnabled(true);
-		view_->SetStatus(CString((LPCWSTR)IDS_STRING_SB_NAME));
-		view_->SetStartText(L"Start");
-		view_->SetHostComboEnabled(true);
-		view_->SetOptionsEnabled(true);
-		view_->FocusHostCombo();
+	case TRACING_TO_IDLE:
+		RestoreIdleUi();
 		break;
 	case STOPPING_TO_STOPPING:
-		view_->RefreshList();
-		break;
 	case TRACING_TO_TRACING:
 		view_->RefreshList();
 		break;
@@ -150,7 +181,7 @@ void TraceSessionController::Transit(State new_state)
 		view_->SetStartEnabled(false);
 		view_->SetHostComboEnabled(false);
 		view_->SetOptionsEnabled(false);
-		net_->StopTrace();
+		engine_->Stop();
 		view_->SetStatus(L"Waiting for last packets in order to stop trace ...");
 		view_->RefreshList();
 		break;
@@ -158,12 +189,14 @@ void TraceSessionController::Transit(State new_state)
 		view_->SetStartEnabled(false);
 		view_->SetHostComboEnabled(false);
 		view_->SetOptionsEnabled(false);
+		// No worker to wait on; close immediately.
+		view_->RequestClose();
 		break;
 	case TRACING_TO_EXIT:
 		view_->SetStartEnabled(false);
 		view_->SetHostComboEnabled(false);
 		view_->SetOptionsEnabled(false);
-		net_->StopTrace();
+		engine_->Stop();
 		view_->SetStatus(L"Waiting for last packets in order to stop trace ...");
 		break;
 	case STOPPING_TO_EXIT:
@@ -174,4 +207,34 @@ void TraceSessionController::Transit(State new_state)
 	default:
 		TRACE_MSG(L"Unknown transition " << transition_);
 	}
+}
+
+void TraceSessionController::RestoreIdleUi()
+{
+	view_->SetStartEnabled(true);
+	view_->SetStatus(CString((LPCWSTR)IDS_STRING_SB_NAME));
+	view_->SetStartText(L"Start");
+	view_->SetHostComboEnabled(true);
+	view_->SetOptionsEnabled(true);
+	view_->FocusHostCombo();
+}
+
+void TraceSessionController::SessionWorkerEntry(void* p)
+{
+	std::unique_ptr<SessionWorkerArgs> args(static_cast<SessionWorkerArgs*>(p));
+	args->controller->ExecuteSession(args->host, args->opts);
+	_endthread();
+}
+
+void TraceSessionController::ExecuteSession(const std::wstring& host, const TraceOptions& opts)
+{
+	int     addr = 0;
+	CString err;
+	if (!WinMTRHostResolver::Resolve(host.c_str(), addr, err)) {
+		view_->PostTraceFailed(err);
+		return;
+	}
+
+	engine_->Trace(addr, opts);
+	view_->PostTraceCompleted();
 }

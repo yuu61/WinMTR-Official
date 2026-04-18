@@ -2,7 +2,7 @@
 // FILE:            TraceListView.h
 //
 // DESCRIPTION:
-//   Populates and refreshes the main hop list (CListCtrl) from WinMTRNet.
+//   Populates and refreshes the main hop list (CListCtrl) from HopStatistics.
 //
 //*****************************************************************************
 
@@ -12,12 +12,12 @@
 #include <afxwin.h>
 #include <afxcmn.h>
 
-class WinMTRNet;
+class HopStatistics;
 
 namespace WinMTRTraceListView {
 
 void InitColumns(CListCtrl& list);
-void Refresh(CListCtrl& list, WinMTRNet& net);
+void Refresh(CListCtrl& list, const HopStatistics& stats);
 
 } // namespace WinMTRTraceListView
 

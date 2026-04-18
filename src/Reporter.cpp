@@ -6,19 +6,19 @@
 
 #include "Global.h"
 #include "Reporter.h"
-#include "Net.h"
+#include "HopStatistics.h"
 
 
 //*****************************************************************************
 // WinMTRReporter::BuildTextReport
 //
 //*****************************************************************************
-CString WinMTRReporter::BuildTextReport(WinMTRNet* net)
+CString WinMTRReporter::BuildTextReport(const HopStatistics& stats)
 {
 	wchar_t buf[255];
 	CString result;
 
-	int nh = net->GetMax();
+	int nh = stats.GetMax();
 
 	result  = L"|------------------------------------------------------------------------------------------|\r\n";
 	result += L"|                                      WinMTR statistics                                   |\r\n";
@@ -26,14 +26,14 @@ CString WinMTRReporter::BuildTextReport(WinMTRNet* net)
 	result += L"|------------------------------------------------|------|------|------|------|------|------|\r\n";
 
 	for(int i=0;i <nh ; i++) {
-		net->GetName(i, buf);
+		stats.GetName(i, buf);
 		if (buf[0] == L'\0') wcscpy_s(buf, L"No response from host");
 
 		CString line;
 		line.Format(L"|%40s - %4d | %4d | %4d | %4d | %4d | %4d | %4d |\r\n",
-					buf, net->GetPercent(i),
-					net->GetXmit(i), net->GetReturned(i), net->GetBest(i),
-					net->GetAvg(i), net->GetWorst(i), net->GetLast(i));
+					buf, stats.GetPercent(i),
+					stats.GetXmit(i), stats.GetReturned(i), stats.GetBest(i),
+					stats.GetAvg(i), stats.GetWorst(i), stats.GetLast(i));
 		result += line;
 	}
 
@@ -49,12 +49,12 @@ CString WinMTRReporter::BuildTextReport(WinMTRNet* net)
 // WinMTRReporter::BuildHtmlReport
 //
 //*****************************************************************************
-CString WinMTRReporter::BuildHtmlReport(WinMTRNet* net)
+CString WinMTRReporter::BuildHtmlReport(const HopStatistics& stats)
 {
 	wchar_t buf[255];
 	CString result;
 
-	int nh = net->GetMax();
+	int nh = stats.GetMax();
 
 	result  = L"<html><head><title>WinMTR Statistics</title></head><body bgcolor=\"white\">\r\n";
 	result += L"<center><h2>WinMTR statistics</h2></center>\r\n";
@@ -62,14 +62,14 @@ CString WinMTRReporter::BuildHtmlReport(WinMTRNet* net)
 	result += L"<tr><td>Host</td> <td>%</td> <td>Sent</td> <td>Recv</td> <td>Best</td> <td>Avrg</td> <td>Wrst</td> <td>Last</td></tr>\r\n";
 
 	for(int i=0;i <nh ; i++) {
-		net->GetName(i, buf);
+		stats.GetName(i, buf);
 		if (buf[0] == L'\0') wcscpy_s(buf, L"No response from host");
 
 		CString line;
 		line.Format(L"<tr><td>%s</td> <td>%4d</td> <td>%4d</td> <td>%4d</td> <td>%4d</td> <td>%4d</td> <td>%4d</td> <td>%4d</td></tr>\r\n",
-					buf, net->GetPercent(i),
-					net->GetXmit(i), net->GetReturned(i), net->GetBest(i),
-					net->GetAvg(i), net->GetWorst(i), net->GetLast(i));
+					buf, stats.GetPercent(i),
+					stats.GetXmit(i), stats.GetReturned(i), stats.GetBest(i),
+					stats.GetAvg(i), stats.GetWorst(i), stats.GetLast(i));
 		result += line;
 	}
 

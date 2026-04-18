@@ -5,17 +5,23 @@
 //   State machine that sequences the trace lifecycle (IDLE/TRACING/STOPPING/
 //   EXIT) and forwards UI side-effects through ISessionView.
 //
+//   Completion notification uses PostMessage (via ISessionView::PostTrace*)
+//   instead of mutex polling; the owning dialog wires the messages back to
+//   OnTraceCompleted / OnTraceFailed.
+//
 //*****************************************************************************
 
 #ifndef TRACESESSIONCONTROLLER_H_
 #define TRACESESSIONCONTROLLER_H_
 
 #include "TraceOptions.h"
+#include <afxwin.h>
 #include <memory>
 #include <string>
 
-class WinMTRNet;
+class HopStatistics;
 class ISessionView;
+class TraceEngine;
 
 class TraceSessionController {
 public:
@@ -36,12 +42,17 @@ public:
 	void RequestStop();
 	void RequestExit();
 
-	// Called from the dialog's WM_TIMER handler.
+	// Called on the UI thread when the session worker reports back through
+	// ISessionView::PostTrace*.
+	void OnTraceCompleted();
+	void OnTraceFailed(const CString& error);
+
+	// Driven by WM_TIMER; refreshes the hop list while TRACING/STOPPING.
 	void Tick();
 
-	[[nodiscard]] State      CurrentState() const { return state_; }
-	[[nodiscard]] bool       IsTracing()    const { return state_ == TRACING; }
-	[[nodiscard]] WinMTRNet& Net();
+	[[nodiscard]] State CurrentState() const { return state_; }
+	[[nodiscard]] bool  IsTracing()   const { return state_ == TRACING; }
+	[[nodiscard]] const HopStatistics& Stats() const;
 
 private:
 	enum Transition {
@@ -50,23 +61,34 @@ private:
 		IDLE_TO_EXIT,
 		TRACING_TO_TRACING,
 		TRACING_TO_STOPPING,
+		TRACING_TO_IDLE,
 		TRACING_TO_EXIT,
 		STOPPING_TO_IDLE,
 		STOPPING_TO_STOPPING,
 		STOPPING_TO_EXIT
 	};
 
+	struct SessionWorkerArgs {
+		TraceSessionController* controller;
+		std::wstring            host;
+		TraceOptions            opts;
+	};
+
 	void Transit(State new_state);
+	void ApplyTransition();
+	void RestoreIdleUi();
 
-	ISessionView*              view_;
-	std::unique_ptr<WinMTRNet> net_;
-	HANDLE                     mutex_;
-	State                      state_;
-	Transition                 transition_;
-	unsigned int               tick_count_;
+	void ExecuteSession(const std::wstring& host, const TraceOptions& opts);
+	static void SessionWorkerEntry(void* p);
 
-	std::wstring               pending_host_;
-	TraceOptions               pending_opts_{};
+	ISessionView*                view_;
+	std::unique_ptr<TraceEngine> engine_;
+	State                        state_;
+	Transition                   transition_;
+	unsigned int                 tick_count_;
+
+	std::wstring pending_host_;
+	TraceOptions pending_opts_{};
 };
 
 #endif // TRACESESSIONCONTROLLER_H_

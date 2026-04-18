@@ -15,7 +15,9 @@
 #include "TraceConfigState.h"
 #include <memory>
 
-constexpr UINT WINMTR_DIALOG_TIMER = 100;
+constexpr UINT WINMTR_DIALOG_TIMER      = 100;
+constexpr UINT WM_WINMTR_TRACE_COMPLETED = WM_USER + 100;
+constexpr UINT WM_WINMTR_TRACE_FAILED    = WM_USER + 101;
 
 class CMFCLinkCtrl;
 class TraceSessionController;
@@ -54,14 +56,17 @@ public:
 	[[nodiscard]] const TraceConfigState& Config() const { return config; }
 
 	// ISessionView
-	void SetStartEnabled(bool enabled)     override;
-	void SetStartText(LPCWSTR text)        override;
-	void SetHostComboEnabled(bool enabled) override;
-	void SetOptionsEnabled(bool enabled)   override;
-	void SetStatus(LPCWSTR text)           override;
-	void RefreshList()                     override;
-	void FocusHostCombo()                  override;
-	void RequestClose()                    override;
+	void SetStartEnabled(bool enabled)             override;
+	void SetStartText(LPCWSTR text)                override;
+	void SetHostComboEnabled(bool enabled)         override;
+	void SetOptionsEnabled(bool enabled)           override;
+	void SetStatus(LPCWSTR text)                   override;
+	void RefreshList()                             override;
+	void FocusHostCombo()                          override;
+	void RequestClose()                            override;
+	void ShowError(const CString& error)           override;
+	void PostTraceCompleted()                      override;
+	void PostTraceFailed(const CString& error)     override;
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);
@@ -100,6 +105,8 @@ public:
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
 	afx_msg void OnClose();
 	afx_msg void OnBnClickedCancel();
+	afx_msg LRESULT OnTraceCompletedMsg(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnTraceFailedMsg(WPARAM wParam, LPARAM lParam);
 };
 
 #endif // WINMTRDIALOG_H_

@@ -8,6 +8,4 @@ constexpr double DEFAULT_INTERVAL  = 1.0;
 constexpr int    DEFAULT_MAX_LRU   = 128;
 constexpr BOOL   DEFAULT_DNS       = TRUE;
 
-constexpr int MaxHost = 256;
-
 #endif // TRACECONFIG_H_
