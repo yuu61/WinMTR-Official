@@ -17,6 +17,9 @@
 
 #include "StatusBar.h"
 #include "Net.h"
+#include <memory>
+
+class CMFCLinkCtrl;
 
 //*****************************************************************************
 // CLASS:  WinMTRDialog
@@ -83,6 +86,7 @@ public:
 	BOOL				useDNS;
 	bool				hasUseDNSFromCmdLine;
 	WinMTRNet*			wmtrnet;
+	std::unique_ptr<CMFCLinkCtrl> m_appnorLink;
 
 	void SetHostName(const char *host);
 	void SetInterval(float i);

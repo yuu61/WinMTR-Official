@@ -94,7 +94,7 @@ void WinMTRMain::ParseCommandLineParams(LPTSTR cmd, WinMTRDialog *wmtrdlg)
 	char value[1024];
 	std::string host_name = "";
 
-	if(GetParamValue(cmd, "help",'h', value)) {
+	if(GetParamValue(cmd, "help",'h', value, sizeof(value))) {
 		WinMTRHelp mtrHelp;
 		m_pMainWnd = &mtrHelp;
 		mtrHelp.DoModal();
@@ -104,19 +104,19 @@ void WinMTRMain::ParseCommandLineParams(LPTSTR cmd, WinMTRDialog *wmtrdlg)
 	if(GetHostNameParamValue(cmd, host_name)) {
 		wmtrdlg->SetHostName(host_name.c_str());
 	}
-	if(GetParamValue(cmd, "interval",'i', value)) {
+	if(GetParamValue(cmd, "interval",'i', value, sizeof(value))) {
 		wmtrdlg->SetInterval((float)atof(value));
 		wmtrdlg->hasIntervalFromCmdLine = true;
 	}
-	if(GetParamValue(cmd, "size",'s', value)) {
+	if(GetParamValue(cmd, "size",'s', value, sizeof(value))) {
 		wmtrdlg->SetPingSize(atoi(value));
 		wmtrdlg->hasPingsizeFromCmdLine = true;
 	}
-	if(GetParamValue(cmd, "maxLRU",'m', value)) {
+	if(GetParamValue(cmd, "maxLRU",'m', value, sizeof(value))) {
 		wmtrdlg->SetMaxLRU(atoi(value));
 		wmtrdlg->hasMaxLRUFromCmdLine = true;
 	}
-	if(GetParamValue(cmd, "numeric",'n', value)) {
+	if(GetParamValue(cmd, "numeric",'n', value, sizeof(value))) {
 		wmtrdlg->SetUseDNS(FALSE);
 		wmtrdlg->hasUseDNSFromCmdLine = true;
 	}
@@ -127,32 +127,34 @@ void WinMTRMain::ParseCommandLineParams(LPTSTR cmd, WinMTRDialog *wmtrdlg)
 //
 // 
 //*****************************************************************************
-int WinMTRMain::GetParamValue(LPTSTR cmd, const char *param, char sparam, char *value)
+int WinMTRMain::GetParamValue(LPTSTR cmd, const char *param, char sparam, char *value, size_t value_size)
 {
 	char *p;
-	
+
 	char p_long[1024];
 	char p_short[1024];
-	
+
 	sprintf(p_long,"--%s ", param);
 	sprintf(p_short,"-%c ", sparam);
-	
+
 	if( (p=strstr(cmd, p_long)) ) ;
-	else 
+	else
 		p=strstr(cmd, p_short);
 
 	if(p == NULL)
 		return 0;
 
-	if(strcmp(param,"numeric")==0) 
+	if(strcmp(param,"numeric")==0)
 		return 1;
 
 	while(*p && *p!=' ')
 		p++;
 	while(*p==' ') p++;
-	
-	int i = 0;
-	while(*p && *p!=' ')
+
+	if (value_size == 0)
+		return 1;
+	size_t i = 0;
+	while(*p && *p!=' ' && i < value_size - 1)
 		value[i++] = *p++;
 	value[i]='\0';
 

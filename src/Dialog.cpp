@@ -14,6 +14,7 @@
 #include "HostResolver.h"
 #include "TraceConfig.h"
 #include "MtrColumns.h"
+#include "Version.h"
 #include <iostream>
 #include <sstream>
 #include <vector>
@@ -123,9 +124,9 @@ BOOL WinMTRDialog::OnInitDialog()
 	CDialog::OnInitDialog();
 
 	#ifndef  _WIN64
-	char caption[] = {"WinMTR v0.92 32 bit by Appnor MSP - www.winmtr.net"};
+	char caption[] = "WinMTR v" WINMTR_VERSION " 32 bit by Appnor MSP - www.winmtr.net";
 	#else
-	char caption[] = {"WinMTR v0.92 64 bit by Appnor MSP - www.winmtr.net"};
+	char caption[] = "WinMTR v" WINMTR_VERSION " 64 bit by Appnor MSP - www.winmtr.net";
 	#endif
 
 	SetTimer(1, WINMTR_DIALOG_TIMER, NULL);
@@ -143,21 +144,21 @@ BOOL WinMTRDialog::OnInitDialog()
 	statusBar.SetIndicators( sbi,1);
 	statusBar.SetPaneInfo(0, statusBar.GetItemID(0),SBPS_STRETCH, NULL );
 	{ // Add appnor URL
-		CMFCLinkCtrl* m_pWndButton = new CMFCLinkCtrl;
-		if (!m_pWndButton->Create(_T("www.appnor.com"), WS_CHILD|WS_VISIBLE|WS_TABSTOP, CRect(0,0,0,0), &statusBar, 1234)) {
+		m_appnorLink.reset(new CMFCLinkCtrl);
+		if (!m_appnorLink->Create(_T("www.appnor.com"), WS_CHILD|WS_VISIBLE|WS_TABSTOP, CRect(0,0,0,0), &statusBar, 1234)) {
 			TRACE(_T("Failed to create button control.\n"));
 			return FALSE;
 		}
 
-		m_pWndButton->SetURL("http://www.appnor.com/?utm_source=winmtr&utm_medium=desktop&utm_campaign=software");
-			
+		m_appnorLink->SetURL("http://www.appnor.com/?utm_source=winmtr&utm_medium=desktop&utm_campaign=software");
+
 		if(!statusBar.AddPane(1234,1)) {
 			AfxMessageBox(_T("Pane index out of range\nor pane with same ID already exists in the status bar"), MB_ICONERROR);
 			return FALSE;
 		}
-			
+
 		statusBar.SetPaneWidth(statusBar.CommandToIndex(1234), 100);
-		statusBar.AddPaneControl(m_pWndButton, 1234, true);
+		statusBar.AddPaneControl(m_appnorLink.get(), 1234, FALSE);
 	}
 
 	for(int i = 0; i< MTR_NR_COLS; i++)
@@ -389,7 +390,8 @@ void WinMTRDialog::OnDblclkList(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 void WinMTRDialog::SetHostName(const char *host)
 {
 	m_autostart = 1;
-	strncpy(msz_defaulthostname,host,1000);
+	strncpy(msz_defaulthostname, host, sizeof(msz_defaulthostname) - 1);
+	msz_defaulthostname[sizeof(msz_defaulthostname) - 1] = '\0';
 }
 
 
