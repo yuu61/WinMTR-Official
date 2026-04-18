@@ -44,20 +44,20 @@ void TraceEngine::Trace(int address, const TraceOptions& opts)
 	stats_.SetLastRemoteAddr(address);
 
 	HANDLE threads[MAX_HOPS];
+	DWORD  nthreads = 0;
 	for (int i = 0; i < MAX_HOPS; ++i) {
 		auto args = std::make_unique<TraceWorkerArgs>();
 		args->engine  = this;
 		args->address = address;
 		args->ttl     = i + 1;
 		const uintptr_t h = _beginthread(TraceWorkerEntry, 0, args.get());
-		if (h == 0 || h == static_cast<uintptr_t>(-1)) {
-			threads[i] = INVALID_HANDLE_VALUE;
-		} else {
-			threads[i] = reinterpret_cast<HANDLE>(h);
+		if (h != 0 && h != static_cast<uintptr_t>(-1)) {
+			threads[nthreads++] = reinterpret_cast<HANDLE>(h);
 			args.release();
 		}
 	}
-	WaitForMultipleObjects(MAX_HOPS, threads, TRUE, INFINITE);
+	if (nthreads > 0)
+		WaitForMultipleObjects(nthreads, threads, TRUE, INFINITE);
 }
 
 void TraceEngine::TraceWorkerEntry(void* p)
