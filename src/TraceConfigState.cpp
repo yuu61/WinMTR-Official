@@ -8,22 +8,7 @@
 
 BOOL TraceConfigState::LoadAtInit(const CommandLineOverrides& overrides, std::vector<CString>& outHosts)
 {
-	LoadedSettings s{};
-	s.pingsize = pingsize;
-	s.interval = interval;
-	s.maxLRU   = maxLRU;
-	s.useDNS   = useDNS;
-	s.nrLRU    = nrLRU;
-
-	if (!Settings::InitAndLoad(s, overrides, outHosts))
-		return FALSE;
-
-	pingsize = s.pingsize;
-	interval = s.interval;
-	maxLRU   = s.maxLRU;
-	useDNS   = s.useDNS;
-	nrLRU    = s.nrLRU;
-	return TRUE;
+	return Settings::InitAndLoad(*this, overrides, outHosts);
 }
 
 void TraceConfigState::SaveOptions() const

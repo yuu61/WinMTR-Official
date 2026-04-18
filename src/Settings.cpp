@@ -6,6 +6,7 @@
 
 #include "Global.h"
 #include "Settings.h"
+#include "TraceConfigState.h"
 #include "Version.h"
 
 namespace {
@@ -45,15 +46,15 @@ LONG OpenWinMTRSubKey(LPCWSTR sub, REGSAM access, HKEY& outKey)
 // Settings::InitAndLoad
 //
 //*****************************************************************************
-BOOL Settings::InitAndLoad(LoadedSettings& io, const CommandLineOverrides& overrides, std::vector<CString>& outHosts)
+BOOL Settings::InitAndLoad(TraceConfigState& state, const CommandLineOverrides& overrides, std::vector<CString>& outHosts)
 {
 	// Apply cmdline overrides first so registry writes below (first-run path)
 	// seed from the cmdline value, and registry reads correctly skip
 	// overridden fields.
-	if (overrides.pingsize) io.pingsize = *overrides.pingsize;
-	if (overrides.interval) io.interval = *overrides.interval;
-	if (overrides.maxLRU)   io.maxLRU   = *overrides.maxLRU;
-	if (overrides.useDNS)   io.useDNS   = *overrides.useDNS;
+	if (overrides.pingsize) state.pingsize = *overrides.pingsize;
+	if (overrides.interval) state.interval = *overrides.interval;
+	if (overrides.maxLRU)   state.maxLRU   = *overrides.maxLRU;
+	if (overrides.useDNS)   state.useDNS   = *overrides.useDNS;
 
 	HKEY hWinMTR = NULL;
 	if (OpenWinMTRRoot(KEY_ALL_ACCESS, hWinMTR) != ERROR_SUCCESS)
@@ -78,34 +79,34 @@ BOOL Settings::InitAndLoad(LoadedSettings& io, const CommandLineOverrides& overr
 	DWORD tmp = 0;
 	DWORD sz = sizeof(DWORD);
 	if (RegQueryValueExW(hConfig, L"PingSize", 0, NULL, (BYTE*)&tmp, &sz) != ERROR_SUCCESS) {
-		tmp = (DWORD)io.pingsize;
+		tmp = (DWORD)state.pingsize;
 		RegSetValueExW(hConfig, L"PingSize", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
 	} else {
-		if (!overrides.pingsize) io.pingsize = (int)tmp;
+		if (!overrides.pingsize) state.pingsize = (int)tmp;
 	}
 
 	sz = sizeof(DWORD);
 	if (RegQueryValueExW(hConfig, L"MaxLRU", 0, NULL, (BYTE*)&tmp, &sz) != ERROR_SUCCESS) {
-		tmp = (DWORD)io.maxLRU;
+		tmp = (DWORD)state.maxLRU;
 		RegSetValueExW(hConfig, L"MaxLRU", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
 	} else {
-		if (!overrides.maxLRU) io.maxLRU = (int)tmp;
+		if (!overrides.maxLRU) state.maxLRU = (int)tmp;
 	}
 
 	sz = sizeof(DWORD);
 	if (RegQueryValueExW(hConfig, L"UseDNS", 0, NULL, (BYTE*)&tmp, &sz) != ERROR_SUCCESS) {
-		tmp = io.useDNS ? 1 : 0;
+		tmp = state.useDNS ? 1 : 0;
 		RegSetValueExW(hConfig, L"UseDNS", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
 	} else {
-		if (!overrides.useDNS) io.useDNS = (BOOL)tmp;
+		if (!overrides.useDNS) state.useDNS = (BOOL)tmp;
 	}
 
 	sz = sizeof(DWORD);
 	if (RegQueryValueExW(hConfig, L"Interval", 0, NULL, (BYTE*)&tmp, &sz) != ERROR_SUCCESS) {
-		tmp = (DWORD)(io.interval * 1000);
+		tmp = (DWORD)(state.interval * 1000);
 		RegSetValueExW(hConfig, L"Interval", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
 	} else {
-		if (!overrides.interval) io.interval = (double)tmp / 1000.0;
+		if (!overrides.interval) state.interval = (double)tmp / 1000.0;
 	}
 	RegCloseKey(hConfig);
 
@@ -119,12 +120,12 @@ BOOL Settings::InitAndLoad(LoadedSettings& io, const CommandLineOverrides& overr
 
 	sz = sizeof(DWORD);
 	if (RegQueryValueExW(hLRU, L"NrLRU", 0, NULL, (BYTE*)&tmp, &sz) != ERROR_SUCCESS) {
-		tmp = (DWORD)io.nrLRU;
+		tmp = (DWORD)state.nrLRU;
 		RegSetValueExW(hLRU, L"NrLRU", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
 	} else {
 		wchar_t hostBuf[255]{};
-		io.nrLRU = (int)tmp;
-		for (int i = 0; i < io.maxLRU; ++i) {
+		state.nrLRU = (int)tmp;
+		for (int i = 0; i < state.maxLRU; ++i) {
 			const auto keyName = std::format(L"Host{}", i + 1);
 			DWORD hostSize = sizeof(hostBuf);
 			if (RegQueryValueExW(hLRU, keyName.c_str(), 0, NULL, (BYTE*)hostBuf, &hostSize) == ERROR_SUCCESS) {

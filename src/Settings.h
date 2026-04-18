@@ -14,14 +14,7 @@
 #include <afxwin.h>
 #include <vector>
 
-// Values exchanged with the registry on load.
-struct LoadedSettings {
-	int    pingsize = 0;
-	double interval = 0.0;
-	int    maxLRU   = 0;
-	BOOL   useDNS   = FALSE;
-	int    nrLRU    = 0;
-};
+struct TraceConfigState;
 
 //*****************************************************************************
 // CLASS:  Settings
@@ -32,11 +25,11 @@ struct LoadedSettings {
 class Settings
 {
 public:
-	// Seed io with caller's current values. Applies cmdline overrides up-front,
-	// then loads the registry; registry values replace io only for fields that
-	// were not overridden on the command line. Missing registry entries are
-	// seeded from io (so first-run writes reflect both defaults and cmdline).
-	static BOOL InitAndLoad(LoadedSettings& io, const CommandLineOverrides& overrides, std::vector<CString>& outHosts);
+	// Seeds state with caller's current values. Applies cmdline overrides
+	// up-front, then loads the registry; registry values replace state only
+	// for fields that were not overridden. Missing registry entries are seeded
+	// from state (so first-run writes reflect both defaults and cmdline).
+	static BOOL InitAndLoad(TraceConfigState& state, const CommandLineOverrides& overrides, std::vector<CString>& outHosts);
 
 	static void SaveOptions(int pingsize, int maxLRU, BOOL useDNS, double interval);
 
