@@ -32,8 +32,6 @@ public:
 
 	enum { IDD = IDD_WINMTR_DIALOG };
 
-	afx_msg BOOL InitRegistry();
-
 	WinMTRStatusBar	statusBar;
 
 	enum STATES {

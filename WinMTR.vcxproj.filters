@@ -31,6 +31,9 @@
     <ClCompile Include="src\Help.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="src\HostResolver.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
     <ClCompile Include="src\Main.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -41,6 +44,12 @@
       <Filter>Source</Filter>
     </ClCompile>
     <ClCompile Include="src\Properties.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Reporter.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\Settings.cpp">
       <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
@@ -63,6 +72,9 @@
     <ClInclude Include="src\Help.h">
       <Filter>Header</Filter>
     </ClInclude>
+    <ClInclude Include="src\HostResolver.h">
+      <Filter>Header</Filter>
+    </ClInclude>
     <ClInclude Include="src\Main.h">
       <Filter>Header</Filter>
     </ClInclude>
@@ -73,6 +85,12 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="src\Properties.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Reporter.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Settings.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>

@@ -289,10 +289,13 @@
     <ClCompile Include="src\Dialog.cpp" />
     <ClCompile Include="src\Global.cpp" />
     <ClCompile Include="src\Help.cpp" />
+    <ClCompile Include="src\HostResolver.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Net.cpp" />
     <ClCompile Include="src\Options.cpp" />
     <ClCompile Include="src\Properties.cpp" />
+    <ClCompile Include="src\Reporter.cpp" />
+    <ClCompile Include="src\Settings.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\License.h" />
@@ -301,10 +304,13 @@
     <ClInclude Include="src\Dialog.h" />
     <ClInclude Include="src\Global.h" />
     <ClInclude Include="src\Help.h" />
+    <ClInclude Include="src\HostResolver.h" />
     <ClInclude Include="src\Main.h" />
     <ClInclude Include="src\Net.h" />
     <ClInclude Include="src\Options.h" />
     <ClInclude Include="src\Properties.h" />
+    <ClInclude Include="src\Reporter.h" />
+    <ClInclude Include="src\Settings.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="resources\WinMTR.ico" />
