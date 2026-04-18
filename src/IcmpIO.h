@@ -30,7 +30,8 @@ public:
 	IcmpIO(const IcmpIO&)            = delete;
 	IcmpIO& operator=(const IcmpIO&) = delete;
 
-	[[nodiscard]] bool IsValid() const { return valid_; }
+	[[nodiscard]] bool    IsValid()   const { return valid_; }
+	[[nodiscard]] LPCWSTR LastError() const { return last_error_; }
 
 	// Matches IcmpSendEcho semantics; returns 0 on failure or if invalid.
 	DWORD SendEcho(u_long dest_addr, LPVOID req_data, WORD req_size,
@@ -49,6 +50,7 @@ private:
 	LPFNICMPCREATEFILE  fn_create_;
 	LPFNICMPCLOSEHANDLE fn_close_;
 	LPFNICMPSENDECHO    fn_send_;
+	LPCWSTR             last_error_;
 };
 
 #endif // ICMPIO_H_

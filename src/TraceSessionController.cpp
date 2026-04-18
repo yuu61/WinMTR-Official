@@ -34,6 +34,16 @@ const HopStatistics& TraceSessionController::Stats() const
 	return engine_->Stats();
 }
 
+bool TraceSessionController::IsEngineValid() const
+{
+	return engine_ && engine_->IsValid();
+}
+
+LPCWSTR TraceSessionController::EngineError() const
+{
+	return engine_ ? engine_->LastError() : nullptr;
+}
+
 void TraceSessionController::RequestStart(const std::wstring& host, const TraceOptions& opts)
 {
 	pending_host_ = host;

@@ -81,6 +81,11 @@ BOOL Dialog::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 
+	if (!controller->IsEngineValid()) {
+		LPCWSTR err = controller->EngineError();
+		AfxMessageBox(err ? err : L"ICMP subsystem initialization failed.");
+	}
+
 #ifndef _WIN64
 	wchar_t caption[] = L"WinMTR v" WINMTR_VERSION L" 32 bit by Appnor MSP - www.winmtr.net";
 #else

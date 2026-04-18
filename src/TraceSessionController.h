@@ -54,6 +54,9 @@ public:
 	[[nodiscard]] bool  IsTracing()   const { return state_ == TRACING; }
 	[[nodiscard]] const HopStatistics& Stats() const;
 
+	[[nodiscard]] bool    IsEngineValid() const;
+	[[nodiscard]] LPCWSTR EngineError()   const;
+
 private:
 	enum Transition {
 		IDLE_TO_IDLE,

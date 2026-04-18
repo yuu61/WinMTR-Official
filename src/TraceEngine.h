@@ -23,7 +23,8 @@ public:
 	TraceEngine(const TraceEngine&)            = delete;
 	TraceEngine& operator=(const TraceEngine&) = delete;
 
-	[[nodiscard]] bool IsValid() const { return icmp_.IsValid(); }
+	[[nodiscard]] bool    IsValid()   const { return icmp_.IsValid(); }
+	[[nodiscard]] LPCWSTR LastError() const { return icmp_.LastError(); }
 
 	[[nodiscard]] const HopStatistics& Stats() const { return stats_; }
 	[[nodiscard]] HopStatistics&       Stats()       { return stats_; }

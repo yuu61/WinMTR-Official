@@ -11,11 +11,12 @@ IcmpIO::IcmpIO()
 	  handle_(INVALID_HANDLE_VALUE),
 	  fn_create_(nullptr),
 	  fn_close_(nullptr),
-	  fn_send_(nullptr)
+	  fn_send_(nullptr),
+	  last_error_(nullptr)
 {
 	dll_ = LoadLibraryW(L"ICMP.DLL");
 	if (dll_ == nullptr) {
-		AfxMessageBox(L"Failed: Unable to locate ICMP.DLL!");
+		last_error_ = L"Unable to locate ICMP.DLL.";
 		return;
 	}
 
@@ -23,13 +24,13 @@ IcmpIO::IcmpIO()
 	fn_close_  = (LPFNICMPCLOSEHANDLE)GetProcAddress(dll_, "IcmpCloseHandle");
 	fn_send_   = (LPFNICMPSENDECHO)GetProcAddress(dll_, "IcmpSendEcho");
 	if (fn_create_ == nullptr || fn_close_ == nullptr || fn_send_ == nullptr) {
-		AfxMessageBox(L"Wrong ICMP.DLL system library !");
+		last_error_ = L"ICMP.DLL is missing required entry points.";
 		return;
 	}
 
 	handle_ = fn_create_();
 	if (handle_ == INVALID_HANDLE_VALUE) {
-		AfxMessageBox(L"Error in ICMP.DLL !");
+		last_error_ = L"IcmpCreateFile failed.";
 		return;
 	}
 
