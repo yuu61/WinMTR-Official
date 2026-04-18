@@ -1,0 +1,31 @@
+//*****************************************************************************
+// FILE:            DialogLayout.h
+//
+// DESCRIPTION:
+//   Resize/size-clamp logic for the main dialog's child controls.
+//
+//*****************************************************************************
+
+#ifndef DIALOGLAYOUT_H_
+#define DIALOGLAYOUT_H_
+
+#include <afxwin.h>
+#include <afxcmn.h>
+
+namespace WinMTRDialogLayout {
+
+struct ControlRefs {
+	CStatic&   staticS;
+	CStatic&   staticJ;
+	CButton&   buttonExit;
+	CButton&   buttonExpH;
+	CButton&   buttonExpT;
+	CListCtrl& listMTR;
+};
+
+void ApplyClientSize(CWnd& dialog, const ControlRefs& refs);
+void ClampMinimum(LPRECT rect);
+
+} // namespace WinMTRDialogLayout
+
+#endif // DIALOGLAYOUT_H_

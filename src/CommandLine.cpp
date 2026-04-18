@@ -5,6 +5,7 @@
 #include "Global.h"
 #include "CommandLine.h"
 #include "Dialog.h"
+#include "TraceConfigState.h"
 #include <string>
 
 namespace {
@@ -95,20 +96,20 @@ bool WinMTRCommandLine::Parse(LPWSTR cmd, WinMTRDialog* dlg)
 		dlg->SetHostName(host_name.c_str());
 	}
 	if (GetParamValue(cmd, L"interval", L'i', value, _countof(value))) {
-		dlg->SetInterval((float)_wtof(value));
-		dlg->hasIntervalFromCmdLine = true;
+		dlg->Config().interval = (double)_wtof(value);
+		dlg->Config().hasIntervalFromCmdLine = true;
 	}
 	if (GetParamValue(cmd, L"size", L's', value, _countof(value))) {
-		dlg->SetPingSize(_wtoi(value));
-		dlg->hasPingsizeFromCmdLine = true;
+		dlg->Config().pingsize = _wtoi(value);
+		dlg->Config().hasPingsizeFromCmdLine = true;
 	}
 	if (GetParamValue(cmd, L"maxLRU", L'm', value, _countof(value))) {
-		dlg->SetMaxLRU(_wtoi(value));
-		dlg->hasMaxLRUFromCmdLine = true;
+		dlg->Config().maxLRU = _wtoi(value);
+		dlg->Config().hasMaxLRUFromCmdLine = true;
 	}
 	if (GetParamValue(cmd, L"numeric", L'n', value, _countof(value))) {
-		dlg->SetUseDNS(FALSE);
-		dlg->hasUseDNSFromCmdLine = true;
+		dlg->Config().useDNS = FALSE;
+		dlg->Config().hasUseDNSFromCmdLine = true;
 	}
 
 	return false;

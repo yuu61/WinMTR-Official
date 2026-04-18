@@ -342,7 +342,9 @@
     <ClCompile Include="src\License.cpp" />
     <ClCompile Include="src\StatusBar.cpp" />
     <ClCompile Include="src\Dialog.cpp" />
+    <ClCompile Include="src\DialogLayout.cpp" />
     <ClCompile Include="src\Help.cpp" />
+    <ClCompile Include="src\HostComboModel.cpp" />
     <ClCompile Include="src\HostResolver.cpp" />
     <ClCompile Include="src\Main.cpp" />
     <ClCompile Include="src\Net.cpp" />
@@ -350,6 +352,9 @@
     <ClCompile Include="src\Properties.cpp" />
     <ClCompile Include="src\Reporter.cpp" />
     <ClCompile Include="src\Settings.cpp" />
+    <ClCompile Include="src\TraceConfigState.cpp" />
+    <ClCompile Include="src\TraceListView.cpp" />
+    <ClCompile Include="src\TraceSessionController.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\CommandLine.h" />
@@ -357,11 +362,17 @@
     <ClInclude Include="src\StatusBar.h" />
     <ClInclude Include="resources\resource.h" />
     <ClInclude Include="src\Dialog.h" />
+    <ClInclude Include="src\DialogLayout.h" />
     <ClInclude Include="src\Global.h" />
     <ClInclude Include="src\Help.h" />
+    <ClInclude Include="src\HostComboModel.h" />
     <ClInclude Include="src\MtrColumns.h" />
+    <ClInclude Include="src\SessionView.h" />
     <ClInclude Include="src\TraceConfig.h" />
+    <ClInclude Include="src\TraceConfigState.h" />
+    <ClInclude Include="src\TraceListView.h" />
     <ClInclude Include="src\TraceOptions.h" />
+    <ClInclude Include="src\TraceSessionController.h" />
     <ClInclude Include="src\Version.h" />
     <ClInclude Include="src\HostResolver.h" />
     <ClInclude Include="src\Main.h" />

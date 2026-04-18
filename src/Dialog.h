@@ -1,12 +1,9 @@
 //*****************************************************************************
 // FILE:            Dialog.h
 //
-//
 // DESCRIPTION:
-//   
-//
-// NOTES:
-//    
+//   Main WinMTR dialog. Acts as a facade that owns the config state plus a
+//   TraceSessionController, and fulfills ISessionView for the controller.
 //
 //*****************************************************************************
 
@@ -14,96 +11,72 @@
 #define WINMTRDIALOG_H_
 
 #include "StatusBar.h"
-#include "Net.h"
+#include "SessionView.h"
+#include "TraceConfigState.h"
 #include <memory>
 
 constexpr UINT WINMTR_DIALOG_TIMER = 100;
 
 class CMFCLinkCtrl;
+class TraceSessionController;
 
 //*****************************************************************************
 // CLASS:  WinMTRDialog
-//
-//
 //*****************************************************************************
 
-class WinMTRDialog : public CDialog
+class WinMTRDialog : public CDialog, public ISessionView
 {
 public:
 	WinMTRDialog(CWnd* pParent = NULL);
-	~WinMTRDialog();
+	~WinMTRDialog() override;
 
 	enum { IDD = IDD_WINMTR_DIALOG };
 
-	WinMTRStatusBar	statusBar;
+	WinMTRStatusBar statusBar;
 
-	enum STATES {
-		IDLE,
-		TRACING,
-		STOPPING,
-		EXIT
-	};
-
-	enum STATE_TRANSITIONS {
-		IDLE_TO_IDLE,
-		IDLE_TO_TRACING,
-		IDLE_TO_EXIT,
-		TRACING_TO_TRACING,
-		TRACING_TO_STOPPING,
-		TRACING_TO_EXIT,
-		STOPPING_TO_IDLE,
-		STOPPING_TO_STOPPING,
-		STOPPING_TO_EXIT
-	};
-
-	CButton	m_buttonOptions;
-	CButton	m_buttonExit;
-	CButton	m_buttonStart;
+	CButton   m_buttonOptions;
+	CButton   m_buttonExit;
+	CButton   m_buttonStart;
 	CComboBox m_comboHost;
-	CListCtrl	m_listMTR;
+	CListCtrl m_listMTR;
 
-	CStatic	m_staticS;
-	CStatic	m_staticJ;
+	CStatic m_staticS;
+	CStatic m_staticJ;
 
-	CButton	m_buttonExpT;
-	CButton	m_buttonExpH;
+	CButton m_buttonExpT;
+	CButton m_buttonExpH;
 
-	int DisplayRedraw();
-	void Transit(STATES new_state);
-
-	STATES				state;
-	STATE_TRANSITIONS	transition;
-	HANDLE				traceThreadMutex; 
-	double				interval;
-	bool				hasIntervalFromCmdLine;
-	int					pingsize;
-	bool				hasPingsizeFromCmdLine;
-	int					maxLRU;
-	bool				hasMaxLRUFromCmdLine;
-	int					nrLRU;
-	BOOL				useDNS;
-	bool				hasUseDNSFromCmdLine;
-	std::unique_ptr<WinMTRNet>    wmtrnet;
 	std::unique_ptr<CMFCLinkCtrl> m_appnorLink;
 
-	void SetHostName(const wchar_t *host);
-	void SetInterval(float i);
-	void SetPingSize(int ps);
-	void SetMaxLRU(int mlru);
-	void SetUseDNS(BOOL udns);
+	void SetHostName(const wchar_t* host);
+
+	[[nodiscard]] TraceConfigState&       Config()       { return config; }
+	[[nodiscard]] const TraceConfigState& Config() const { return config; }
+
+	// ISessionView
+	void SetStartEnabled(bool enabled)     override;
+	void SetStartText(LPCWSTR text)        override;
+	void SetHostComboEnabled(bool enabled) override;
+	void SetOptionsEnabled(bool enabled)   override;
+	void SetStatus(LPCWSTR text)           override;
+	void RefreshList()                     override;
+	void FocusHostCombo()                  override;
+	void RequestClose()                    override;
 
 protected:
 	virtual void DoDataExchange(CDataExchange* pDX);
 
-	int m_autostart;
+	TraceConfigState                        config;
+	std::unique_ptr<TraceSessionController> controller;
+
+	int     m_autostart;
 	wchar_t msz_defaulthostname[1000]{};
-	
-	HICON m_hIcon;
+	HICON   m_hIcon;
 
 	virtual BOOL OnInitDialog();
 	afx_msg void OnPaint();
 	afx_msg void OnSize(UINT, int, int);
-	afx_msg void OnSizing(UINT, LPRECT); 
+	afx_msg void OnSizing(UINT, LPRECT);
 	afx_msg HCURSOR OnQueryDragIcon();
 	afx_msg void OnRestart();
 	afx_msg void OnOptions();
@@ -115,7 +88,7 @@ protected:
 	afx_msg void OnEXPH();
 
 	afx_msg void OnDblclkList(NMHDR* pNMHDR, LRESULT* pResult);
-	
+
 	DECLARE_MESSAGE_MAP()
 public:
 	afx_msg void OnCbnSelchangeComboHost();
@@ -129,4 +102,4 @@ public:
 	afx_msg void OnBnClickedCancel();
 };
 
-#endif // ifndef WINMTRDIALOG_H_
+#endif // WINMTRDIALOG_H_
