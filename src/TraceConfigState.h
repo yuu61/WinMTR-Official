@@ -11,17 +11,17 @@
 #define TRACECONFIGSTATE_H_
 
 #include "CommandLineOverrides.h"
+#include "LRUStore.h"
 #include "TraceConfig.h"
 #include "TraceOptions.h"
 #include <afxwin.h>
 #include <vector>
 
 struct TraceConfigState {
-	double interval = DEFAULT_INTERVAL;
-	int    pingsize = DEFAULT_PING_SIZE;
-	int    maxLRU   = DEFAULT_MAX_LRU;
-	BOOL   useDNS   = DEFAULT_DNS;
-	int    nrLRU    = 0;
+	double   interval = DEFAULT_INTERVAL;
+	int      pingsize = DEFAULT_PING_SIZE;
+	BOOL     useDNS   = DEFAULT_DNS;
+	LRUStore lru;
 
 	// Applies overrides and loads persisted values. Fields set via cmdline
 	// win over both defaults and registry.

@@ -32,12 +32,6 @@ public:
 	static BOOL InitAndLoad(TraceConfigState& state, const CommandLineOverrides& overrides, std::vector<CString>& outHosts);
 
 	static void SaveOptions(int pingsize, int maxLRU, BOOL useDNS, double interval);
-
-	static void AppendLRUHost(LPCWSTR host, int& nrLRU, int maxLRU);
-
-	static void TrimLRU(int maxLRU, int& nrLRU);
-
-	static void ClearLRU(int& nrLRU);
 };
 
 #endif // ifndef SETTINGS_H_

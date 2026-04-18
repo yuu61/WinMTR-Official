@@ -53,7 +53,7 @@ BOOL Settings::InitAndLoad(TraceConfigState& state, const CommandLineOverrides& 
 	// overridden fields.
 	if (overrides.pingsize) state.pingsize = *overrides.pingsize;
 	if (overrides.interval) state.interval = *overrides.interval;
-	if (overrides.maxLRU)   state.maxLRU   = *overrides.maxLRU;
+	if (overrides.maxLRU)   state.lru.SetMax(*overrides.maxLRU);
 	if (overrides.useDNS)   state.useDNS   = *overrides.useDNS;
 
 	HKEY hWinMTR = NULL;
@@ -86,12 +86,14 @@ BOOL Settings::InitAndLoad(TraceConfigState& state, const CommandLineOverrides& 
 	}
 
 	sz = sizeof(DWORD);
+	int maxLRU = state.lru.Max();
 	if (RegQueryValueExW(hConfig, L"MaxLRU", 0, NULL, (BYTE*)&tmp, &sz) != ERROR_SUCCESS) {
-		tmp = (DWORD)state.maxLRU;
+		tmp = (DWORD)maxLRU;
 		RegSetValueExW(hConfig, L"MaxLRU", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
 	} else {
-		if (!overrides.maxLRU) state.maxLRU = (int)tmp;
+		if (!overrides.maxLRU) maxLRU = (int)tmp;
 	}
+	state.lru.SetMax(maxLRU);
 
 	sz = sizeof(DWORD);
 	if (RegQueryValueExW(hConfig, L"UseDNS", 0, NULL, (BYTE*)&tmp, &sz) != ERROR_SUCCESS) {
@@ -110,34 +112,8 @@ BOOL Settings::InitAndLoad(TraceConfigState& state, const CommandLineOverrides& 
 	}
 	RegCloseKey(hConfig);
 
-	HKEY hLRU = NULL;
-	if (RegCreateKeyExW(hWinMTR, L"LRU", 0, NULL,
-						REG_OPTION_NON_VOLATILE, KEY_ALL_ACCESS, NULL,
-						&hLRU, &disp) != ERROR_SUCCESS) {
-		RegCloseKey(hWinMTR);
-		return FALSE;
-	}
-
-	sz = sizeof(DWORD);
-	if (RegQueryValueExW(hLRU, L"NrLRU", 0, NULL, (BYTE*)&tmp, &sz) != ERROR_SUCCESS) {
-		tmp = (DWORD)state.nrLRU;
-		RegSetValueExW(hLRU, L"NrLRU", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
-	} else {
-		wchar_t hostBuf[255]{};
-		state.nrLRU = (int)tmp;
-		for (int i = 0; i < state.maxLRU; ++i) {
-			const auto keyName = std::format(L"Host{}", i + 1);
-			DWORD hostSize = sizeof(hostBuf);
-			if (RegQueryValueExW(hLRU, keyName.c_str(), 0, NULL, (BYTE*)hostBuf, &hostSize) == ERROR_SUCCESS) {
-				DWORD chars = hostSize / sizeof(wchar_t);
-				if (chars > 0 && chars <= _countof(hostBuf))
-					hostBuf[chars - 1] = L'\0';
-				outHosts.push_back(CString(hostBuf));
-			}
-		}
-	}
-	RegCloseKey(hLRU);
 	RegCloseKey(hWinMTR);
+	state.lru.Load(outHosts);
 	return TRUE;
 }
 
@@ -165,66 +141,3 @@ void Settings::SaveOptions(int pingsize, int maxLRU, BOOL useDNS, double interva
 }
 
 
-//*****************************************************************************
-// Settings::AppendLRUHost
-//
-//*****************************************************************************
-void Settings::AppendLRUHost(LPCWSTR host, int& nrLRU, int maxLRU)
-{
-	HKEY hLRU = NULL;
-	if (OpenWinMTRSubKey(L"LRU", KEY_ALL_ACCESS, hLRU) != ERROR_SUCCESS)
-		return;
-
-	if (nrLRU >= maxLRU) nrLRU = 0;
-	nrLRU++;
-	const auto keyName = std::format(L"Host{}", nrLRU);
-	RegSetValueExW(hLRU, keyName.c_str(), 0, REG_SZ,
-				   (const BYTE*)host,
-				   (DWORD)((wcslen(host) + 1) * sizeof(wchar_t)));
-	DWORD tmp = (DWORD)nrLRU;
-	RegSetValueExW(hLRU, L"NrLRU", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
-	RegCloseKey(hLRU);
-}
-
-
-//*****************************************************************************
-// Settings::TrimLRU
-//
-// Mirrors legacy off-by-one in OnOptions: deletes Host{maxLRU}..Host{nrLRU}.
-//*****************************************************************************
-void Settings::TrimLRU(int maxLRU, int& nrLRU)
-{
-	HKEY hLRU = NULL;
-	if (OpenWinMTRSubKey(L"LRU", KEY_ALL_ACCESS, hLRU) != ERROR_SUCCESS)
-		return;
-
-	for (int i = maxLRU; i <= nrLRU; ++i) {
-		RegDeleteValueW(hLRU, std::format(L"Host{}", i).c_str());
-	}
-	nrLRU = maxLRU;
-	DWORD tmp = (DWORD)nrLRU;
-	RegSetValueExW(hLRU, L"NrLRU", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
-	RegCloseKey(hLRU);
-}
-
-
-//*****************************************************************************
-// Settings::ClearLRU
-//
-// Mirrors legacy ClearHistory: starts at Host0 (which never exists) and
-// continues through Host{nrLRU}.
-//*****************************************************************************
-void Settings::ClearLRU(int& nrLRU)
-{
-	HKEY hLRU = NULL;
-	if (OpenWinMTRSubKey(L"LRU", KEY_ALL_ACCESS, hLRU) != ERROR_SUCCESS)
-		return;
-
-	for (int i = 0; i <= nrLRU; ++i) {
-		RegDeleteValueW(hLRU, std::format(L"Host{}", i).c_str());
-	}
-	nrLRU = 0;
-	DWORD tmp = 0;
-	RegSetValueExW(hLRU, L"NrLRU", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
-	RegCloseKey(hLRU);
-}

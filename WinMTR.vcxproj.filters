@@ -64,6 +64,9 @@
     <ClCompile Include="src\StartTraceUseCase.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="src\LRUStore.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\CommandLine.h">
@@ -130,6 +133,9 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="src\Settings.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\LRUStore.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>

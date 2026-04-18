@@ -369,6 +369,7 @@
     <ClCompile Include="src\TraceEngine.cpp" />
     <ClCompile Include="src\TraceListView.cpp" />
     <ClCompile Include="src\TraceSessionController.cpp" />
+    <ClCompile Include="src\LRUStore.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\CommandLine.h" />
@@ -399,6 +400,7 @@
     <ClInclude Include="src\Properties.h" />
     <ClInclude Include="src\Reporter.h" />
     <ClInclude Include="src\Settings.h" />
+    <ClInclude Include="src\LRUStore.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="resources\WinMTR.ico" />

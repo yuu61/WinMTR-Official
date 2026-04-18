@@ -243,7 +243,7 @@ void Dialog::OnRestart()
 	}
 
 	if (HostComboModel::AppendBeforeSentinel(m_comboHost, result.normalizedHost))
-		Settings::AppendLRUHost((LPCWSTR)result.normalizedHost, config.nrLRU, config.maxLRU);
+		config.lru.Append((LPCWSTR)result.normalizedHost);
 
 	controller->RequestStart((LPCWSTR)result.normalizedHost, config.Snapshot());
 }
@@ -255,18 +255,18 @@ void Dialog::OnOptions()
 
 	optDlg.SetPingSize(config.pingsize);
 	optDlg.SetInterval(config.interval);
-	optDlg.SetMaxLRU(config.maxLRU);
+	optDlg.SetMaxLRU(config.lru.Max());
 	optDlg.SetUseDNS(config.useDNS);
 
 	if (IDOK == optDlg.DoModal()) {
 		config.pingsize = optDlg.GetPingSize();
 		config.interval = optDlg.GetInterval();
-		config.maxLRU   = optDlg.GetMaxLRU();
+		config.lru.SetMax(optDlg.GetMaxLRU());
 		config.useDNS   = optDlg.GetUseDNS();
 
 		config.SaveOptions();
-		if (config.maxLRU < config.nrLRU)
-			Settings::TrimLRU(config.maxLRU, config.nrLRU);
+		if (config.lru.Max() < config.lru.Count())
+			config.lru.Trim();
 	}
 }
 
@@ -315,7 +315,7 @@ void Dialog::OnCbnSelchangeComboHost()
 
 void Dialog::ClearHistory()
 {
-	Settings::ClearLRU(config.nrLRU);
+	config.lru.Clear();
 	HostComboModel::ClearAndResetSentinel(m_comboHost);
 }
 

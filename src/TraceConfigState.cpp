@@ -13,7 +13,7 @@ BOOL TraceConfigState::LoadAtInit(const CommandLineOverrides& overrides, std::ve
 
 void TraceConfigState::SaveOptions() const
 {
-	Settings::SaveOptions(pingsize, maxLRU, useDNS, interval);
+	Settings::SaveOptions(pingsize, lru.Max(), useDNS, interval);
 }
 
 TraceOptions TraceConfigState::Snapshot() const
