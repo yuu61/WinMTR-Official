@@ -26,6 +26,7 @@
 #include "Dialog.h"
 #include "Help.h"
 #include "CommandLine.h"
+#include <string>
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -72,8 +73,9 @@ BOOL Main::InitInstance()
 	m_pMainWnd = &mtrDialog;
 
 	if (wcslen(m_lpCmdLine)) {
-		wcscat(m_lpCmdLine, L" ");
-		auto parsed = CommandLine::Parse(m_lpCmdLine);
+		std::wstring cmd = m_lpCmdLine;
+		cmd += L' ';
+		auto parsed = CommandLine::Parse(cmd.data());
 		if (parsed.helpRequested) {
 			Help mtrHelp;
 			m_pMainWnd = &mtrHelp;
