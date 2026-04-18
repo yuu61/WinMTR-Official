@@ -7,6 +7,7 @@
 #include "Dialog.h"
 #include <iostream>
 #include <sstream>
+#include <vector>
 
 #define TRACE_MSG(msg)										\
 	{														\
@@ -142,9 +143,9 @@ void TraceThread(void *p)
 
     IPINFO			stIPInfo, *lpstIPInfo;
     DWORD			dwReplyCount;
-	char			achReqData[8192];
+	std::vector<char> achReqData(8192);
 	int				nDataLen									= wmtrnet->wmtrdlg->pingsize;
-	char			achRepData[sizeof(ICMPECHO) + 8192];
+	std::vector<char> achRepData(sizeof(ICMPECHO) + 8192);
 
 
     /*
@@ -172,9 +173,9 @@ void TraceThread(void *p)
 		// - as soon as we get a hop, we start pinging directly that hop, with a greater TTL
 		// - a drawback would be that, some servers are configured to reply for TTL transit expire, but not to ping requests, so,
 		// for these servers we'll have 100% loss
-		dwReplyCount = wmtrnet->lpfnIcmpSendEcho(wmtrnet->hICMP, current->address, achReqData, (WORD)nDataLen, lpstIPInfo, achRepData, sizeof(achRepData), ECHO_REPLY_TIMEOUT);
+		dwReplyCount = wmtrnet->lpfnIcmpSendEcho(wmtrnet->hICMP, current->address, achReqData.data(), (WORD)nDataLen, lpstIPInfo, achRepData.data(), (DWORD)achRepData.size(), ECHO_REPLY_TIMEOUT);
 
-		PICMPECHO icmp_echo_reply = (PICMPECHO)achRepData;
+		PICMPECHO icmp_echo_reply = (PICMPECHO)achRepData.data();
 
 		wmtrnet->AddXmit(current->ttl - 1);
 		if (dwReplyCount != 0) {

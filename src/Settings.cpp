@@ -53,11 +53,11 @@ BOOL WinMTRSettings::InitAndLoad(WinMTRDialog* dlg, std::vector<CString>& outHos
 		return FALSE;
 
 	RegSetValueEx(hWinMTR, "Version", 0, REG_SZ,
-				  (const unsigned char*)WINMTR_VERSION, sizeof(WINMTR_VERSION) + 1);
+				  (const unsigned char*)WINMTR_VERSION, sizeof(WINMTR_VERSION));
 	RegSetValueEx(hWinMTR, "License", 0, REG_SZ,
-				  (const unsigned char*)WINMTR_LICENSE, sizeof(WINMTR_LICENSE) + 1);
+				  (const unsigned char*)WINMTR_LICENSE, sizeof(WINMTR_LICENSE));
 	RegSetValueEx(hWinMTR, "HomePage", 0, REG_SZ,
-				  (const unsigned char*)WINMTR_HOMEPAGE, sizeof(WINMTR_HOMEPAGE) + 1);
+				  (const unsigned char*)WINMTR_HOMEPAGE, sizeof(WINMTR_HOMEPAGE));
 
 	HKEY hConfig = NULL;
 	DWORD disp = 0;

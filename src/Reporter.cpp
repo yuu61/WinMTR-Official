@@ -85,11 +85,20 @@ CString WinMTRReporter::BuildHtmlReport(WinMTRNet* net)
 //*****************************************************************************
 bool WinMTRReporter::CopyToClipboard(CWnd* owner, const CString& content)
 {
-	owner->OpenClipboard();
+	if (!owner->OpenClipboard()) return false;
 	EmptyClipboard();
 
 	HGLOBAL clipbuffer = GlobalAlloc(GMEM_DDESHARE, (SIZE_T)content.GetLength() + 1);
+	if (clipbuffer == NULL) {
+		CloseClipboard();
+		return false;
+	}
 	char* buffer = (char*)GlobalLock(clipbuffer);
+	if (buffer == NULL) {
+		GlobalFree(clipbuffer);
+		CloseClipboard();
+		return false;
+	}
 	strcpy(buffer, (LPCSTR)content);
 	GlobalUnlock(clipbuffer);
 
