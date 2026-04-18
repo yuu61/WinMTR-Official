@@ -12,6 +12,7 @@ It was started in 2000 by Vasile Laurentiu Stanimir as a clone for the popular M
 
 WinMTR is offered as Open Source Software under GPL v2.
 
+- [Read the full license text](LICENSE) (bundled with this repository)
 - [Read more about the licensing conditions](http://www.gnu.org/licenses/gpl-2.0.html)
 - [Download the code](https://github.com/WinMTR/WinMTR-Official)
 
