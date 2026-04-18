@@ -127,6 +127,8 @@
         WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>resources;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>.\Release\</AssemblerListingLocation>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>Global.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>.\Release\WinMTR.pch</PrecompiledHeaderOutputFile>
       <ObjectFileName>.\Release\</ObjectFileName>
       <ProgramDataBaseFileName>.\Release\</ProgramDataBaseFileName>
@@ -188,6 +190,8 @@
         WIN32;NDEBUG;_WINDOWS;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>resources;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>.\Release\</AssemblerListingLocation>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>Global.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>.\Release\WinMTR.pch</PrecompiledHeaderOutputFile>
       <ObjectFileName>.\Release\</ObjectFileName>
       <ProgramDataBaseFileName>.\Release\</ProgramDataBaseFileName>
@@ -246,6 +250,8 @@
         WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>resources;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>.\Debug\</AssemblerListingLocation>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>Global.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>.\Debug\WinMTR.pch</PrecompiledHeaderOutputFile>
       <ObjectFileName>.\Debug\</ObjectFileName>
       <ProgramDataBaseFileName>.\Debug\</ProgramDataBaseFileName>
@@ -304,6 +310,8 @@
         WIN32;_DEBUG;_WINDOWS;_UNICODE;UNICODE;_CRT_SECURE_NO_WARNINGS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <AdditionalIncludeDirectories>resources;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <AssemblerListingLocation>.\Debug\</AssemblerListingLocation>
+      <PrecompiledHeader>Use</PrecompiledHeader>
+      <PrecompiledHeaderFile>Global.h</PrecompiledHeaderFile>
       <PrecompiledHeaderOutputFile>.\Debug\WinMTR.pch</PrecompiledHeaderOutputFile>
       <ObjectFileName>.\Debug\</ObjectFileName>
       <ProgramDataBaseFileName>.\Debug\</ProgramDataBaseFileName>
@@ -338,6 +346,9 @@
     <ResourceCompile Include="resources\WinMTR.rc" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Global.cpp">
+      <PrecompiledHeader>Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="src\CommandLine.cpp" />
     <ClCompile Include="src\License.cpp" />
     <ClCompile Include="src\StatusBar.cpp" />

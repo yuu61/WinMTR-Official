@@ -16,6 +16,9 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="src\Global.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
     <ClCompile Include="src\CommandLine.cpp">
       <Filter>Source</Filter>
     </ClCompile>
