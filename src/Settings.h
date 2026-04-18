@@ -10,6 +10,7 @@
 #ifndef WINMTRSETTINGS_H_
 #define WINMTRSETTINGS_H_
 
+#include "CommandLineOverrides.h"
 #include <afxwin.h>
 #include <vector>
 
@@ -22,15 +23,6 @@ struct LoadedSettings {
 	int    nrLRU    = 0;
 };
 
-// Indicates fields explicitly set via the command line. Such fields keep
-// the caller-provided value and are not overwritten by registry data.
-struct LoadedSettingsFlags {
-	bool hasPingsize = false;
-	bool hasInterval = false;
-	bool hasMaxLRU   = false;
-	bool hasUseDNS   = false;
-};
-
 //*****************************************************************************
 // CLASS:  WinMTRSettings
 //
@@ -40,10 +32,11 @@ struct LoadedSettingsFlags {
 class WinMTRSettings
 {
 public:
-	// Seed io with caller's current values. On return, fields whose flag is
-	// false are replaced with persisted registry values; missing registry
-	// entries are seeded from io.
-	static BOOL InitAndLoad(LoadedSettings& io, const LoadedSettingsFlags& flags, std::vector<CString>& outHosts);
+	// Seed io with caller's current values. Applies cmdline overrides up-front,
+	// then loads the registry; registry values replace io only for fields that
+	// were not overridden on the command line. Missing registry entries are
+	// seeded from io (so first-run writes reflect both defaults and cmdline).
+	static BOOL InitAndLoad(LoadedSettings& io, const CommandLineOverrides& overrides, std::vector<CString>& outHosts);
 
 	static void SaveOptions(int pingsize, int maxLRU, BOOL useDNS, double interval);
 

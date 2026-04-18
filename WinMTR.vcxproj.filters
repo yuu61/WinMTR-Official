@@ -58,9 +58,18 @@
     <ClCompile Include="src\Settings.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="src\StartTraceUseCase.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\CommandLine.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\CommandLineOverrides.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\StartTraceUseCase.h">
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="src\TraceOptions.h">

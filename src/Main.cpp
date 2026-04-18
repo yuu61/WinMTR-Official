@@ -73,12 +73,17 @@ BOOL WinMTRMain::InitInstance()
 
 	if (wcslen(m_lpCmdLine)) {
 		wcscat(m_lpCmdLine, L" ");
-		if (WinMTRCommandLine::Parse(m_lpCmdLine, &mtrDialog)) {
+		auto parsed = WinMTRCommandLine::Parse(m_lpCmdLine);
+		if (parsed.helpRequested) {
 			WinMTRHelp mtrHelp;
 			m_pMainWnd = &mtrHelp;
 			mtrHelp.DoModal();
 			return FALSE;
 		}
+		if (parsed.hostName) {
+			mtrDialog.SetHostName(parsed.hostName->c_str());
+		}
+		mtrDialog.SetCommandLineOverrides(parsed.overrides);
 	}
 
 	mtrDialog.DoModal();

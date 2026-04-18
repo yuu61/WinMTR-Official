@@ -13,6 +13,7 @@
 #include "Version.h"
 #include "DialogLayout.h"
 #include "HostComboModel.h"
+#include "StartTraceUseCase.h"
 #include "TraceListView.h"
 #include "TraceSessionController.h"
 #include <memory>
@@ -154,7 +155,7 @@ BOOL WinMTRDialog::OnInitDialog()
 
 	{
 		std::vector<CString> lruHosts;
-		if (config.LoadAtInit(lruHosts))
+		if (config.LoadAtInit(cmdline_overrides, lruHosts))
 			WinMTRHostComboModel::Populate(m_comboHost, lruHosts);
 	}
 
@@ -275,38 +276,43 @@ void WinMTRDialog::OnRestart()
 		return;
 	}
 
-	if (controller->CurrentState() == TraceSessionController::IDLE) {
-		CString sHost;
-		m_comboHost.GetWindowText(sHost);
-		sHost.TrimLeft();
-		sHost.TrimLeft();
-
-		if (sHost.IsEmpty()) {
-			AfxMessageBox(L"No host specified!");
-			m_comboHost.SetFocus();
-			return;
-		}
-		m_listMTR.DeleteAllItems();
-
-		if (!WinMTRHostResolver::LooksNumeric((LPCWSTR)sHost)) {
-			statusBar.SetPaneText(0,
-				std::format(L"Resolving host {}...", (LPCWSTR)sHost).c_str());
-		}
-
-		CString err;
-		if (!WinMTRHostResolver::Validate((LPCWSTR)sHost, err)) {
-			statusBar.SetPaneText(0, CString((LPCWSTR)IDS_STRING_SB_NAME));
-			AfxMessageBox(err);
-			return;
-		}
-
-		if (WinMTRHostComboModel::AppendBeforeSentinel(m_comboHost, sHost))
-			WinMTRSettings::AppendLRUHost((LPCWSTR)sHost, config.nrLRU, config.maxLRU);
-
-		controller->RequestStart((LPCWSTR)sHost, config.Snapshot());
-	} else {
+	if (controller->CurrentState() != TraceSessionController::IDLE) {
 		controller->RequestStop();
+		return;
 	}
+
+	CString raw;
+	m_comboHost.GetWindowText(raw);
+
+	// Status hint before the blocking DNS probe.
+	CString preview = raw;
+	preview.TrimLeft();
+	preview.TrimRight();
+	if (!preview.IsEmpty() && !WinMTRHostResolver::LooksNumeric(preview)) {
+		statusBar.SetPaneText(0,
+			std::format(L"Resolving host {}...", (LPCWSTR)preview).c_str());
+	}
+
+	m_listMTR.DeleteAllItems();
+
+	auto result = StartTraceUseCase::Validate(raw);
+	switch (result.validation) {
+	case StartTraceUseCase::Validation::EmptyHost:
+		AfxMessageBox(L"No host specified!");
+		m_comboHost.SetFocus();
+		return;
+	case StartTraceUseCase::Validation::ResolutionFailed:
+		statusBar.SetPaneText(0, CString((LPCWSTR)IDS_STRING_SB_NAME));
+		AfxMessageBox(result.error);
+		return;
+	case StartTraceUseCase::Validation::Ok:
+		break;
+	}
+
+	if (WinMTRHostComboModel::AppendBeforeSentinel(m_comboHost, result.normalizedHost))
+		WinMTRSettings::AppendLRUHost((LPCWSTR)result.normalizedHost, config.nrLRU, config.maxLRU);
+
+	controller->RequestStart((LPCWSTR)result.normalizedHost, config.Snapshot());
 }
 
 

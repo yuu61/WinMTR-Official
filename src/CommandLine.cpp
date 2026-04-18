@@ -4,8 +4,6 @@
 
 #include "Global.h"
 #include "CommandLine.h"
-#include "Dialog.h"
-#include "TraceConfigState.h"
 #include <string>
 
 namespace {
@@ -83,34 +81,32 @@ int GetHostNameParamValue(LPWSTR cmd, std::wstring& host_name)
 } // namespace
 
 
-bool WinMTRCommandLine::Parse(LPWSTR cmd, WinMTRDialog* dlg)
+WinMTRCommandLine::ParseResult WinMTRCommandLine::Parse(LPWSTR cmd)
 {
+	ParseResult result;
 	wchar_t value[1024];
-	std::wstring host_name;
 
 	if (GetParamValue(cmd, L"help", L'h', value, _countof(value))) {
-		return true;
+		result.helpRequested = true;
+		return result;
 	}
 
+	std::wstring host_name;
 	if (GetHostNameParamValue(cmd, host_name)) {
-		dlg->SetHostName(host_name.c_str());
+		result.hostName = host_name;
 	}
 	if (GetParamValue(cmd, L"interval", L'i', value, _countof(value))) {
-		dlg->Config().interval = (double)_wtof(value);
-		dlg->Config().hasIntervalFromCmdLine = true;
+		result.overrides.interval = (double)_wtof(value);
 	}
 	if (GetParamValue(cmd, L"size", L's', value, _countof(value))) {
-		dlg->Config().pingsize = _wtoi(value);
-		dlg->Config().hasPingsizeFromCmdLine = true;
+		result.overrides.pingsize = _wtoi(value);
 	}
 	if (GetParamValue(cmd, L"maxLRU", L'm', value, _countof(value))) {
-		dlg->Config().maxLRU = _wtoi(value);
-		dlg->Config().hasMaxLRUFromCmdLine = true;
+		result.overrides.maxLRU = _wtoi(value);
 	}
 	if (GetParamValue(cmd, L"numeric", L'n', value, _countof(value))) {
-		dlg->Config().useDNS = FALSE;
-		dlg->Config().hasUseDNSFromCmdLine = true;
+		result.overrides.useDNS = FALSE;
 	}
 
-	return false;
+	return result;
 }

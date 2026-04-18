@@ -10,6 +10,7 @@
 #ifndef WINMTRDIALOG_H_
 #define WINMTRDIALOG_H_
 
+#include "CommandLineOverrides.h"
 #include "StatusBar.h"
 #include "SessionView.h"
 #include "TraceConfigState.h"
@@ -51,6 +52,7 @@ public:
 	std::unique_ptr<CMFCLinkCtrl> m_appnorLink;
 
 	void SetHostName(const wchar_t* host);
+	void SetCommandLineOverrides(const CommandLineOverrides& o) { cmdline_overrides = o; }
 
 	[[nodiscard]] TraceConfigState&       Config()       { return config; }
 	[[nodiscard]] const TraceConfigState& Config() const { return config; }
@@ -72,6 +74,7 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);
 
 	TraceConfigState                        config;
+	CommandLineOverrides                    cmdline_overrides;
 	std::unique_ptr<TraceSessionController> controller;
 
 	int     m_autostart;

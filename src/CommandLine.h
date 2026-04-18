@@ -3,22 +3,30 @@
 //
 //
 // DESCRIPTION:
-//   Parses WinMTR command-line arguments and applies them to a dialog.
+//   Parses WinMTR command-line arguments into a ParseResult the caller can
+//   apply to the dialog / config.
 //
 //*****************************************************************************
 
 #ifndef WINMTRCOMMANDLINE_H_
 #define WINMTRCOMMANDLINE_H_
 
+#include "CommandLineOverrides.h"
 #include <afxwin.h>
-
-class WinMTRDialog;
+#include <optional>
+#include <string>
 
 namespace WinMTRCommandLine {
 
-	// Parses cmd and applies settings onto dlg. Returns true if --help was
-	// requested (the caller is expected to show the help dialog and exit).
-	bool Parse(LPWSTR cmd, WinMTRDialog* dlg);
+struct ParseResult {
+	bool                        helpRequested = false;
+	std::optional<std::wstring> hostName;
+	CommandLineOverrides        overrides;
+};
+
+// Parses cmd into a ParseResult. On --help / -h, sets helpRequested and
+// skips remaining parsing.
+ParseResult Parse(LPWSTR cmd);
 
 } // namespace WinMTRCommandLine
 

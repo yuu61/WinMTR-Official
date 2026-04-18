@@ -45,8 +45,16 @@ LONG OpenWinMTRSubKey(LPCWSTR sub, REGSAM access, HKEY& outKey)
 // WinMTRSettings::InitAndLoad
 //
 //*****************************************************************************
-BOOL WinMTRSettings::InitAndLoad(LoadedSettings& io, const LoadedSettingsFlags& flags, std::vector<CString>& outHosts)
+BOOL WinMTRSettings::InitAndLoad(LoadedSettings& io, const CommandLineOverrides& overrides, std::vector<CString>& outHosts)
 {
+	// Apply cmdline overrides first so registry writes below (first-run path)
+	// seed from the cmdline value, and registry reads correctly skip
+	// overridden fields.
+	if (overrides.pingsize) io.pingsize = *overrides.pingsize;
+	if (overrides.interval) io.interval = *overrides.interval;
+	if (overrides.maxLRU)   io.maxLRU   = *overrides.maxLRU;
+	if (overrides.useDNS)   io.useDNS   = *overrides.useDNS;
+
 	HKEY hWinMTR = NULL;
 	if (OpenWinMTRRoot(KEY_ALL_ACCESS, hWinMTR) != ERROR_SUCCESS)
 		return FALSE;
@@ -73,7 +81,7 @@ BOOL WinMTRSettings::InitAndLoad(LoadedSettings& io, const LoadedSettingsFlags& 
 		tmp = (DWORD)io.pingsize;
 		RegSetValueExW(hConfig, L"PingSize", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
 	} else {
-		if (!flags.hasPingsize) io.pingsize = (int)tmp;
+		if (!overrides.pingsize) io.pingsize = (int)tmp;
 	}
 
 	sz = sizeof(DWORD);
@@ -81,7 +89,7 @@ BOOL WinMTRSettings::InitAndLoad(LoadedSettings& io, const LoadedSettingsFlags& 
 		tmp = (DWORD)io.maxLRU;
 		RegSetValueExW(hConfig, L"MaxLRU", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
 	} else {
-		if (!flags.hasMaxLRU) io.maxLRU = (int)tmp;
+		if (!overrides.maxLRU) io.maxLRU = (int)tmp;
 	}
 
 	sz = sizeof(DWORD);
@@ -89,7 +97,7 @@ BOOL WinMTRSettings::InitAndLoad(LoadedSettings& io, const LoadedSettingsFlags& 
 		tmp = io.useDNS ? 1 : 0;
 		RegSetValueExW(hConfig, L"UseDNS", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
 	} else {
-		if (!flags.hasUseDNS) io.useDNS = (BOOL)tmp;
+		if (!overrides.useDNS) io.useDNS = (BOOL)tmp;
 	}
 
 	sz = sizeof(DWORD);
@@ -97,7 +105,7 @@ BOOL WinMTRSettings::InitAndLoad(LoadedSettings& io, const LoadedSettingsFlags& 
 		tmp = (DWORD)(io.interval * 1000);
 		RegSetValueExW(hConfig, L"Interval", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
 	} else {
-		if (!flags.hasInterval) io.interval = (double)tmp / 1000.0;
+		if (!overrides.interval) io.interval = (double)tmp / 1000.0;
 	}
 	RegCloseKey(hConfig);
 

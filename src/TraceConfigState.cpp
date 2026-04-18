@@ -6,7 +6,7 @@
 #include "TraceConfigState.h"
 #include "Settings.h"
 
-BOOL TraceConfigState::LoadAtInit(std::vector<CString>& outHosts)
+BOOL TraceConfigState::LoadAtInit(const CommandLineOverrides& overrides, std::vector<CString>& outHosts)
 {
 	LoadedSettings s{};
 	s.pingsize = pingsize;
@@ -15,13 +15,7 @@ BOOL TraceConfigState::LoadAtInit(std::vector<CString>& outHosts)
 	s.useDNS   = useDNS;
 	s.nrLRU    = nrLRU;
 
-	LoadedSettingsFlags f{};
-	f.hasPingsize = hasPingsizeFromCmdLine;
-	f.hasInterval = hasIntervalFromCmdLine;
-	f.hasMaxLRU   = hasMaxLRUFromCmdLine;
-	f.hasUseDNS   = hasUseDNSFromCmdLine;
-
-	if (!WinMTRSettings::InitAndLoad(s, f, outHosts))
+	if (!WinMTRSettings::InitAndLoad(s, overrides, outHosts))
 		return FALSE;
 
 	pingsize = s.pingsize;
