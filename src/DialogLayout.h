@@ -25,7 +25,7 @@ struct ControlRefs {
 
 void AdjustInitialSize(CWnd& dialog);
 void ApplyClientSize(CWnd& dialog, const ControlRefs& refs);
-void ClampMinimum(LPRECT rect);
+void ClampMinimum(LPRECT rect, const SIZE& minSize);
 
 } // namespace DialogLayout
 

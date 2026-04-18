@@ -59,10 +59,17 @@ void ApplyClientSize(CWnd& dialog, const ControlRefs& refs)
 			SWP_NOMOVE | SWP_NOZORDER);
 	}
 
+	// Right-edge anchor margins (pixels at the dialog's current DPI).
+	// Exit and ExpH share the 7 DLU right margin; ExpT leaves room for ExpH + gap.
+	const UINT dpi        = ::GetDpiForWindow(dialog.GetSafeHwnd());
+	const int  dpiScale   = dpi ? static_cast<int>(dpi) : 96;
+	const int  marginEdge = ::MulDiv(11,  dpiScale, 96);  // ~7 DLU
+	const int  marginExpT = ::MulDiv(120, dpiScale, 96);  // ~80 DLU (ExpH width + 8 DLU gap + 7 DLU margin)
+
 	if (::IsWindow(refs.buttonExit.m_hWnd)) {
 		refs.buttonExit.GetWindowRect(&lb);
 		dialog.ScreenToClient(&lb);
-		refs.buttonExit.SetWindowPos(NULL, r.Width() - lb.Width() - 21, lb.TopLeft().y,
+		refs.buttonExit.SetWindowPos(NULL, r.Width() - lb.Width() - marginEdge, lb.TopLeft().y,
 			lb.Width(), lb.Height(),
 			SWP_NOSIZE | SWP_NOZORDER);
 	}
@@ -70,7 +77,7 @@ void ApplyClientSize(CWnd& dialog, const ControlRefs& refs)
 	if (::IsWindow(refs.buttonExpH.m_hWnd)) {
 		refs.buttonExpH.GetWindowRect(&lb);
 		dialog.ScreenToClient(&lb);
-		refs.buttonExpH.SetWindowPos(NULL, r.Width() - lb.Width() - 21, lb.TopLeft().y,
+		refs.buttonExpH.SetWindowPos(NULL, r.Width() - lb.Width() - marginEdge, lb.TopLeft().y,
 			lb.Width(), lb.Height(),
 			SWP_NOSIZE | SWP_NOZORDER);
 	}
@@ -78,7 +85,7 @@ void ApplyClientSize(CWnd& dialog, const ControlRefs& refs)
 	if (::IsWindow(refs.buttonExpT.m_hWnd)) {
 		refs.buttonExpT.GetWindowRect(&lb);
 		dialog.ScreenToClient(&lb);
-		refs.buttonExpT.SetWindowPos(NULL, r.Width() - lb.Width() - 103, lb.TopLeft().y,
+		refs.buttonExpT.SetWindowPos(NULL, r.Width() - lb.Width() - marginExpT, lb.TopLeft().y,
 			lb.Width(), lb.Height(),
 			SWP_NOSIZE | SWP_NOZORDER);
 	}
@@ -96,12 +103,10 @@ void ApplyClientSize(CWnd& dialog, const ControlRefs& refs)
 	dialog.RepositionBars(AFX_IDW_CONTROLBAR_FIRST, AFX_IDW_CONTROLBAR_LAST, 0);
 }
 
-void ClampMinimum(LPRECT rect)
+void ClampMinimum(LPRECT rect, const SIZE& minSize)
 {
-	const int iWidth  = rect->right - rect->left;
-	const int iHeight = rect->bottom - rect->top;
-	if (iWidth  < 600) rect->right  = rect->left + 600;
-	if (iHeight < 250) rect->bottom = rect->top  + 250;
+	if (rect->right - rect->left < minSize.cx) rect->right  = rect->left + minSize.cx;
+	if (rect->bottom - rect->top < minSize.cy) rect->bottom = rect->top  + minSize.cy;
 }
 
 } // namespace DialogLayout

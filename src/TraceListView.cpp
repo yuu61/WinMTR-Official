@@ -7,13 +7,27 @@
 #include "HopStatistics.h"
 #include "MtrColumns.h"
 #include <string>
+#include <uxtheme.h>
+#pragma comment(lib, "uxtheme.lib")
 
 namespace TraceListView {
 
 void InitColumns(CListCtrl& list)
 {
-	for (int i = 0; i < MTR_NR_COLS; ++i)
-		list.InsertColumn(i, MTR_COLS[i], LVCFMT_LEFT, MTR_COL_LENGTH[i], -1);
+	const UINT dpi      = ::GetDpiForWindow(list.GetSafeHwnd());
+	const int  dpiScale = dpi ? static_cast<int>(dpi) : 96;
+
+	for (int i = 0; i < MTR_NR_COLS; ++i) {
+		const int widthPx = ::MulDiv(MTR_COL_LENGTH[i], dpiScale, 96);
+		list.InsertColumn(i, MTR_COLS[i], MTR_COL_FORMAT[i], widthPx, -1);
+	}
+
+	list.SetExtendedStyle(list.GetExtendedStyle()
+		| LVS_EX_DOUBLEBUFFER
+		| LVS_EX_FULLROWSELECT
+		| LVS_EX_HEADERDRAGDROP);
+
+	::SetWindowTheme(list.GetSafeHwnd(), L"Explorer", nullptr);
 }
 
 void Refresh(CListCtrl& list, const HopStatistics& stats)

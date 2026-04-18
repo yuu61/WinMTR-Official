@@ -154,11 +154,11 @@
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <SubSystem>Windows</SubSystem>
+      <GenerateManifest>false</GenerateManifest>
+      <EmbedManifest>false</EmbedManifest>
+      <AdditionalOptions>/MANIFEST:NO /ignore:4075 %(AdditionalOptions)</AdditionalOptions>
       <OutputFile>.\Release_x32\WinMTR.exe</OutputFile>
       <AdditionalDependencies>odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
-      <EnableUAC>false</EnableUAC>
-      <UACUIAccess>true</UACUIAccess>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -216,11 +216,11 @@
       <OptimizeReferences>true</OptimizeReferences>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <SubSystem>Windows</SubSystem>
+      <GenerateManifest>false</GenerateManifest>
+      <EmbedManifest>false</EmbedManifest>
+      <AdditionalOptions>/MANIFEST:NO /ignore:4075 %(AdditionalOptions)</AdditionalOptions>
       <OutputFile>.\Release_x64\WinMTR.exe</OutputFile>
       <AdditionalDependencies>odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
-      <EnableUAC>false</EnableUAC>
-      <UACUIAccess>true</UACUIAccess>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
@@ -276,11 +276,11 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
+      <GenerateManifest>false</GenerateManifest>
+      <EmbedManifest>false</EmbedManifest>
+      <AdditionalOptions>/MANIFEST:NO /ignore:4075 %(AdditionalOptions)</AdditionalOptions>
       <OutputFile>.\Debug_x32\WinMTR.exe</OutputFile>
       <AdditionalDependencies>odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
-      <EnableUAC>false</EnableUAC>
-      <UACUIAccess>true</UACUIAccess>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -335,11 +335,11 @@
       <SuppressStartupBanner>true</SuppressStartupBanner>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
+      <GenerateManifest>false</GenerateManifest>
+      <EmbedManifest>false</EmbedManifest>
+      <AdditionalOptions>/MANIFEST:NO /ignore:4075 %(AdditionalOptions)</AdditionalOptions>
       <OutputFile>.\Debug_x64\WinMTR.exe</OutputFile>
       <AdditionalDependencies>odbc32.lib;odbccp32.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <UACExecutionLevel>AsInvoker</UACExecutionLevel>
-      <EnableUAC>false</EnableUAC>
-      <UACUIAccess>true</UACUIAccess>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>

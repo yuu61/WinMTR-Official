@@ -80,11 +80,13 @@ protected:
 	int     m_autostart;
 	wchar_t msz_defaulthostname[1000]{};
 	HICON   m_hIcon;
+	CSize   m_minTrackSize{};
 
 	virtual BOOL OnInitDialog();
 	afx_msg void OnPaint();
 	afx_msg void OnSize(UINT, int, int);
 	afx_msg void OnSizing(UINT, LPRECT);
+	afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
 	afx_msg HCURSOR OnQueryDragIcon();
 	afx_msg void OnRestart();
 	afx_msg void OnOptions();

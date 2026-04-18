@@ -30,6 +30,7 @@ BEGIN_MESSAGE_MAP(Dialog, CDialog)
 	ON_WM_PAINT()
 	ON_WM_SIZE()
 	ON_WM_SIZING()
+	ON_WM_GETMINMAXINFO()
 	ON_WM_QUERYDRAGICON()
 	ON_BN_CLICKED(ID_RESTART, OnRestart)
 	ON_BN_CLICKED(ID_OPTIONS, OnOptions)
@@ -116,6 +117,15 @@ BOOL Dialog::OnInitDialog()
 	DialogLayout::AdjustInitialSize(*this);
 
 	{
+		// Record the dialog's initial window size as the minimum tracking size.
+		// This keeps the template-defined layout as a hard lower bound regardless
+		// of DPI or font metrics, preventing controls from overlapping on resize.
+		CRect rcWindow;
+		GetWindowRect(&rcWindow);
+		m_minTrackSize = rcWindow.Size();
+	}
+
+	{
 		std::vector<CString> lruHosts;
 		if (config.LoadAtInit(cmdline_overrides, lruHosts))
 			HostComboModel::Populate(m_comboHost, lruHosts);
@@ -133,7 +143,17 @@ BOOL Dialog::OnInitDialog()
 void Dialog::OnSizing(UINT fwSide, LPRECT pRect)
 {
 	CDialog::OnSizing(fwSide, pRect);
-	DialogLayout::ClampMinimum(pRect);
+	DialogLayout::ClampMinimum(pRect, m_minTrackSize);
+}
+
+
+void Dialog::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
+{
+	if (m_minTrackSize.cx > 0 && m_minTrackSize.cy > 0) {
+		lpMMI->ptMinTrackSize.x = m_minTrackSize.cx;
+		lpMMI->ptMinTrackSize.y = m_minTrackSize.cy;
+	}
+	CDialog::OnGetMinMaxInfo(lpMMI);
 }
 
 
