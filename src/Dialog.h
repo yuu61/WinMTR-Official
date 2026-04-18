@@ -96,7 +96,7 @@ protected:
 	virtual void DoDataExchange(CDataExchange* pDX);
 
 	int m_autostart;
-	wchar_t msz_defaulthostname[1000];
+	wchar_t msz_defaulthostname[1000]{};
 	
 	HICON m_hIcon;
 

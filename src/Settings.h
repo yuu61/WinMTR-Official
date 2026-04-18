@@ -15,20 +15,20 @@
 
 // Values exchanged with the registry on load.
 struct LoadedSettings {
-	int    pingsize;
-	double interval;
-	int    maxLRU;
-	BOOL   useDNS;
-	int    nrLRU;
+	int    pingsize = 0;
+	double interval = 0.0;
+	int    maxLRU   = 0;
+	BOOL   useDNS   = FALSE;
+	int    nrLRU    = 0;
 };
 
 // Indicates fields explicitly set via the command line. Such fields keep
 // the caller-provided value and are not overwritten by registry data.
 struct LoadedSettingsFlags {
-	bool hasPingsize;
-	bool hasInterval;
-	bool hasMaxLRU;
-	bool hasUseDNS;
+	bool hasPingsize = false;
+	bool hasInterval = false;
+	bool hasMaxLRU   = false;
+	bool hasUseDNS   = false;
 };
 
 //*****************************************************************************

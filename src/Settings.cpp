@@ -114,7 +114,7 @@ BOOL WinMTRSettings::InitAndLoad(LoadedSettings& io, const LoadedSettingsFlags& 
 		tmp = (DWORD)io.nrLRU;
 		RegSetValueExW(hLRU, L"NrLRU", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
 	} else {
-		wchar_t hostBuf[255];
+		wchar_t hostBuf[255]{};
 		io.nrLRU = (int)tmp;
 		for (int i = 0; i < io.maxLRU; ++i) {
 			const auto keyName = std::format(L"Host{}", i + 1);

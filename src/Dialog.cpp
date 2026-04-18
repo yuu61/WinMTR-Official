@@ -136,8 +136,8 @@ BOOL WinMTRDialog::OnInitDialog()
 		AfxMessageBox(L"Error creating status bar");
 	statusBar.GetStatusBarCtrl().SetMinHeight(23);
 		
-	UINT sbi[1];
-	sbi[0] = IDS_STRING_SB_NAME;	
+	UINT sbi[1]{};
+	sbi[0] = IDS_STRING_SB_NAME;
 	statusBar.SetIndicators( sbi,1);
 	statusBar.SetPaneInfo(0, statusBar.GetItemID(0),SBPS_STRETCH, NULL );
 	{ // Add appnor URL
@@ -199,13 +199,13 @@ BOOL WinMTRDialog::OnInitDialog()
 	RepositionBars(AFX_IDW_CONTROLBAR_FIRST, AFX_IDW_CONTROLBAR_LAST, 0);
 
 	{
-		LoadedSettings s;
+		LoadedSettings s{};
 		s.pingsize = pingsize;
 		s.interval = interval;
 		s.maxLRU   = maxLRU;
 		s.useDNS   = useDNS;
 		s.nrLRU    = nrLRU;
-		LoadedSettingsFlags f;
+		LoadedSettingsFlags f{};
 		f.hasPingsize = hasPingsizeFromCmdLine;
 		f.hasInterval = hasIntervalFromCmdLine;
 		f.hasMaxLRU   = hasMaxLRUFromCmdLine;
@@ -744,9 +744,9 @@ void WinMTRDialog::Transit(STATES new_state)
 			m_buttonOptions.EnableWindow(FALSE);
 			statusBar.SetPaneText(0, L"Double click on host name for more information.");
 
-			wchar_t strtmp[255];
+			wchar_t strtmp[255]{};
 			m_comboHost.GetWindowText(strtmp, 255);
-			TraceOptions opts;
+			TraceOptions opts{};
 			opts.pingsize = pingsize;
 			opts.interval = interval;
 			opts.useDNS   = useDNS;

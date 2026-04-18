@@ -61,7 +61,7 @@ bool WinMTRHostResolver::Resolve(LPCWSTR hostname, int& outAddr, CString& errorM
 {
 	if (hostname == NULL) hostname = L"localhost";
 	if (LooksNumeric(hostname)) {
-		struct in_addr addr;
+		struct in_addr addr{};
 		if (InetPtonW(AF_INET, hostname, &addr) != 1) {
 			errorMessage = L"Invalid IP address.";
 			return false;

@@ -29,18 +29,18 @@ public:
 	
 	enum { IDD = IDD_DIALOG_PROPERTIES };
 
-	wchar_t	host[255];
-	wchar_t	ip[16];
-	wchar_t	comment[255];
+	wchar_t	host[255]{};
+	wchar_t	ip[16]{};
+	wchar_t	comment[255]{};
 
-	float	ping_last;
-	float	ping_best;
-	float	ping_avrg;
-	float	ping_worst;
+	float	ping_last  = 0.0f;
+	float	ping_best  = 0.0f;
+	float	ping_avrg  = 0.0f;
+	float	ping_worst = 0.0f;
 
-	int		pck_sent;
-	int		pck_recv;
-	int		pck_loss;
+	int		pck_sent = 0;
+	int		pck_recv = 0;
+	int		pck_loss = 0;
 
 	CEdit	m_editHost,
 			m_editIP,
