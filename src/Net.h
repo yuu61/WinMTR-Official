@@ -13,6 +13,8 @@
 #ifndef WINMTRNET_H_
 #define WINMTRNET_H_
 
+#include "TraceConfig.h"
+
 
 class WinMTRDialog;
 

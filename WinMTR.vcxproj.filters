@@ -25,9 +25,6 @@
     <ClCompile Include="src\Dialog.cpp">
       <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="src\Global.cpp">
-      <Filter>Source</Filter>
-    </ClCompile>
     <ClCompile Include="src\Help.cpp">
       <Filter>Source</Filter>
     </ClCompile>
@@ -70,6 +67,15 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="src\Help.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\MtrColumns.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TraceConfig.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\Version.h">
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="src\HostResolver.h">

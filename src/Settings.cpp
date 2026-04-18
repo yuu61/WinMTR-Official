@@ -7,6 +7,7 @@
 #include "Global.h"
 #include "Settings.h"
 #include "Dialog.h"
+#include "Version.h"
 
 namespace {
 

@@ -287,7 +287,6 @@
     <ClCompile Include="src\License.cpp" />
     <ClCompile Include="src\StatusBar.cpp" />
     <ClCompile Include="src\Dialog.cpp" />
-    <ClCompile Include="src\Global.cpp" />
     <ClCompile Include="src\Help.cpp" />
     <ClCompile Include="src\HostResolver.cpp" />
     <ClCompile Include="src\Main.cpp" />
@@ -304,6 +303,9 @@
     <ClInclude Include="src\Dialog.h" />
     <ClInclude Include="src\Global.h" />
     <ClInclude Include="src\Help.h" />
+    <ClInclude Include="src\MtrColumns.h" />
+    <ClInclude Include="src\TraceConfig.h" />
+    <ClInclude Include="src\Version.h" />
     <ClInclude Include="src\HostResolver.h" />
     <ClInclude Include="src\Main.h" />
     <ClInclude Include="src\Net.h" />

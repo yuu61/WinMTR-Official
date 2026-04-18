@@ -12,6 +12,8 @@
 #include "Settings.h"
 #include "Reporter.h"
 #include "HostResolver.h"
+#include "TraceConfig.h"
+#include "MtrColumns.h"
 #include <iostream>
 #include <sstream>
 #include <vector>
