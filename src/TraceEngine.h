@@ -37,10 +37,9 @@ public:
 
 private:
 	void ExecuteTrace(int address, int ttl);
-	void ExecuteDnsResolve(int hop);
+	void ResolveHopName(int hop);
 
 	static void TraceWorkerEntry(void* p);
-	static void DnsWorkerEntry(void* p);
 
 	IcmpIO            icmp_;
 	HopStatistics     stats_;

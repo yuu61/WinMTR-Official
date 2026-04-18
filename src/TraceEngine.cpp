@@ -26,11 +26,6 @@ struct TraceWorkerArgs {
 	int          ttl;
 };
 
-struct DnsWorkerArgs {
-	TraceEngine* engine;
-	int          hop;
-};
-
 } // namespace
 
 TraceEngine::TraceEngine()
@@ -69,13 +64,6 @@ void TraceEngine::TraceWorkerEntry(void* p)
 {
 	std::unique_ptr<TraceWorkerArgs> args(static_cast<TraceWorkerArgs*>(p));
 	args->engine->ExecuteTrace(args->address, args->ttl);
-	_endthread();
-}
-
-void TraceEngine::DnsWorkerEntry(void* p)
-{
-	std::unique_ptr<DnsWorkerArgs> args(static_cast<DnsWorkerArgs*>(p));
-	args->engine->ExecuteDnsResolve(args->hop);
 	_endthread();
 }
 
@@ -121,13 +109,9 @@ void TraceEngine::ExecuteTrace(int address, int ttl)
 			stats_.UpdateRTT(hop, reply->RoundTripTime);
 			stats_.AddReturned(hop);
 			if (stats_.SetAddrIfNew(hop, reply->Address) && options_.useDNS) {
-				TRACE_MSG(L"Start DNS resolver for hop " << hop
-				                                        << L" addr " << reply->Address);
-				auto args = std::make_unique<DnsWorkerArgs>();
-				args->engine = this;
-				args->hop    = hop;
-				const uintptr_t h = _beginthread(DnsWorkerEntry, 0, args.get());
-				if (h != 0 && h != static_cast<uintptr_t>(-1)) args.release();
+				TRACE_MSG(L"Resolving DNS for hop " << hop
+				                                   << L" addr " << reply->Address);
+				ResolveHopName(hop);
 			}
 			break;
 		case IP_BUF_TOO_SMALL:         stats_.SetName(hop, L"Reply buffer too small."); break;
@@ -158,10 +142,8 @@ void TraceEngine::ExecuteTrace(int address, int ttl)
 	TRACE_MSG(L"Thread with TTL=" << ttl << L" stopped.");
 }
 
-void TraceEngine::ExecuteDnsResolve(int hop)
+void TraceEngine::ResolveHopName(int hop)
 {
-	TRACE_MSG(L"DNS resolver thread started.");
-
 	const int addr = stats_.GetAddr(hop);
 	wchar_t hostname[NI_MAXHOST];
 	if (HostResolver::ReverseResolve(addr, hostname, NI_MAXHOST)) {
@@ -172,6 +154,4 @@ void TraceEngine::ExecuteDnsResolve(int hop)
 			(addr >>  8) & 0xff,  addr        & 0xff);
 		stats_.SetName(hop, numeric.c_str());
 	}
-
-	TRACE_MSG(L"DNS resolver thread stopped.");
 }
