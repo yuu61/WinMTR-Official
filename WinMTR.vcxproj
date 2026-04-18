@@ -284,27 +284,27 @@
     <ResourceCompile Include="resources\WinMTR.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\WinMTRLicense.cpp" />
-    <ClCompile Include="src\WinMTRStatusBar.cpp" />
-    <ClCompile Include="src\WinMTRDialog.cpp" />
-    <ClCompile Include="src\WinMTRGlobal.cpp" />
-    <ClCompile Include="src\WinMTRHelp.cpp" />
-    <ClCompile Include="src\WinMTRMain.cpp" />
-    <ClCompile Include="src\WinMTRNet.cpp" />
-    <ClCompile Include="src\WinMTROptions.cpp" />
-    <ClCompile Include="src\WinMTRProperties.cpp" />
+    <ClCompile Include="src\License.cpp" />
+    <ClCompile Include="src\StatusBar.cpp" />
+    <ClCompile Include="src\Dialog.cpp" />
+    <ClCompile Include="src\Global.cpp" />
+    <ClCompile Include="src\Help.cpp" />
+    <ClCompile Include="src\Main.cpp" />
+    <ClCompile Include="src\Net.cpp" />
+    <ClCompile Include="src\Options.cpp" />
+    <ClCompile Include="src\Properties.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\WinMTRLicense.h" />
-    <ClInclude Include="src\WinMTRStatusBar.h" />
+    <ClInclude Include="src\License.h" />
+    <ClInclude Include="src\StatusBar.h" />
     <ClInclude Include="resources\resource.h" />
-    <ClInclude Include="src\WinMTRDialog.h" />
-    <ClInclude Include="src\WinMTRGlobal.h" />
-    <ClInclude Include="src\WinMTRHelp.h" />
-    <ClInclude Include="src\WinMTRMain.h" />
-    <ClInclude Include="src\WinMTRNet.h" />
-    <ClInclude Include="src\WinMTROptions.h" />
-    <ClInclude Include="src\WinMTRProperties.h" />
+    <ClInclude Include="src\Dialog.h" />
+    <ClInclude Include="src\Global.h" />
+    <ClInclude Include="src\Help.h" />
+    <ClInclude Include="src\Main.h" />
+    <ClInclude Include="src\Net.h" />
+    <ClInclude Include="src\Options.h" />
+    <ClInclude Include="src\Properties.h" />
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="resources\WinMTR.ico" />

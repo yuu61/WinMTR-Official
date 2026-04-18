@@ -1,89 +1,89 @@
-<?xml version="1.0" encoding="utf-8"?>
+﻿<?xml version="1.0" encoding="utf-8"?>
 <Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup>
-    <Filter Include="Source Files">
+    <Filter Include="Source">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
       <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="Header Files">
+    <Filter Include="Header">
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
-    <Filter Include="Resource Files">
+    <Filter Include="Resource">
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>
         rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="src\WinMTRLicense.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\License.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="src\WinMTRStatusBar.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\StatusBar.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="src\WinMTRDialog.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\Dialog.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="src\WinMTRGlobal.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\Global.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="src\WinMTRHelp.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\Help.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="src\WinMTRMain.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\Main.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="src\WinMTRNet.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\Net.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="src\WinMTROptions.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\Options.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
-    <ClCompile Include="src\WinMTRProperties.cpp">
-      <Filter>Source Files</Filter>
+    <ClCompile Include="src\Properties.cpp">
+      <Filter>Source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="src\WinMTRLicense.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\License.h">
+      <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="src\WinMTRStatusBar.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\StatusBar.h">
+      <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="resources\resource.h">
-      <Filter>Header Files</Filter>
+      <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="src\WinMTRDialog.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\Dialog.h">
+      <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="src\WinMTRGlobal.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\Global.h">
+      <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="src\WinMTRHelp.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\Help.h">
+      <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="src\WinMTRMain.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\Main.h">
+      <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="src\WinMTRNet.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\Net.h">
+      <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="src\WinMTROptions.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\Options.h">
+      <Filter>Header</Filter>
     </ClInclude>
-    <ClInclude Include="src\WinMTRProperties.h">
-      <Filter>Header Files</Filter>
+    <ClInclude Include="src\Properties.h">
+      <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resources\WinMTR.rc">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource</Filter>
     </ResourceCompile>
   </ItemGroup>
   <ItemGroup>
     <CustomBuild Include="resources\WinMTR.ico">
-      <Filter>Resource Files</Filter>
+      <Filter>Resource</Filter>
     </CustomBuild>
   </ItemGroup>
 </Project>
