@@ -9,29 +9,41 @@
 
 namespace {
 
+constexpr size_t kHostBufferLen = 255;
+
 // Duplicated with Settings.cpp's OpenWinMTRSubKey; candidate for a shared
 // RegistryHelpers translation unit.
 LONG OpenLRUKey(REGSAM access, HKEY& outKey)
 {
-	HKEY hSoftware = NULL;
-	DWORD disp = 0;
-	LONG r = RegCreateKeyExW(HKEY_CURRENT_USER, L"Software", 0, NULL,
-							 REG_OPTION_NON_VOLATILE, access, NULL,
-							 &hSoftware, &disp);
-	if (r != ERROR_SUCCESS) return r;
+	HKEY  hSoftware = nullptr;
+	DWORD disp      = 0;
+	LONG  r         = RegCreateKeyExW(HKEY_CURRENT_USER, L"Software", 0, nullptr,
+	                                  REG_OPTION_NON_VOLATILE, access, nullptr,
+	                                  &hSoftware, &disp);
+	if (r != ERROR_SUCCESS) {
+		return r;
+	}
 
-	HKEY hWinMTR = NULL;
-	r = RegCreateKeyExW(hSoftware, L"WinMTR", 0, NULL,
-						REG_OPTION_NON_VOLATILE, access, NULL,
-						&hWinMTR, &disp);
+	HKEY hWinMTR = nullptr;
+	r = RegCreateKeyExW(hSoftware, L"WinMTR", 0, nullptr,
+	                    REG_OPTION_NON_VOLATILE, access, nullptr,
+	                    &hWinMTR, &disp);
 	RegCloseKey(hSoftware);
-	if (r != ERROR_SUCCESS) return r;
+	if (r != ERROR_SUCCESS) {
+		return r;
+	}
 
-	r = RegCreateKeyExW(hWinMTR, L"LRU", 0, NULL,
-						REG_OPTION_NON_VOLATILE, access, NULL,
-						&outKey, &disp);
+	r = RegCreateKeyExW(hWinMTR, L"LRU", 0, nullptr,
+	                    REG_OPTION_NON_VOLATILE, access, nullptr,
+	                    &outKey, &disp);
 	RegCloseKey(hWinMTR);
 	return r;
+}
+
+void WriteDwordValue(HKEY hKey, LPCWSTR name, DWORD value)
+{
+	RegSetValueExW(hKey, name, 0, REG_DWORD,
+	               reinterpret_cast<const BYTE*>(&value), sizeof(DWORD));
 }
 
 } // namespace
@@ -42,27 +54,33 @@ LONG OpenLRUKey(REGSAM access, HKEY& outKey)
 //*****************************************************************************
 bool LRUStore::Load(std::vector<CString>& outHosts)
 {
-	HKEY hLRU = NULL;
-	if (OpenLRUKey(KEY_ALL_ACCESS, hLRU) != ERROR_SUCCESS)
+	HKEY hLRU = nullptr;
+	if (OpenLRUKey(KEY_ALL_ACCESS, hLRU) != ERROR_SUCCESS) {
 		return false;
+	}
 
 	DWORD tmp = 0;
-	DWORD sz = sizeof(DWORD);
-	if (RegQueryValueExW(hLRU, L"NrLRU", 0, NULL, (BYTE*)&tmp, &sz) != ERROR_SUCCESS) {
-		tmp = (DWORD)nr_;
-		RegSetValueExW(hLRU, L"NrLRU", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
+	DWORD sz  = sizeof(DWORD);
+	if (RegQueryValueExW(hLRU, L"NrLRU", nullptr, nullptr,
+	                     reinterpret_cast<BYTE*>(&tmp), &sz) != ERROR_SUCCESS) {
+		WriteDwordValue(hLRU, L"NrLRU", static_cast<DWORD>(nr_));
 	} else {
-		wchar_t hostBuf[255]{};
-		nr_ = (int)tmp;
+		wchar_t hostBuf[kHostBufferLen]{};
+		nr_ = static_cast<int>(tmp);
 		outHosts.reserve(static_cast<size_t>(max_));
 		for (int i = 0; i < max_; ++i) {
 			const auto keyName = std::format(L"Host{}", i + 1);
 			DWORD hostSize = sizeof(hostBuf);
-			if (RegQueryValueExW(hLRU, keyName.c_str(), 0, NULL, (BYTE*)hostBuf, &hostSize) == ERROR_SUCCESS) {
-				DWORD chars = hostSize / sizeof(wchar_t);
-				if (chars == 0 || chars > _countof(hostBuf)) continue;
+			if (RegQueryValueExW(hLRU, keyName.c_str(), nullptr, nullptr,
+			                     reinterpret_cast<BYTE*>(hostBuf), &hostSize) == ERROR_SUCCESS) {
+				const DWORD chars = hostSize / sizeof(wchar_t);
+				if (chars == 0 || chars > _countof(hostBuf)) {
+					continue;
+				}
 				hostBuf[_countof(hostBuf) - 1] = L'\0';
-				if (hostBuf[0] == L'\0') continue;
+				if (hostBuf[0] == L'\0') {
+					continue;
+				}
 				outHosts.emplace_back(hostBuf);
 			}
 		}
@@ -77,19 +95,21 @@ bool LRUStore::Load(std::vector<CString>& outHosts)
 //*****************************************************************************
 void LRUStore::Append(LPCWSTR host)
 {
-	HKEY hLRU = NULL;
-	if (OpenLRUKey(KEY_ALL_ACCESS, hLRU) != ERROR_SUCCESS)
+	HKEY hLRU = nullptr;
+	if (OpenLRUKey(KEY_ALL_ACCESS, hLRU) != ERROR_SUCCESS) {
 		return;
+	}
 
-	if (nr_ >= max_) nr_ = 0;
+	if (nr_ >= max_) {
+		nr_ = 0;
+	}
 	nr_++;
-	const auto keyName = std::format(L"Host{}", nr_);
+	const auto              keyName  = std::format(L"Host{}", nr_);
 	const std::wstring_view hostView{host};
 	RegSetValueExW(hLRU, keyName.c_str(), 0, REG_SZ,
-				   reinterpret_cast<const BYTE*>(host),
-				   static_cast<DWORD>((hostView.size() + 1) * sizeof(wchar_t)));
-	DWORD tmp = (DWORD)nr_;
-	RegSetValueExW(hLRU, L"NrLRU", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
+	               reinterpret_cast<const BYTE*>(host),
+	               static_cast<DWORD>((hostView.size() + 1) * sizeof(wchar_t)));
+	WriteDwordValue(hLRU, L"NrLRU", static_cast<DWORD>(nr_));
 	RegCloseKey(hLRU);
 }
 
@@ -101,16 +121,16 @@ void LRUStore::Append(LPCWSTR host)
 //*****************************************************************************
 void LRUStore::Trim()
 {
-	HKEY hLRU = NULL;
-	if (OpenLRUKey(KEY_ALL_ACCESS, hLRU) != ERROR_SUCCESS)
+	HKEY hLRU = nullptr;
+	if (OpenLRUKey(KEY_ALL_ACCESS, hLRU) != ERROR_SUCCESS) {
 		return;
+	}
 
 	for (int i = max_; i <= nr_; ++i) {
 		RegDeleteValueW(hLRU, std::format(L"Host{}", i).c_str());
 	}
 	nr_ = max_;
-	DWORD tmp = (DWORD)nr_;
-	RegSetValueExW(hLRU, L"NrLRU", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
+	WriteDwordValue(hLRU, L"NrLRU", static_cast<DWORD>(nr_));
 	RegCloseKey(hLRU);
 }
 
@@ -123,15 +143,15 @@ void LRUStore::Trim()
 //*****************************************************************************
 void LRUStore::Clear()
 {
-	HKEY hLRU = NULL;
-	if (OpenLRUKey(KEY_ALL_ACCESS, hLRU) != ERROR_SUCCESS)
+	HKEY hLRU = nullptr;
+	if (OpenLRUKey(KEY_ALL_ACCESS, hLRU) != ERROR_SUCCESS) {
 		return;
+	}
 
 	for (int i = 0; i <= nr_; ++i) {
 		RegDeleteValueW(hLRU, std::format(L"Host{}", i).c_str());
 	}
 	nr_ = 0;
-	DWORD tmp = 0;
-	RegSetValueExW(hLRU, L"NrLRU", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
+	WriteDwordValue(hLRU, L"NrLRU", 0);
 	RegCloseKey(hLRU);
 }

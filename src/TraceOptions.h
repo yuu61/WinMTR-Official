@@ -15,9 +15,9 @@
 // Values are captured at DoTrace() entry. Changes made via the Options
 // dialog during an active trace do not affect the in-flight trace.
 struct TraceOptions {
-	int    pingsize = 0;
+	int pingsize = 0;
 	double interval = 0.0;
-	BOOL   useDNS   = FALSE;
+	BOOL useDNS = FALSE;
 };
 
 #endif // TRACEOPTIONS_H_

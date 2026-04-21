@@ -19,7 +19,7 @@ static char THIS_FILE[] = __FILE__;
 //*****************************************************************************
 // BEGIN_MESSAGE_MAP
 //
-// 
+//
 //*****************************************************************************
 BEGIN_MESSAGE_MAP(Properties, CDialog)
 END_MESSAGE_MAP()
@@ -28,7 +28,7 @@ END_MESSAGE_MAP()
 //*****************************************************************************
 // Properties::Properties
 //
-// 
+//
 //*****************************************************************************
 Properties::Properties(CWnd* pParent) : CDialog(Properties::IDD, pParent)
 {
@@ -38,7 +38,7 @@ Properties::Properties(CWnd* pParent) : CDialog(Properties::IDD, pParent)
 //*****************************************************************************
 // WinMTRroperties::DoDataExchange
 //
-// 
+//
 //*****************************************************************************
 void Properties::DoDataExchange(CDataExchange* pDX)
 {
@@ -61,7 +61,7 @@ void Properties::DoDataExchange(CDataExchange* pDX)
 //*****************************************************************************
 // Properties::OnInitDialog
 //
-// 
+//
 //*****************************************************************************
 BOOL Properties::OnInitDialog()
 {
@@ -89,10 +89,10 @@ void Properties::PopulateFrom(const HopStatistics& stats, int hop)
 	const IpAddress addr = stats.GetAddr(hop);
 	if (addr.IsUnspecified()) {
 		host[0] = L'\0';
-		ip[0]   = L'\0';
+		ip[0] = L'\0';
 		stats.GetName(hop, comment, _countof(comment));
 
-		pck_loss  = pck_sent  = pck_recv  = 0;
+		pck_loss = pck_sent = pck_recv = 0;
 		ping_avrg = ping_last = 0.0f;
 		ping_best = ping_worst = 0.0f;
 		return;
@@ -102,13 +102,12 @@ void Properties::PopulateFrom(const HopStatistics& stats, int hop)
 	HostResolver::FormatNumeric(addr, ip, _countof(ip));
 	wcsncpy_s(comment, L"Host alive.", _TRUNCATE);
 
-	ping_avrg  = (float)stats.GetAvg(hop);
-	ping_last  = (float)stats.GetLast(hop);
-	ping_best  = (float)stats.GetBest(hop);
-	ping_worst = (float)stats.GetWorst(hop);
+	ping_avrg  = static_cast<float>(stats.GetAvg(hop));
+	ping_last  = static_cast<float>(stats.GetLast(hop));
+	ping_best  = static_cast<float>(stats.GetBest(hop));
+	ping_worst = static_cast<float>(stats.GetWorst(hop));
 
 	pck_loss = stats.GetPercent(hop);
 	pck_recv = stats.GetReturned(hop);
 	pck_sent = stats.GetXmit(hop);
 }
-

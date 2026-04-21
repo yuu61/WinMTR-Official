@@ -18,9 +18,9 @@
 #include <vector>
 
 struct TraceConfigState {
-	double   interval = DEFAULT_INTERVAL;
-	int      pingsize = DEFAULT_PING_SIZE;
-	BOOL     useDNS   = DEFAULT_DNS;
+	double interval = DEFAULT_INTERVAL;
+	int pingsize = DEFAULT_PING_SIZE;
+	BOOL useDNS = DEFAULT_DNS;
 	LRUStore lru;
 
 	// Applies overrides and loads persisted values. Fields set via cmdline

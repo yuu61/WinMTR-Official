@@ -36,8 +36,10 @@ public:
 	explicit TraceSessionController(ISessionView* view);
 	~TraceSessionController();
 
-	TraceSessionController(const TraceSessionController&)            = delete;
+	TraceSessionController(const TraceSessionController&) = delete;
 	TraceSessionController& operator=(const TraceSessionController&) = delete;
+	TraceSessionController(TraceSessionController&&) = delete;
+	TraceSessionController& operator=(TraceSessionController&&) = delete;
 
 	void RequestStart(const std::wstring& host, const TraceOptions& opts);
 	void RequestStop();
@@ -52,11 +54,11 @@ public:
 	void Tick();
 
 	[[nodiscard]] State CurrentState() const { return state_; }
-	[[nodiscard]] bool  IsTracing()   const { return state_ == State::Tracing; }
+	[[nodiscard]] bool IsTracing() const { return state_ == State::Tracing; }
 	[[nodiscard]] const HopStatistics& Stats() const;
 
-	[[nodiscard]] bool    IsEngineValid() const;
-	[[nodiscard]] LPCWSTR EngineError()   const;
+	[[nodiscard]] bool IsEngineValid() const;
+	[[nodiscard]] LPCWSTR EngineError() const;
 
 private:
 	enum class Transition {
@@ -76,13 +78,13 @@ private:
 	void ApplyTransition();
 	void RestoreIdleUi();
 
-	void ExecuteSession(std::wstring host, TraceOptions opts);
+	void ExecuteSession(const std::wstring& host, TraceOptions opts);
 
 	ISessionView*                view_;
 	std::unique_ptr<TraceEngine> engine_;
-	State                        state_;
-	Transition                   transition_;
-	unsigned int                 tick_count_;
+	State                        state_       = State::Idle;
+	Transition                   transition_  = Transition::IdleToIdle;
+	unsigned int                 tick_count_  = 0;
 	std::thread                  session_thread_;
 
 	std::wstring pending_host_;

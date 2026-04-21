@@ -18,7 +18,7 @@
 class LRUStore {
 public:
 	void SetMax(int max) { max_ = max; }
-	[[nodiscard]] int Max()   const { return max_; }
+	[[nodiscard]] int Max() const { return max_; }
 	[[nodiscard]] int Count() const { return nr_; }
 
 	// Reads NrLRU + Host{1..Max()} from the registry. Populates outHosts and
@@ -35,7 +35,7 @@ public:
 	void Clear();
 
 private:
-	int nr_  = 0;
+	int nr_ = 0;
 	int max_ = DEFAULT_MAX_LRU;
 };
 

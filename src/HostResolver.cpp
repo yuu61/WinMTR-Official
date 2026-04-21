@@ -11,7 +11,7 @@ namespace {
 
 bool TryParseNumeric(LPCWSTR hostname, IpAddress& outAddr)
 {
-	in_addr  v4{};
+	in_addr v4{};
 	in6_addr v6{};
 	if (InetPtonW(AF_INET, hostname, &v4) == 1) {
 		outAddr = IpAddress::FromIPv4(v4);
@@ -26,17 +26,17 @@ bool TryParseNumeric(LPCWSTR hostname, IpAddress& outAddr)
 
 bool ResolveByDns(LPCWSTR hostname, IpAddress* outAddr, CString& errorMessage)
 {
-	ADDRINFOW hints = {};
+	ADDRINFOW hints   = {};
 	hints.ai_family   = AF_UNSPEC;
 	hints.ai_socktype = SOCK_RAW;
-	PADDRINFOW result = NULL;
-	if (GetAddrInfoW(hostname, NULL, &hints, &result) != 0 || result == NULL) {
+	PADDRINFOW result = nullptr;
+	if (GetAddrInfoW(hostname, nullptr, &hints, &result) != 0 || result == nullptr) {
 		errorMessage = L"Unable to resolve hostname.";
 		return false;
 	}
 
 	bool ok = false;
-	for (PADDRINFOW ai = result; ai != NULL; ai = ai->ai_next) {
+	for (PADDRINFOW ai = result; ai != nullptr; ai = ai->ai_next) {
 		if (ai->ai_family == AF_INET) {
 			if (outAddr) {
 				const auto* sa = reinterpret_cast<const sockaddr_in*>(ai->ai_addr);
@@ -55,7 +55,9 @@ bool ResolveByDns(LPCWSTR hostname, IpAddress* outAddr, CString& errorMessage)
 		}
 	}
 	FreeAddrInfoW(result);
-	if (!ok) errorMessage = L"Unable to resolve hostname.";
+	if (!ok) {
+		errorMessage = L"Unable to resolve hostname.";
+	}
 	return ok;
 }
 
@@ -68,7 +70,9 @@ bool ResolveByDns(LPCWSTR hostname, IpAddress* outAddr, CString& errorMessage)
 //*****************************************************************************
 bool HostResolver::LooksNumeric(LPCWSTR hostname)
 {
-	if (hostname == nullptr) return false;
+	if (hostname == nullptr) {
+		return false;
+	}
 	IpAddress tmp;
 	return TryParseNumeric(hostname, tmp);
 }
@@ -80,10 +84,14 @@ bool HostResolver::LooksNumeric(LPCWSTR hostname)
 //*****************************************************************************
 bool HostResolver::Validate(LPCWSTR hostname, CString& errorMessage)
 {
-	if (hostname == NULL) hostname = L"localhost";
+	if (hostname == nullptr) {
+		hostname = L"localhost";
+	}
 	IpAddress tmp;
-	if (TryParseNumeric(hostname, tmp)) return true;
-	return ResolveByDns(hostname, NULL, errorMessage);
+	if (TryParseNumeric(hostname, tmp)) {
+		return true;
+	}
+	return ResolveByDns(hostname, nullptr, errorMessage);
 }
 
 
@@ -93,8 +101,12 @@ bool HostResolver::Validate(LPCWSTR hostname, CString& errorMessage)
 //*****************************************************************************
 bool HostResolver::Resolve(LPCWSTR hostname, IpAddress& outAddr, CString& errorMessage)
 {
-	if (hostname == NULL) hostname = L"localhost";
-	if (TryParseNumeric(hostname, outAddr)) return true;
+	if (hostname == nullptr) {
+		hostname = L"localhost";
+	}
+	if (TryParseNumeric(hostname, outAddr)) {
+		return true;
+	}
 	return ResolveByDns(hostname, &outAddr, errorMessage);
 }
 
@@ -107,19 +119,19 @@ bool HostResolver::ReverseResolve(const IpAddress& addr, wchar_t* outName, size_
 {
 	if (addr.family == AF_INET) {
 		sockaddr_in sa = {};
-		sa.sin_family = AF_INET;
-		sa.sin_addr   = addr.bytes.v4;
+		sa.sin_family   = AF_INET;
+		sa.sin_addr     = addr.bytes.v4;
 		return GetNameInfoW(reinterpret_cast<const sockaddr*>(&sa), sizeof(sa),
 		                    outName, static_cast<DWORD>(outSize),
-		                    NULL, 0, NI_NAMEREQD) == 0;
+		                    nullptr, 0, NI_NAMEREQD) == 0;
 	}
 	if (addr.family == AF_INET6) {
 		sockaddr_in6 sa = {};
-		sa.sin6_family = AF_INET6;
-		sa.sin6_addr   = addr.bytes.v6;
+		sa.sin6_family  = AF_INET6;
+		sa.sin6_addr    = addr.bytes.v6;
 		return GetNameInfoW(reinterpret_cast<const sockaddr*>(&sa), sizeof(sa),
 		                    outName, static_cast<DWORD>(outSize),
-		                    NULL, 0, NI_NAMEREQD) == 0;
+		                    nullptr, 0, NI_NAMEREQD) == 0;
 	}
 	return false;
 }
@@ -131,7 +143,9 @@ bool HostResolver::ReverseResolve(const IpAddress& addr, wchar_t* outName, size_
 //*****************************************************************************
 void HostResolver::FormatNumeric(const IpAddress& addr, wchar_t* outName, size_t outSize)
 {
-	if (outSize == 0) return;
+	if (outSize == 0) {
+		return;
+	}
 	outName[0] = L'\0';
 	if (addr.family == AF_INET) {
 		InetNtopW(AF_INET, &addr.bytes.v4, outName, outSize);

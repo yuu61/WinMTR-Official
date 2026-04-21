@@ -10,13 +10,8 @@
 
 IMPLEMENT_DYNAMIC(Help, CDialog)
 
-Help::Help(CWnd* pParent /*=NULL*/)
-	: CDialog(Help::IDD, pParent)
-{
-
-}
-
-Help::~Help()
+Help::Help(CWnd* pParent)
+    : CDialog(Help::IDD, pParent)
 {
 }
 

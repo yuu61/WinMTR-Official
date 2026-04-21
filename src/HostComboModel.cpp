@@ -9,7 +9,7 @@ namespace {
 
 inline CString SentinelText()
 {
-	return CString((LPCWSTR)IDS_STRING_CLEAR_HISTORY);
+	return {MAKEINTRESOURCE(IDS_STRING_CLEAR_HISTORY)};
 }
 
 } // namespace
@@ -18,8 +18,9 @@ namespace HostComboModel {
 
 void Populate(CComboBox& combo, const std::vector<CString>& hosts)
 {
-	for (const auto& h : hosts)
+	for (const auto& h : hosts) {
 		combo.AddString(h);
+	}
 	combo.AddString(SentinelText());
 }
 
@@ -32,8 +33,9 @@ void ClearAndResetSentinel(CComboBox& combo)
 
 bool AppendBeforeSentinel(CComboBox& combo, const CString& host)
 {
-	if (combo.FindString(-1, host) != CB_ERR)
+	if (combo.FindString(-1, host) != CB_ERR) {
 		return false;
+	}
 	combo.InsertString(combo.GetCount() - 1, host);
 	return true;
 }

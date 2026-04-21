@@ -27,10 +27,12 @@ static char THIS_FILE[] = __FILE__;
 #endif
 
 namespace {
-constexpr wchar_t kTxtFileFilter[]  = L"Text Files (*.txt)|*.txt|All Files (*.*)|*.*||";
+constexpr wchar_t kTxtFileFilter[] = L"Text Files (*.txt)|*.txt|All Files (*.*)|*.*||";
 constexpr wchar_t kHtmlFileFilter[] = L"HTML Files (*.htm, *.html)|*.htm;*.html|All Files (*.*)|*.*||";
-constexpr UINT_PTR kRefreshTimerId  = 1;
-}
+constexpr UINT_PTR kRefreshTimerId = 1;
+constexpr UINT kAppnorLinkPaneId = 1234;
+constexpr int kAppnorLinkPaneWidth = 100;
+} // namespace
 
 BEGIN_MESSAGE_MAP(Dialog, CDialog)
 	ON_WM_PAINT()
@@ -38,33 +40,30 @@ BEGIN_MESSAGE_MAP(Dialog, CDialog)
 	ON_WM_SIZING()
 	ON_WM_GETMINMAXINFO()
 	ON_WM_QUERYDRAGICON()
-	ON_BN_CLICKED(ID_RESTART, OnRestart)
-	ON_BN_CLICKED(ID_OPTIONS, OnOptions)
-	ON_BN_CLICKED(ID_CTTC, OnCTTC)
-	ON_BN_CLICKED(ID_CHTC, OnCHTC)
-	ON_BN_CLICKED(ID_EXPT, OnEXPT)
-	ON_BN_CLICKED(ID_EXPH, OnEXPH)
-	ON_NOTIFY(NM_DBLCLK, IDC_LIST_MTR, OnDblclkList)
+	ON_BN_CLICKED(ID_RESTART, &Dialog::OnRestart)
+	ON_BN_CLICKED(ID_OPTIONS, &Dialog::OnOptions)
+	ON_BN_CLICKED(ID_CTTC, &Dialog::OnCTTC)
+	ON_BN_CLICKED(ID_CHTC, &Dialog::OnCHTC)
+	ON_BN_CLICKED(ID_EXPT, &Dialog::OnEXPT)
+	ON_BN_CLICKED(ID_EXPH, &Dialog::OnEXPH)
+	ON_NOTIFY(NM_DBLCLK, IDC_LIST_MTR, &Dialog::OnDblclkList)
 	ON_CBN_CLOSEUP(IDC_COMBO_HOST, &Dialog::OnCbnCloseupComboHost)
 	ON_WM_TIMER()
 	ON_WM_CLOSE()
 	ON_BN_CLICKED(IDCANCEL, &Dialog::OnBnClickedCancel)
 	ON_MESSAGE(WM_WINMTR_TRACE_COMPLETED, &Dialog::OnTraceCompletedMsg)
-	ON_MESSAGE(WM_WINMTR_TRACE_FAILED,    &Dialog::OnTraceFailedMsg)
+	ON_MESSAGE(WM_WINMTR_TRACE_FAILED, &Dialog::OnTraceFailedMsg)
 END_MESSAGE_MAP()
 
 
 Dialog::Dialog(CWnd* pParent)
-	: CDialog(Dialog::IDD, pParent)
+    : CDialog(Dialog::IDD, pParent),
+      controller(std::make_unique<TraceSessionController>(this)),
+      m_hIcon(AfxGetApp()->LoadIcon(IDR_MAINFRAME))
 {
-	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
-	m_autostart = false;
-	controller = std::make_unique<TraceSessionController>(this);
 }
 
-Dialog::~Dialog()
-{
-}
+Dialog::~Dialog() = default;
 
 
 void Dialog::DoDataExchange(CDataExchange* pDX)
@@ -97,7 +96,7 @@ BOOL Dialog::OnInitDialog()
 	wchar_t caption[] = L"WinMTR v" WINMTR_VERSION L" 64 bit by Appnor MSP - www.winmtr.net";
 #endif
 
-	SetTimer(kRefreshTimerId, WINMTR_DIALOG_TIMER, NULL);
+	SetTimer(kRefreshTimerId, WINMTR_DIALOG_TIMER, nullptr);
 	SetWindowText(caption);
 
 	SetIcon(m_hIcon, TRUE);
@@ -108,10 +107,10 @@ BOOL Dialog::OnInitDialog()
 		return FALSE;
 	}
 
-	m_appnorLink.reset(new CMFCLinkCtrl);
+	m_appnorLink = std::make_unique<CMFCLinkCtrl>();
 	if (!statusBar.AddLinkPane(*m_appnorLink, L"www.appnor.com",
-			L"https://www.appnor.com/?utm_source=winmtr&utm_medium=desktop&utm_campaign=software",
-			1234, 100)) {
+	                           L"https://www.appnor.com/?utm_source=winmtr&utm_medium=desktop&utm_campaign=software",
+	                           kAppnorLinkPaneId, kAppnorLinkPaneWidth)) {
 		AfxMessageBox(L"Failed to add status bar link pane", MB_ICONERROR);
 		return FALSE;
 	}
@@ -133,8 +132,9 @@ BOOL Dialog::OnInitDialog()
 
 	{
 		std::vector<CString> lruHosts;
-		if (config.LoadAtInit(cmdline_overrides, lruHosts))
+		if (config.LoadAtInit(cmdline_overrides, lruHosts)) {
 			HostComboModel::Populate(m_comboHost, lruHosts);
+		}
 	}
 
 	if (m_autostart) {
@@ -166,32 +166,33 @@ void Dialog::OnGetMinMaxInfo(MINMAXINFO* lpMMI)
 void Dialog::OnSize(UINT nType, int cx, int cy)
 {
 	CDialog::OnSize(nType, cx, cy);
-	DialogLayout::ControlRefs refs{
-		m_staticS, m_staticJ, m_buttonExit, m_buttonExpH, m_buttonExpT, m_listMTR
-	};
+	const DialogLayout::ControlRefs refs{
+	    .staticS = m_staticS,
+	    .staticJ = m_staticJ,
+	    .buttonExit = m_buttonExit,
+	    .buttonExpH = m_buttonExpH,
+	    .buttonExpT = m_buttonExpT,
+	    .listMTR = m_listMTR};
 	DialogLayout::ApplyClientSize(*this, refs);
 }
 
 
 void Dialog::OnPaint()
 {
-	if (IsIconic())
-	{
+	if (IsIconic()) {
 		CPaintDC dc(this);
 
-		SendMessage(WM_ICONERASEBKGND, (WPARAM) dc.GetSafeHdc(), 0);
+		SendMessage(WM_ICONERASEBKGND, reinterpret_cast<WPARAM>(dc.GetSafeHdc()), 0);
 
-		int cxIcon = GetSystemMetrics(SM_CXICON);
-		int cyIcon = GetSystemMetrics(SM_CYICON);
+		const int cxIcon = GetSystemMetrics(SM_CXICON);
+		const int cyIcon = GetSystemMetrics(SM_CYICON);
 		CRect rect;
 		GetClientRect(&rect);
-		int x = (rect.Width()  - cxIcon + 1) / 2;
-		int y = (rect.Height() - cyIcon + 1) / 2;
+		const int x = (rect.Width() - cxIcon + 1) / 2;
+		const int y = (rect.Height() - cyIcon + 1) / 2;
 
 		dc.DrawIcon(x, y, m_hIcon);
-	}
-	else
-	{
+	} else {
 		CDialog::OnPaint();
 	}
 }
@@ -199,7 +200,7 @@ void Dialog::OnPaint()
 
 HCURSOR Dialog::OnQueryDragIcon()
 {
-	return (HCURSOR) m_hIcon;
+	return static_cast<HCURSOR>(m_hIcon);
 }
 
 
@@ -207,14 +208,16 @@ void Dialog::OnDblclkList(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 {
 	*pResult = 0;
 
-	if (!controller->IsTracing())
+	if (!controller->IsTracing()) {
 		return;
+	}
 
 	POSITION pos = m_listMTR.GetFirstSelectedItemPosition();
-	if (pos == NULL)
+	if (pos == nullptr) {
 		return;
+	}
 
-	int nItem = m_listMTR.GetNextSelectedItem(pos);
+	const int nItem = m_listMTR.GetNextSelectedItem(pos);
 	Properties wmtrprop;
 	wmtrprop.PopulateFrom(controller->Stats(), nItem);
 	wmtrprop.DoModal();
@@ -249,7 +252,7 @@ void Dialog::OnRestart()
 	preview.TrimRight();
 	if (!preview.IsEmpty() && !HostResolver::LooksNumeric(preview)) {
 		statusBar.SetPaneText(0,
-			std::format(L"Resolving host {}...", (LPCWSTR)preview).c_str());
+		                      std::format(L"Resolving host {}...", static_cast<LPCWSTR>(preview)).c_str());
 	}
 
 	m_listMTR.DeleteAllItems();
@@ -261,17 +264,18 @@ void Dialog::OnRestart()
 		m_comboHost.SetFocus();
 		return;
 	case StartTraceUseCase::Validation::ResolutionFailed:
-		statusBar.SetPaneText(0, CString((LPCWSTR)IDS_STRING_SB_NAME));
+		statusBar.SetPaneText(0, CString(MAKEINTRESOURCE(IDS_STRING_SB_NAME)));
 		AfxMessageBox(result.error);
 		return;
 	case StartTraceUseCase::Validation::Ok:
 		break;
 	}
 
-	if (HostComboModel::AppendBeforeSentinel(m_comboHost, result.normalizedHost))
-		config.lru.Append((LPCWSTR)result.normalizedHost);
+	if (HostComboModel::AppendBeforeSentinel(m_comboHost, result.normalizedHost)) {
+		config.lru.Append(static_cast<LPCWSTR>(result.normalizedHost));
+	}
 
-	controller->RequestStart((LPCWSTR)result.normalizedHost, config.Snapshot());
+	controller->RequestStart(static_cast<LPCWSTR>(result.normalizedHost), config.Snapshot());
 }
 
 
@@ -288,11 +292,12 @@ void Dialog::OnOptions()
 		config.pingsize = optDlg.GetPingSize();
 		config.interval = optDlg.GetInterval();
 		config.lru.SetMax(optDlg.GetMaxLRU());
-		config.useDNS   = optDlg.GetUseDNS();
+		config.useDNS = optDlg.GetUseDNS();
 
 		config.SaveOptions();
-		if (config.lru.Max() < config.lru.Count())
+		if (config.lru.Max() < config.lru.Count()) {
 			config.lru.Trim();
+		}
 	}
 }
 
@@ -315,7 +320,7 @@ void Dialog::OnCHTC()
 
 void Dialog::OnEXPT()
 {
-	CFileDialog dlg(FALSE, L"TXT", NULL, OFN_HIDEREADONLY | OFN_EXPLORER, kTxtFileFilter, this);
+	CFileDialog dlg(FALSE, L"TXT", nullptr, OFN_HIDEREADONLY | OFN_EXPLORER, kTxtFileFilter, this);
 	if (dlg.DoModal() == IDOK) {
 		if (!Reporter::SaveToFile(dlg.GetPathName(), Reporter::BuildTextReport(controller->Stats()))) {
 			AfxMessageBox(L"Failed to save report to file.");
@@ -326,7 +331,7 @@ void Dialog::OnEXPT()
 
 void Dialog::OnEXPH()
 {
-	CFileDialog dlg(FALSE, L"HTML", NULL, OFN_HIDEREADONLY | OFN_EXPLORER, kHtmlFileFilter, this);
+	CFileDialog dlg(FALSE, L"HTML", nullptr, OFN_HIDEREADONLY | OFN_EXPLORER, kHtmlFileFilter, this);
 	if (dlg.DoModal() == IDOK) {
 		if (!Reporter::SaveToFile(dlg.GetPathName(), Reporter::BuildHtmlReport(controller->Stats()))) {
 			AfxMessageBox(L"Failed to save report to file.");
@@ -351,8 +356,9 @@ void Dialog::ClearHistory()
 
 void Dialog::OnCbnCloseupComboHost()
 {
-	if (HostComboModel::IsSentinelSelected(m_comboHost))
+	if (HostComboModel::IsSentinelSelected(m_comboHost)) {
 		ClearHistory();
+	}
 }
 
 
@@ -435,29 +441,43 @@ void Dialog::PostTraceCompleted()
 }
 
 
+// Ownership of `copy` transfers to the MFC message queue on PostMessage
+// success; the UI thread reclaims and deletes it in OnTraceFailedMsg.
+// clang-analyzer cannot model this hand-off and flags the success path as a
+// leak, so this function is wrapped in a suppression block.
+// NOLINTBEGIN(clang-analyzer-cplusplus.NewDeleteLeaks)
 void Dialog::PostTraceFailed(const CString& error)
 {
 	try {
 		auto* copy = new CString(error);
+		// reinterpret_cast + int-to-ptr is the required MFC message-passing
+		// protocol for carrying a heap pointer through WPARAM/LPARAM.
+		// NOLINTNEXTLINE(performance-no-int-to-ptr,cppcoreguidelines-pro-type-reinterpret-cast)
 		if (!PostMessage(WM_WINMTR_TRACE_FAILED, 0, reinterpret_cast<LPARAM>(copy))) {
 			delete copy;
 		}
-	} catch (...) {
-		// Swallow: worker thread must not terminate the process.
+	} catch (...) { // NOLINT(bugprone-empty-catch)
+		            // The worker thread must never propagate an exception into MFC's
+		            // message pump. On allocation/Post failure the error path is already
+		            // logged upstream; dropping the notification here is the documented
+		            // fallback.
 	}
 }
+// NOLINTEND(clang-analyzer-cplusplus.NewDeleteLeaks)
 
 
-LRESULT Dialog::OnTraceCompletedMsg(WPARAM, LPARAM)
+LRESULT Dialog::OnTraceCompletedMsg(WPARAM /*wParam*/, LPARAM /*lParam*/)
 {
 	controller->OnTraceCompleted();
 	return 0;
 }
 
 
-LRESULT Dialog::OnTraceFailedMsg(WPARAM, LPARAM lParam)
+LRESULT Dialog::OnTraceFailedMsg(WPARAM /*wParam*/, LPARAM lParam)
 {
-	std::unique_ptr<CString> err(reinterpret_cast<CString*>(lParam));
+	// Symmetric with PostTraceFailed: reclaim the heap CString encoded in lParam.
+	// NOLINTNEXTLINE(performance-no-int-to-ptr,cppcoreguidelines-pro-type-reinterpret-cast)
+	const std::unique_ptr<CString> err(reinterpret_cast<CString*>(lParam));
 	controller->OnTraceFailed(*err);
 	return 0;
 }

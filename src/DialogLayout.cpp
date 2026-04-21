@@ -7,6 +7,29 @@
 
 namespace DialogLayout {
 
+namespace {
+
+// DPI baseline used by MulDiv for logical-to-physical pixel scaling.
+constexpr int kBaselineDpi = 96;
+
+// Horizontal padding (pixels at 96 DPI) between the static/list right edge
+// and the dialog's right border. Two related values:
+//   - kStaticRightMargin: visual breathing room for the left-anchored label.
+//   - kListRightMargin  : slightly tighter gap matching the dialog template.
+constexpr int kStaticRightMargin = 10;
+constexpr int kListRightMargin   = 21;
+
+// Bottom gap (pixels at 96 DPI) below the list view before the status bar.
+constexpr int kListBottomMargin = 25;
+
+// Right-edge button margins in logical units (pixels at 96 DPI).
+//   kButtonEdgeMargin ~= 7 DLU  (Exit / ExpH share this margin)
+//   kButtonExpTMargin ~= 80 DLU (leaves room for ExpH width + 8 DLU gap + 7 DLU margin)
+constexpr int kButtonEdgeMargin = 11;
+constexpr int kButtonExpTMargin = 120;
+
+} // namespace
+
 void AdjustInitialSize(CWnd& dialog)
 {
 	CRect rcClientStart;
@@ -16,7 +39,7 @@ void AdjustInitialSize(CWnd& dialog)
 	                      0, CWnd::reposQuery, rcClientNow);
 
 	const CPoint ptOffset(rcClientNow.left - rcClientStart.left,
-	                      rcClientNow.top  - rcClientStart.top);
+	                      rcClientNow.top - rcClientStart.top);
 
 	CRect rcChild;
 	CWnd* pwndChild = dialog.GetWindow(GW_CHILD);
@@ -46,67 +69,71 @@ void ApplyClientSize(CWnd& dialog, const ControlRefs& refs)
 	if (::IsWindow(refs.staticS.m_hWnd)) {
 		refs.staticS.GetWindowRect(&lb);
 		dialog.ScreenToClient(&lb);
-		refs.staticS.SetWindowPos(NULL, lb.TopLeft().x, lb.TopLeft().y,
-			r.Width() - lb.TopLeft().x - 10, lb.Height(),
-			SWP_NOMOVE | SWP_NOZORDER);
+		refs.staticS.SetWindowPos(nullptr, lb.TopLeft().x, lb.TopLeft().y,
+		                          r.Width() - lb.TopLeft().x - kStaticRightMargin, lb.Height(),
+		                          SWP_NOMOVE | SWP_NOZORDER);
 	}
 
 	if (::IsWindow(refs.staticJ.m_hWnd)) {
 		refs.staticJ.GetWindowRect(&lb);
 		dialog.ScreenToClient(&lb);
-		refs.staticJ.SetWindowPos(NULL, lb.TopLeft().x, lb.TopLeft().y,
-			r.Width() - 21, lb.Height(),
-			SWP_NOMOVE | SWP_NOZORDER);
+		refs.staticJ.SetWindowPos(nullptr, lb.TopLeft().x, lb.TopLeft().y,
+		                          r.Width() - kListRightMargin, lb.Height(),
+		                          SWP_NOMOVE | SWP_NOZORDER);
 	}
 
 	// Right-edge anchor margins (pixels at the dialog's current DPI).
 	// Exit and ExpH share the 7 DLU right margin; ExpT leaves room for ExpH + gap.
-	const UINT dpi        = ::GetDpiForWindow(dialog.GetSafeHwnd());
-	const int  dpiScale   = dpi ? static_cast<int>(dpi) : 96;
-	const int  marginEdge = ::MulDiv(11,  dpiScale, 96);  // ~7 DLU
-	const int  marginExpT = ::MulDiv(120, dpiScale, 96);  // ~80 DLU (ExpH width + 8 DLU gap + 7 DLU margin)
+	const UINT dpi         = ::GetDpiForWindow(dialog.GetSafeHwnd());
+	const int  dpiScale    = dpi ? static_cast<int>(dpi) : kBaselineDpi;
+	const int  marginEdge  = ::MulDiv(kButtonEdgeMargin, dpiScale, kBaselineDpi);
+	const int  marginExpT  = ::MulDiv(kButtonExpTMargin, dpiScale, kBaselineDpi);
 
 	if (::IsWindow(refs.buttonExit.m_hWnd)) {
 		refs.buttonExit.GetWindowRect(&lb);
 		dialog.ScreenToClient(&lb);
-		refs.buttonExit.SetWindowPos(NULL, r.Width() - lb.Width() - marginEdge, lb.TopLeft().y,
-			lb.Width(), lb.Height(),
-			SWP_NOSIZE | SWP_NOZORDER);
+		refs.buttonExit.SetWindowPos(nullptr, r.Width() - lb.Width() - marginEdge, lb.TopLeft().y,
+		                             lb.Width(), lb.Height(),
+		                             SWP_NOSIZE | SWP_NOZORDER);
 	}
 
 	if (::IsWindow(refs.buttonExpH.m_hWnd)) {
 		refs.buttonExpH.GetWindowRect(&lb);
 		dialog.ScreenToClient(&lb);
-		refs.buttonExpH.SetWindowPos(NULL, r.Width() - lb.Width() - marginEdge, lb.TopLeft().y,
-			lb.Width(), lb.Height(),
-			SWP_NOSIZE | SWP_NOZORDER);
+		refs.buttonExpH.SetWindowPos(nullptr, r.Width() - lb.Width() - marginEdge, lb.TopLeft().y,
+		                             lb.Width(), lb.Height(),
+		                             SWP_NOSIZE | SWP_NOZORDER);
 	}
 
 	if (::IsWindow(refs.buttonExpT.m_hWnd)) {
 		refs.buttonExpT.GetWindowRect(&lb);
 		dialog.ScreenToClient(&lb);
-		refs.buttonExpT.SetWindowPos(NULL, r.Width() - lb.Width() - marginExpT, lb.TopLeft().y,
-			lb.Width(), lb.Height(),
-			SWP_NOSIZE | SWP_NOZORDER);
+		refs.buttonExpT.SetWindowPos(nullptr, r.Width() - lb.Width() - marginExpT, lb.TopLeft().y,
+		                             lb.Width(), lb.Height(),
+		                             SWP_NOSIZE | SWP_NOZORDER);
 	}
 
 	if (::IsWindow(refs.listMTR.m_hWnd)) {
 		refs.listMTR.GetWindowRect(&lb);
 		dialog.ScreenToClient(&lb);
-		refs.listMTR.SetWindowPos(NULL, lb.TopLeft().x, lb.TopLeft().y,
-			r.Width() - 21, r.Height() - lb.top - 25,
-			SWP_NOMOVE | SWP_NOZORDER);
+		refs.listMTR.SetWindowPos(nullptr, lb.TopLeft().x, lb.TopLeft().y,
+		                          r.Width() - kListRightMargin, r.Height() - lb.top - kListBottomMargin,
+		                          SWP_NOMOVE | SWP_NOZORDER);
 	}
 
 	dialog.RepositionBars(AFX_IDW_CONTROLBAR_FIRST, AFX_IDW_CONTROLBAR_LAST,
-		0, CWnd::reposQuery, r);
+	                      0, CWnd::reposQuery, r);
 	dialog.RepositionBars(AFX_IDW_CONTROLBAR_FIRST, AFX_IDW_CONTROLBAR_LAST, 0);
 }
 
 void ClampMinimum(LPRECT rect, const SIZE& minSize)
 {
-	if (rect->right - rect->left < minSize.cx) rect->right  = rect->left + minSize.cx;
-	if (rect->bottom - rect->top < minSize.cy) rect->bottom = rect->top  + minSize.cy;
+	if (rect->right - rect->left < minSize.cx) {
+		rect->right = rect->left + minSize.cx;
+	}
+	if (rect->bottom - rect->top < minSize.cy) {
+		rect->bottom = rect->top + minSize.cy;
+	}
 }
 
 } // namespace DialogLayout

@@ -21,8 +21,7 @@ class HopStatistics;
 //
 //*****************************************************************************
 
-class Reporter
-{
+class Reporter {
 public:
 	[[nodiscard]] static CString BuildTextReport(const HopStatistics& stats);
 	[[nodiscard]] static CString BuildHtmlReport(const HopStatistics& stats);

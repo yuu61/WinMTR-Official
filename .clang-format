@@ -1,0 +1,178 @@
+---
+# WinMTR coding style.
+# Verified with clang-format 18+ (developed against 22.1).
+#
+# Conventions captured here:
+#   - Tab indentation (width 4), spaces only for column alignment.
+#   - Function definitions use Allman braces; control statements use K&R.
+#   - No column limit: long Win32 / std::format lines are kept intact.
+#   - Includes are not sorted (Global.h is the PCH and must come first).
+#   - Header comment banners are not reflowed.
+
+Language: Cpp
+Standard: c++20
+BasedOnStyle: LLVM
+
+# --- Indentation -------------------------------------------------------------
+UseTab: ForIndentation
+TabWidth: 4
+IndentWidth: 4
+ContinuationIndentWidth: 4
+ConstructorInitializerIndentWidth: 4
+AccessModifierOffset: -4
+NamespaceIndentation: None
+IndentCaseLabels: false
+IndentPPDirectives: None
+IndentExternBlock: NoIndent
+IndentGotoLabels: false
+LambdaBodyIndentation: Signature
+
+# --- Line width --------------------------------------------------------------
+ColumnLimit: 0
+
+# --- Braces ------------------------------------------------------------------
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterCaseLabel:        false
+  AfterClass:            false
+  AfterControlStatement: Never
+  AfterEnum:             false
+  AfterFunction:         true
+  AfterNamespace:        false
+  AfterStruct:           false
+  AfterUnion:            false
+  AfterExternBlock:      false
+  BeforeCatch:           false
+  BeforeElse:            false
+  BeforeLambdaBody:      false
+  BeforeWhile:           false
+  IndentBraces:          false
+  SplitEmptyFunction:    false
+  SplitEmptyRecord:      false
+  SplitEmptyNamespace:   false
+
+# Keep existing single-statement bodies (`if (x) y;`) intact.
+InsertBraces:               false
+RemoveBracesLLVM:           false
+AllowShortBlocksOnASingleLine: Empty
+AllowShortFunctionsOnASingleLine: Inline
+AllowShortIfStatementsOnASingleLine: WithoutElse
+AllowShortLoopsOnASingleLine: true
+AllowShortLambdasOnASingleLine: All
+AllowShortCaseLabelsOnASingleLine: true
+AllowShortEnumsOnASingleLine: true
+Cpp11BracedListStyle: true
+
+# --- Pointers / references ---------------------------------------------------
+PointerAlignment: Left
+ReferenceAlignment: Left
+DerivePointerAlignment: false
+QualifierAlignment: Leave
+
+# --- Spaces ------------------------------------------------------------------
+SpaceAfterCStyleCast: false
+SpaceAfterLogicalNot: false
+SpaceAfterTemplateKeyword: false
+SpaceBeforeAssignmentOperators: true
+SpaceBeforeCpp11BracedList: false
+SpaceBeforeCtorInitializerColon: true
+SpaceBeforeInheritanceColon: true
+SpaceBeforeParens: ControlStatements
+SpaceBeforeRangeBasedForLoopColon: true
+SpaceBeforeSquareBrackets: false
+SpaceInEmptyBlock: false
+SpaceInEmptyParentheses: false
+SpacesBeforeTrailingComments: 1
+SpacesInAngles: Never
+SpacesInCStyleCastParentheses: false
+SpacesInContainerLiterals: false
+SpacesInParens: Never
+SpacesInSquareBrackets: false
+
+# --- Includes ----------------------------------------------------------------
+SortIncludes: Never
+IncludeBlocks: Preserve
+
+# --- Comments ----------------------------------------------------------------
+ReflowComments: false
+FixNamespaceComments: true
+ShortNamespaceLines: 0
+SpacesInLineCommentPrefix:
+  Minimum: 1
+  Maximum: -1
+
+# --- Empty lines -------------------------------------------------------------
+KeepEmptyLinesAtTheStartOfBlocks: false
+MaxEmptyLinesToKeep: 2
+EmptyLineBeforeAccessModifier: LogicalBlock
+EmptyLineAfterAccessModifier: Never
+SeparateDefinitionBlocks: Leave
+
+# --- Alignment ---------------------------------------------------------------
+# Auto-alignment is intentionally disabled: this codebase aligns `=` columns
+# and member declarations by hand in selected places (e.g. ipInfo init,
+# struct members, [[nodiscard]] inline accessors). Letting clang-format pad
+# every consecutive assignment also pads ones that were never meant to align,
+# which fights the existing style. Use `// clang-format off / on` around
+# blocks where hand-tuned alignment must be preserved.
+AlignAfterOpenBracket: Align
+AlignArrayOfStructures: None
+AlignConsecutiveAssignments: None
+AlignConsecutiveDeclarations: None
+AlignConsecutiveBitFields: None
+AlignConsecutiveMacros: None
+AlignEscapedNewlines: Right
+AlignOperands: Align
+AlignTrailingComments:
+  Kind: Always
+  OverEmptyLines: 0
+
+# --- Line breaking -----------------------------------------------------------
+AllowAllArgumentsOnNextLine: true
+AllowAllParametersOfDeclarationOnNextLine: true
+BinPackArguments: true
+BinPackParameters: true
+BreakBeforeBinaryOperators: None
+BreakBeforeConceptDeclarations: Always
+BreakBeforeTernaryOperators: true
+BreakConstructorInitializers: BeforeColon
+BreakInheritanceList: BeforeColon
+BreakStringLiterals: false
+PackConstructorInitializers: NextLine
+RequiresClausePosition: OwnLine
+
+# --- MFC macros --------------------------------------------------------------
+# Treat MFC message-map / interface-map blocks as indentation scopes so
+# their bodies (ON_COMMAND, ON_BN_CLICKED, ...) stay indented one level.
+MacroBlockBegin: '^(BEGIN_MESSAGE_MAP|BEGIN_DISPATCH_MAP|BEGIN_INTERFACE_MAP|BEGIN_PROPPAGEIDS|BEGIN_CATEGORY_MAP|BEGIN_EVENTSINK_MAP|BEGIN_CONNECTION_PART|BEGIN_OLEFACTORY)$'
+MacroBlockEnd:   '^(END_MESSAGE_MAP|END_DISPATCH_MAP|END_INTERFACE_MAP|END_PROPPAGEIDS|END_CATEGORY_MAP|END_EVENTSINK_MAP|END_CONNECTION_PART|END_OLEFACTORY)$'
+
+# Recognised as standalone statements so they do not pull a trailing `;` onto
+# the next line and are not indented like expressions.
+StatementMacros:
+  - DECLARE_MESSAGE_MAP
+  - DECLARE_DYNAMIC
+  - DECLARE_DYNCREATE
+  - DECLARE_SERIAL
+  - DECLARE_INTERFACE_MAP
+  - DECLARE_DISPATCH_MAP
+  - DECLARE_OLECREATE
+  - IMPLEMENT_DYNAMIC
+  - IMPLEMENT_DYNCREATE
+  - IMPLEMENT_SERIAL
+
+# --- Misc --------------------------------------------------------------------
+CompactNamespaces: false
+InsertNewlineAtEOF: true
+KeepEmptyLinesAtEOF: false
+PPIndentWidth: -1
+
+# Known quirks (clang-format 22):
+#   - Constructor member-initializer indent renders as `\t    : member(...)`
+#     (tab + 4 spaces) rather than `\t: member(...)`. There is no clean
+#     option that combines `UseTab: ForIndentation` with a plain tab here;
+#     accept the cosmetic drift on the first reformat.
+#   - Long #pragma directives such as `#pragma warning(suppress: 6262)` get
+#     a space inserted before the colon. Wrap with `// clang-format off / on`
+#     to preserve the original spacing.
+...

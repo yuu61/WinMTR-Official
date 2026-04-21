@@ -16,22 +16,28 @@
 
 class ISessionView {
 public:
+	ISessionView() = default;
 	virtual ~ISessionView() = default;
 
+	ISessionView(const ISessionView&) = delete;
+	ISessionView& operator=(const ISessionView&) = delete;
+	ISessionView(ISessionView&&) = delete;
+	ISessionView& operator=(ISessionView&&) = delete;
+
 	// UI-thread only.
-	virtual void SetStartEnabled(bool enabled)       = 0;
-	virtual void SetStartText(LPCWSTR text)          = 0;
-	virtual void SetHostComboEnabled(bool enabled)   = 0;
-	virtual void SetOptionsEnabled(bool enabled)     = 0;
-	virtual void SetStatus(LPCWSTR text)             = 0;
-	virtual void RefreshList()                       = 0;
-	virtual void FocusHostCombo()                    = 0;
-	virtual void RequestClose()                      = 0;
-	virtual void ShowError(const CString& error)     = 0;
+	virtual void SetStartEnabled(bool enabled) = 0;
+	virtual void SetStartText(LPCWSTR text) = 0;
+	virtual void SetHostComboEnabled(bool enabled) = 0;
+	virtual void SetOptionsEnabled(bool enabled) = 0;
+	virtual void SetStatus(LPCWSTR text) = 0;
+	virtual void RefreshList() = 0;
+	virtual void FocusHostCombo() = 0;
+	virtual void RequestClose() = 0;
+	virtual void ShowError(const CString& error) = 0;
 
 	// Thread-safe; called from the session worker.
-	virtual void PostTraceCompleted()                      = 0;
-	virtual void PostTraceFailed(const CString& error)     = 0;
+	virtual void PostTraceCompleted() = 0;
+	virtual void PostTraceFailed(const CString& error) = 0;
 };
 
 #endif // SESSIONVIEW_H_

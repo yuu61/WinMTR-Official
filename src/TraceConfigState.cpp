@@ -21,6 +21,6 @@ TraceOptions TraceConfigState::Snapshot() const
 	TraceOptions opts{};
 	opts.pingsize = pingsize;
 	opts.interval = interval;
-	opts.useDNS   = useDNS;
+	opts.useDNS = useDNS;
 	return opts;
 }

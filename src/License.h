@@ -3,16 +3,15 @@
 //
 //
 // DESCRIPTION:
-//   
+//
 //
 // NOTES:
-//    
+//
 //
 //*****************************************************************************
 
 #ifndef LICENSE_H_
 #define LICENSE_H_
-
 
 
 //*****************************************************************************
@@ -21,19 +20,18 @@
 //
 //*****************************************************************************
 
-class License : public CDialog
-{
+class License : public CDialog {
 public:
-	License(CWnd* pParent = NULL);
+	explicit License(CWnd* pParent = nullptr);
 
-	
+
 	enum { IDD = IDD_DIALOG_LICENSE };
 
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX) override;
+	void DoDataExchange(CDataExchange* pDX) override;
 
-	virtual BOOL OnInitDialog() override;
-	
+	BOOL OnInitDialog() override;
+
 	DECLARE_MESSAGE_MAP()
 };
 

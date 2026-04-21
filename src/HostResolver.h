@@ -20,8 +20,7 @@
 //
 //*****************************************************************************
 
-class HostResolver
-{
+class HostResolver {
 public:
 	// True if hostname is a valid numeric IPv4 or IPv6 literal.
 	[[nodiscard]] static bool LooksNumeric(LPCWSTR hostname);

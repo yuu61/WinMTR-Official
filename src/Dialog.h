@@ -16,9 +16,12 @@
 #include "TraceConfigState.h"
 #include <memory>
 
-constexpr UINT WINMTR_DIALOG_TIMER      = 100;
+constexpr UINT WINMTR_DIALOG_TIMER = 100;
 constexpr UINT WM_WINMTR_TRACE_COMPLETED = WM_USER + 100;
-constexpr UINT WM_WINMTR_TRACE_FAILED    = WM_USER + 101;
+constexpr UINT WM_WINMTR_TRACE_FAILED = WM_USER + 101;
+
+// Fixed-size buffer for the auto-start hostname copied in from the command line.
+constexpr size_t kDefaultHostNameBufferSize = 1000;
 
 class CMFCLinkCtrl;
 class TraceSessionController;
@@ -27,19 +30,23 @@ class TraceSessionController;
 // CLASS:  Dialog
 //*****************************************************************************
 
-class Dialog : public CDialog, public ISessionView
-{
+class Dialog : public CDialog, public ISessionView {
 public:
-	Dialog(CWnd* pParent = NULL);
+	explicit Dialog(CWnd* pParent = nullptr);
 	~Dialog() override;
+
+	Dialog(const Dialog&) = delete;
+	Dialog& operator=(const Dialog&) = delete;
+	Dialog(Dialog&&) = delete;
+	Dialog& operator=(Dialog&&) = delete;
 
 	enum { IDD = IDD_WINMTR_DIALOG };
 
 	StatusBar statusBar;
 
-	CButton   m_buttonOptions;
-	CButton   m_buttonExit;
-	CButton   m_buttonStart;
+	CButton m_buttonOptions;
+	CButton m_buttonExit;
+	CButton m_buttonStart;
 	CComboBox m_comboHost;
 	CListCtrl m_listMTR;
 
@@ -54,43 +61,43 @@ public:
 	void SetHostName(const wchar_t* host);
 	void SetCommandLineOverrides(const CommandLineOverrides& o) { cmdline_overrides = o; }
 
-	[[nodiscard]] TraceConfigState&       Config()       { return config; }
+	[[nodiscard]] TraceConfigState& Config() { return config; }
 	[[nodiscard]] const TraceConfigState& Config() const { return config; }
 
 	// ISessionView
-	void SetStartEnabled(bool enabled)             override;
-	void SetStartText(LPCWSTR text)                override;
-	void SetHostComboEnabled(bool enabled)         override;
-	void SetOptionsEnabled(bool enabled)           override;
-	void SetStatus(LPCWSTR text)                   override;
-	void RefreshList()                             override;
-	void FocusHostCombo()                          override;
-	void RequestClose()                            override;
-	void ShowError(const CString& error)           override;
-	void PostTraceCompleted()                      override;
-	void PostTraceFailed(const CString& error)     override;
+	void SetStartEnabled(bool enabled) override;
+	void SetStartText(LPCWSTR text) override;
+	void SetHostComboEnabled(bool enabled) override;
+	void SetOptionsEnabled(bool enabled) override;
+	void SetStatus(LPCWSTR text) override;
+	void RefreshList() override;
+	void FocusHostCombo() override;
+	void RequestClose() override;
+	void ShowError(const CString& error) override;
+	void PostTraceCompleted() override;
+	void PostTraceFailed(const CString& error) override;
 
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX) override;
+	void DoDataExchange(CDataExchange* pDX) override;
 
-	TraceConfigState                        config;
-	CommandLineOverrides                    cmdline_overrides;
+	TraceConfigState config;
+	CommandLineOverrides cmdline_overrides;
 	std::unique_ptr<TraceSessionController> controller;
 
-	bool    m_autostart = false;
-	wchar_t msz_defaulthostname[1000]{};
-	HICON   m_hIcon;
-	CSize   m_minTrackSize{};
+	bool m_autostart = false;
+	wchar_t msz_defaulthostname[kDefaultHostNameBufferSize]{};
+	HICON m_hIcon = nullptr;
+	CSize m_minTrackSize;
 
-	virtual BOOL OnInitDialog() override;
+	BOOL OnInitDialog() override;
 	afx_msg void OnPaint();
-	afx_msg void OnSize(UINT, int, int);
-	afx_msg void OnSizing(UINT, LPRECT);
+	afx_msg void OnSize(UINT nType, int cx, int cy);
+	afx_msg void OnSizing(UINT fwSide, LPRECT pRect);
 	afx_msg void OnGetMinMaxInfo(MINMAXINFO* lpMMI);
 	afx_msg HCURSOR OnQueryDragIcon();
 	afx_msg void OnRestart();
 	afx_msg void OnOptions();
-	virtual void OnCancel() override;
+	void OnCancel() override;
 
 	afx_msg void OnCTTC();
 	afx_msg void OnCHTC();
@@ -102,6 +109,7 @@ protected:
 	DECLARE_MESSAGE_MAP()
 private:
 	void ClearHistory();
+
 public:
 	afx_msg void OnCbnCloseupComboHost();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);

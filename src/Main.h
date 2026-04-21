@@ -22,12 +22,11 @@
 //
 //*****************************************************************************
 
-class Main : public CWinApp
-{
+class Main : public CWinApp {
 public:
-	Main();
+	Main() = default;
 
-	virtual BOOL InitInstance() override;
+	BOOL InitInstance() override;
 
 	DECLARE_MESSAGE_MAP()
 };

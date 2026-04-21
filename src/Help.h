@@ -3,19 +3,23 @@
 
 // Help dialog
 
-class Help : public CDialog
-{
+class Help : public CDialog {
 	DECLARE_DYNAMIC(Help)
 
 public:
-	Help(CWnd* pParent = NULL);   // standard constructor
-	virtual ~Help();
+	explicit Help(CWnd* pParent = nullptr);
+	~Help() override = default;
 
-// Dialog Data
+	Help(const Help&)            = delete;
+	Help& operator=(const Help&) = delete;
+	Help(Help&&)                 = delete;
+	Help& operator=(Help&&)      = delete;
+
+	// Dialog Data
 	enum { IDD = IDD_DIALOG_HELP };
 
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX) override;    // DDX/DDV support
+	void DoDataExchange(CDataExchange* pDX) override; // DDX/DDV support
 
 	DECLARE_MESSAGE_MAP()
 public:

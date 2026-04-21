@@ -34,6 +34,9 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+// Required by MFC: the CWinApp singleton must be constructed at file scope so
+// the framework can hook it before WinMain. There is exactly one instance.
+// NOLINTNEXTLINE(misc-use-internal-linkage,cppcoreguidelines-avoid-non-const-global-variables)
 Main WinMTR;
 
 //*****************************************************************************
@@ -42,17 +45,8 @@ Main WinMTR;
 //
 //*****************************************************************************
 BEGIN_MESSAGE_MAP(Main, CWinApp)
-	ON_COMMAND(ID_HELP, CWinApp::OnHelp)
+	ON_COMMAND(ID_HELP, &CWinApp::OnHelp)
 END_MESSAGE_MAP()
-
-//*****************************************************************************
-// Main::Main
-//
-//
-//*****************************************************************************
-Main::Main()
-{
-}
 
 //*****************************************************************************
 // Main::InitInstance
@@ -61,8 +55,7 @@ Main::Main()
 //*****************************************************************************
 BOOL Main::InitInstance()
 {
-	if (!AfxSocketInit())
-	{
+	if (!AfxSocketInit()) {
 		AfxMessageBox(IDP_SOCKETS_INIT_FAILED);
 		return FALSE;
 	}

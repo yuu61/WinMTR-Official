@@ -9,8 +9,8 @@
 #ifndef GLOBAL_H_
 #define GLOBAL_H_
 
-#ifndef  _WIN64
-#define  _USE_32BIT_TIME_T
+#ifndef _WIN64
+#define _USE_32BIT_TIME_T
 #endif
 
 #define VC_EXTRALEAN
@@ -21,7 +21,7 @@
 #include <afxdtctl.h>
 
 #ifndef _AFX_NO_AFXCMN_SUPPORT
-  #include <afxcmn.h>
+#include <afxcmn.h>
 #endif
 #include <afxsock.h>
 #include <ws2tcpip.h>

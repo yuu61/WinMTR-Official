@@ -12,19 +12,23 @@
 #include <sstream>
 #include <utility>
 
-#define TRACE_MSG(msg)                                       \
-	{                                                        \
-		std::wostringstream dbg(std::wostringstream::out);   \
-		dbg << msg << std::endl;                             \
-		OutputDebugStringW(dbg.str().c_str());               \
-	}
+// Variadic so the expression chain (operator<< list) can be passed through
+// verbatim; parenthesising a stream chain the way bugprone-macro-parentheses
+// wants would break the left-most `wchar_t*` operand.
+#define TRACE_MSG(...)                                     \
+	do {                                                   \
+		std::wostringstream dbg(std::wostringstream::out); \
+		dbg << __VA_ARGS__ << std::endl;                   \
+		OutputDebugStringW(dbg.str().c_str());             \
+	} while (false)
+
+namespace {
+constexpr unsigned int kRefreshTicksDivisor = 10;
+} // namespace
 
 TraceSessionController::TraceSessionController(ISessionView* view)
-	: view_(view),
-	  engine_(std::make_unique<TraceEngine>()),
-	  state_(State::Idle),
-	  transition_(Transition::IdleToIdle),
-	  tick_count_(0)
+    : view_(view),
+      engine_(std::make_unique<TraceEngine>())
 {
 }
 
@@ -33,7 +37,9 @@ TraceSessionController::~TraceSessionController()
 	// The session worker always posts back via PostTrace*, which drives the
 	// state machine to IDLE / EXIT and the thread exits shortly after. Wait
 	// for it here so no worker thread outlives the controller.
-	if (session_thread_.joinable()) session_thread_.join();
+	if (session_thread_.joinable()) {
+		session_thread_.join();
+	}
 }
 
 const HopStatistics& TraceSessionController::Stats() const
@@ -71,7 +77,7 @@ void TraceSessionController::RequestExit()
 void TraceSessionController::Tick()
 {
 	tick_count_ += 1;
-	if ((tick_count_ % 10 == 0) && (state_ == State::Tracing || state_ == State::Stopping)) {
+	if ((tick_count_ % kRefreshTicksDivisor == 0) && (state_ == State::Tracing || state_ == State::Stopping)) {
 		view_->RefreshList();
 	}
 }
@@ -80,7 +86,9 @@ void TraceSessionController::OnTraceCompleted()
 {
 	// Previous session worker has posted completion on the UI thread, so it
 	// is safe to join and reset for the next session.
-	if (session_thread_.joinable()) session_thread_.join();
+	if (session_thread_.joinable()) {
+		session_thread_.join();
+	}
 
 	switch (state_) {
 	case State::Tracing:
@@ -98,7 +106,9 @@ void TraceSessionController::OnTraceCompleted()
 
 void TraceSessionController::OnTraceFailed(const CString& error)
 {
-	if (session_thread_.joinable()) session_thread_.join();
+	if (session_thread_.joinable()) {
+		session_thread_.join();
+	}
 
 	switch (state_) {
 	case State::Tracing:
@@ -180,7 +190,9 @@ void TraceSessionController::ApplyTransition()
 
 		// Defensive: a stale completion message might still be queued, so
 		// ensure any previous worker is joined before overwriting the thread.
-		if (session_thread_.joinable()) session_thread_.join();
+		if (session_thread_.joinable()) {
+			session_thread_.join();
+		}
 
 		try {
 			session_thread_ = std::thread(&TraceSessionController::ExecuteSession,
@@ -239,14 +251,14 @@ void TraceSessionController::ApplyTransition()
 void TraceSessionController::RestoreIdleUi()
 {
 	view_->SetStartEnabled(true);
-	view_->SetStatus(CString((LPCWSTR)IDS_STRING_SB_NAME));
+	view_->SetStatus(CString(MAKEINTRESOURCE(IDS_STRING_SB_NAME)));
 	view_->SetStartText(L"Start");
 	view_->SetHostComboEnabled(true);
 	view_->SetOptionsEnabled(true);
 	view_->FocusHostCombo();
 }
 
-void TraceSessionController::ExecuteSession(std::wstring host, TraceOptions opts)
+void TraceSessionController::ExecuteSession(const std::wstring& host, TraceOptions opts)
 {
 	try {
 		IpAddress addr;
@@ -261,8 +273,12 @@ void TraceSessionController::ExecuteSession(std::wstring host, TraceOptions opts
 	} catch (const std::exception& e) {
 		CString msg;
 		msg.Format(L"Unexpected error in trace session: %hs", e.what());
-		if (view_) view_->PostTraceFailed(msg);
+		if (view_) {
+			view_->PostTraceFailed(msg);
+		}
 	} catch (...) {
-		if (view_) view_->PostTraceFailed(L"Unexpected error in trace session.");
+		if (view_) {
+			view_->PostTraceFailed(L"Unexpected error in trace session.");
+		}
 	}
 }

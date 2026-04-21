@@ -1,0 +1,366 @@
+---
+# WinMTR clang-tidy configuration (strict).
+# Verified with clang-tidy 22.1.
+#
+# Design goals:
+#   1. Treat this as a strict, CI-grade ruleset: every clang-tidy warning is an
+#      error (`WarningsAsErrors: '*'`).
+#   2. Keep only the exceptions that are structurally forced by MFC / Win32 /
+#      the PCH layout, or that reflect a deliberate project-wide style that
+#      would auto-rewrite hundreds of lines without improving safety.
+#   3. For the handful of unavoidable call-sites in otherwise-clean code
+#      (e.g. the `Main WinMTR;` CWinApp singleton, ICMP reply reinterpret_cast),
+#      prefer a localized `// NOLINT(check-name)` in the source over a global
+#      disable.
+#
+# When adjusting this file, add new exceptions under the matching rationale
+# heading at the bottom. A rule that simply produces noise is not a reason to
+# disable it — file the finding against the offending code or use NOLINT.
+
+# Scan our own headers under src/ only. MFC / WinSDK / CRT headers are
+# excluded both by HeaderFilterRegex (positive include) and the explicit
+# ExcludeHeaderFilterRegex (negative filter) below.
+#
+# clang-tidy must still *parse* every header reachable from a TU to build the
+# AST — C++ template/inline semantics give us no choice. The filters below
+# only short-circuit the per-header diagnostic pass; they keep the produced
+# warnings small (the framework emits ~150k per TU without them) and shave
+# measurable time off check dispatch even though AST construction dominates.
+#
+# For day-to-day loops, prefer `msbuild /t:Build` over `/t:Rebuild`: clang-tidy
+# is re-run only for TUs whose `.obj` is stale, so edits in one `.cpp` cost a
+# single-file analysis instead of the full tree.
+HeaderFilterRegex: '.*[/\\]src[/\\][^/\\]+\.h$'
+# Match the upstream MSVC / Windows-SDK / ATLMFC include-tree layouts.
+# Anything under "Microsoft Visual Studio\<ver>\...", the platform SDK
+# "Windows Kits\10\Include\...", the MSVC-bundled ATLMFC, and ucrt / um /
+# shared / winrt / cppwinrt subfolders is vendor code.
+ExcludeHeaderFilterRegex: '([/\\](Microsoft Visual Studio|Windows Kits|MSVC|atlmfc|ucrt|um|shared|winrt|cppwinrt|VC[/\\]Tools|Llvm)[/\\])'
+SystemHeaders:     false
+FormatStyle:       file
+UseColor:          true
+
+# Check groups:
+#   abseil / boost              no-op here, enabled for completeness.
+#   bugprone / cert / clang-analyzer / concurrency / cppcoreguidelines /
+#     misc / modernize / performance / portability / readability
+#                                the strict core.
+#   google / hicpp / llvm       catch a few unique rules the core misses
+#                                (google-explicit-constructor,
+#                                 hicpp-multiway-paths-covered,
+#                                 hicpp-signed-bitwise, ...).
+#
+# Items prefixed with `-` are disabled. Each disable MUST map to a rationale
+# heading at the bottom of this file.
+
+Checks: >
+  -*,
+  abseil-*,
+  boost-*,
+  bugprone-*,
+  cert-*,
+  clang-analyzer-*,
+  concurrency-*,
+  cppcoreguidelines-*,
+  google-*,
+  hicpp-*,
+  llvm-*,
+  misc-*,
+  modernize-*,
+  performance-*,
+  portability-*,
+  readability-*,
+  -bugprone-easily-swappable-parameters,
+  -bugprone-suspicious-include,
+  -clang-diagnostic-unused-command-line-argument,
+  -cert-err58-cpp,
+  -cppcoreguidelines-avoid-c-arrays,
+  -cppcoreguidelines-avoid-non-const-global-variables,
+  -cppcoreguidelines-macro-usage,
+  -cppcoreguidelines-non-private-member-variables-in-classes,
+  -cppcoreguidelines-owning-memory,
+  -cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+  -cppcoreguidelines-pro-bounds-constant-array-index,
+  -cppcoreguidelines-pro-bounds-pointer-arithmetic,
+  -cppcoreguidelines-pro-type-cstyle-cast,
+  -cppcoreguidelines-pro-type-reinterpret-cast,
+  -cppcoreguidelines-pro-type-union-access,
+  -cppcoreguidelines-pro-type-vararg,
+  -google-runtime-int,
+  -google-runtime-references,
+  -google-readability-todo,
+  -hicpp-avoid-c-arrays,
+  -hicpp-braces-around-statements,
+  -hicpp-use-auto,
+  -hicpp-named-parameter,
+  -hicpp-no-array-decay,
+  -hicpp-uppercase-literal-suffix,
+  -hicpp-vararg,
+  -llvm-header-guard,
+  -llvm-include-order,
+  -llvm-namespace-comment,
+  -misc-include-cleaner,
+  -misc-no-recursion,
+  -misc-non-private-member-variables-in-classes,
+  -modernize-avoid-c-arrays,
+  -modernize-use-auto,
+  -modernize-use-trailing-return-type,
+  -performance-avoid-endl,
+  -performance-enum-size,
+  -portability-template-virtual-member-function,
+  -readability-identifier-length,
+  -readability-implicit-bool-conversion,
+  -readability-uppercase-literal-suffix
+
+# Every remaining warning is an error. Use source-level
+# `// NOLINT(check-name)` or `// NOLINTNEXTLINE(check-name)` to exempt a
+# specific line and record the reason inline.
+#
+# `clang-diagnostic-unused-command-line-argument` is kept out of the
+# WarningsAsErrors set explicitly: MSBuild always injects a few
+# MSVC-only `/Zc:*` flags that the clang driver does not recognise, and
+# turning those into errors breaks the first TU the build reaches.
+WarningsAsErrors: '*,-clang-diagnostic-unused-command-line-argument'
+
+# ExtraArgs are appended to the clang driver command line for every TU.
+# `-Wno-unused-command-line-argument` silences the driver-side warning that
+# the unknown MSVC conformance flags trigger, in addition to the
+# Checks/WarningsAsErrors filters above (belt-and-braces — the driver emits
+# this diagnostic before clang-tidy's filtering kicks in on some versions).
+ExtraArgs:
+  - '-Wno-unused-command-line-argument'
+
+CheckOptions:
+  # --- cppcoreguidelines ----------------------------------------------------
+  # Destructors are the MFC-owned virtual override pattern; an author-defined
+  # dtor without explicit copy/move is fine.
+  cppcoreguidelines-special-member-functions.AllowSoleDefaultDtor: 'true'
+
+  # --- readability ----------------------------------------------------------
+  # 25 is the clang-tidy default; kept explicit so drift in upstream defaults
+  # is visible here rather than silently relaxing the threshold.
+  readability-function-cognitive-complexity.Threshold:                  '25'
+  readability-function-cognitive-complexity.IgnoreMacros:               'true'
+  readability-function-size.LineThreshold:                              '120'
+  readability-function-size.StatementThreshold:                         '100'
+  readability-function-size.BranchThreshold:                            '15'
+  readability-function-size.ParameterThreshold:                         '8'
+  readability-function-size.NestingThreshold:                           '5'
+
+  # --- cppcoreguidelines ----------------------------------------------------
+  # The `do { ... } while (false)` idiom is the only portable way to write a
+  # statement-like macro that still requires a trailing semicolon at the
+  # call-site. Everything flagged in our code is exactly this pattern, so
+  # skip macro-expanded forms.
+  cppcoreguidelines-avoid-do-while.IgnoreMacros:                        'true'
+
+  # --- bugprone -------------------------------------------------------------
+  # Catch mismatched `/*name=*/` argument comments (strict form).
+  # CommentXxxLiterals are intentionally left off: Win32 APIs such as
+  # SetPaneInfo(0, GetItemID(0), SBPS_STRETCH, NULL) take many integer-like
+  # literals where a name label would be pure noise. We still catch the case
+  # where a caller *does* write an argument comment and it disagrees with the
+  # parameter name.
+  bugprone-argument-comment.StrictMode:                                 'true'
+
+  # --- misc -----------------------------------------------------------------
+  # Recommend `const` on locals / references that never mutate.
+  misc-const-correctness.AnalyzeValues:                                 'true'
+  misc-const-correctness.AnalyzeReferences:                             'true'
+  misc-const-correctness.WarnPointersAsValues:                          'false'
+  misc-const-correctness.TransformValues:                               'false'
+  misc-const-correctness.TransformReferences:                           'false'
+  misc-const-correctness.TransformPointersAsValues:                     'false'
+
+  # --- modernize ------------------------------------------------------------
+  # Prefer `int x = 0;` over `int x{0};` to match the existing style.
+  modernize-use-default-member-init.UseAssignment:                      'true'
+  # Only suggest `= default` when the body is genuinely a no-op.
+  modernize-use-equals-default.IgnoreMacros:                            'true'
+  # `override` should always be used when inheriting; `final` is up to the
+  # individual class.
+  modernize-use-override.IgnoreDestructors:                             'false'
+  modernize-use-override.AllowOverrideAndFinal:                         'false'
+
+  # --- performance ----------------------------------------------------------
+  performance-unnecessary-value-param.AllowedTypes:                     ''
+  performance-for-range-copy.WarnOnAllAutoCopies:                       'true'
+  performance-inefficient-string-concatenation.StrictMode:              'true'
+
+  # --- google ---------------------------------------------------------------
+  google-readability-function-size.StatementThreshold:                  '100'
+  google-readability-namespace-comments.ShortNamespaceLines:            '1'
+  google-readability-namespace-comments.SpacesBeforeComments:           '1'
+
+# =============================================================================
+# Rationale for each disabled check (keep in sync with the `-` list above).
+# =============================================================================
+#
+# --- Structural exceptions (cannot be fixed without abandoning MFC/Win32) ---
+#
+#   bugprone-easily-swappable-parameters:
+#       Thin Win32 wrappers such as `IcmpIO::DoEcho(..., LPVOID req_data,
+#       WORD req_size, LPVOID reply_buffer, DWORD reply_size, HANDLE stop_event,
+#       DWORD timeout)` mirror the underlying API signature and cannot be
+#       reordered without losing that mapping. Leaving this on would require
+#       line-level NOLINTs with no corresponding code change.
+#
+#   bugprone-suspicious-include:
+#       `Global.h` is the PCH and pulls in every MFC / CRT / Winsock header
+#       every translation unit needs. This is the PCH pattern, not a bug.
+#
+#   clang-diagnostic-unused-command-line-argument:
+#       MSVC-specific conformance flags (`/Zc:enumTypes`, `/Zc:lambda`,
+#       `/Zc:throwingNew`, ...) that MSBuild passes are unknown to the
+#       underlying clang driver; clang-tidy flags them per TU, which breaks
+#       the build on the very first file under `WarningsAsErrors: '*'`.
+#
+#   cert-err58-cpp:
+#       `Main WinMTR;` at Main.cpp:37 is the `CWinApp` singleton that MFC
+#       requires at file scope; its constructor can legally throw. There is
+#       one such global, and it is mandated by the framework.
+#
+#   cppcoreguidelines-non-private-member-variables-in-classes,
+#   misc-non-private-member-variables-in-classes:
+#       MFC `DDX_Control` requires the dialog's `CButton`, `CComboBox`, ...
+#       members to be directly addressable from outside the class. Making them
+#       private breaks the generated dialog data exchange code.
+#
+#   cppcoreguidelines-owning-memory:
+#       MFC ownership is handle-based (`new CMFCLinkCtrl` → `std::unique_ptr`
+#       reset), and the framework itself owns raw pointers it passes us.
+#       gsl::owner annotations would have to propagate into MFC headers.
+#
+#   cppcoreguidelines-pro-bounds-array-to-pointer-decay,
+#   cppcoreguidelines-pro-bounds-constant-array-index,
+#   cppcoreguidelines-pro-bounds-pointer-arithmetic,
+#   hicpp-no-array-decay:
+#       ICMP send/receive buffers are `char reqData[N]` passed to
+#       `IcmpSendEcho2(..., LPVOID, WORD, ...)`. The Win32 API is the reason
+#       the arrays exist; `gsl::span` conversion is imposed and fixes nothing.
+#
+#   cppcoreguidelines-pro-type-cstyle-cast:
+#       `BEGIN_MESSAGE_MAP` and friends expand to C-style casts inside the
+#       MFC-generated table. We cannot rewrite the framework macros.
+#
+#   cppcoreguidelines-pro-type-reinterpret-cast:
+#       `PICMP_ECHO_REPLY` / `PICMPV6_ECHO_REPLY` views of the reply buffer
+#       are exactly what ICMP parsing requires. Sanctioned by MSDN samples.
+#
+#   cppcoreguidelines-pro-type-union-access:
+#       `IpAddress` stores the IPv4/IPv6 address through a tagged union by
+#       design. The union access *is* the abstraction.
+#
+#   cppcoreguidelines-pro-type-vararg,
+#   hicpp-vararg:
+#       `AfxMessageBox`, `TRACE`, `printf`-family, and ICMP APIs are varargs
+#       by design. std::format is used where practical.
+#
+#   cppcoreguidelines-macro-usage:
+#       `BEGIN_MESSAGE_MAP`, `DECLARE_DYNAMIC`, `ON_BN_CLICKED`, `DDX_Control`,
+#       `DEBUG_NEW`, and the `TRACE_MSG` stream-debug helper all require the
+#       preprocessor. constexpr alternatives do not exist.
+#
+#   misc-include-cleaner:
+#       With `Global.h` precompiled, every translation unit legitimately
+#       relies on transitive includes. The include-cleaner heuristic
+#       misinterprets this as missing direct includes.
+#
+#   performance-avoid-endl:
+#       `TRACE_MSG` is a `_DEBUG`-only stream that intentionally flushes via
+#       `std::endl` so the debugger window receives partial output during
+#       crashes. There is exactly one use-site.
+#
+#   performance-enum-size:
+#       MFC dialog classes must declare `enum { IDD = IDD_XYZ };` so the
+#       framework's `CDialog` machinery can pick up the template id. MFC
+#       hands this value around as `UINT`; narrowing the underlying enum
+#       type (e.g. `std::uint8_t`) would break the integral-promotion path
+#       relied on by the generated DDX / message map code.
+#
+#   portability-template-virtual-member-function:
+#       `CArray<T*, T*>` and other MFC template containers declare virtual
+#       members that the check reports against the header that instantiates
+#       them (afxtempl.h). HeaderFilterRegex hides direct warnings on the
+#       MFC headers, but template-instantiation diagnostics surface via our
+#       TU-level files. The implementation lives in MFC; we cannot change it.
+#
+# --- Style exceptions (deliberate project-wide choice) ---------------------
+#
+#   cppcoreguidelines-avoid-c-arrays, modernize-avoid-c-arrays,
+#   hicpp-avoid-c-arrays:
+#       Stack buffers such as `char reqData[8192]` and `wchar_t
+#       hostname[NI_MAXHOST]` are passed directly to Win32 APIs. Wrapping in
+#       `std::array` only adds `.data()` at every call-site.
+#
+#   cppcoreguidelines-avoid-non-const-global-variables:
+#       `Main WinMTR;` at file scope is the MFC `CWinApp` singleton and is
+#       required by the framework. There is only one such global. Individual
+#       NOLINTs would match this, but the rule has no other use in this
+#       codebase.
+#
+#   modernize-use-auto:
+#       The codebase prefers explicit Win32 / CRT types (`DWORD`, `HKEY`,
+#       `LONG`, `wchar_t*`) at declaration sites for readability in a Win32
+#       context.
+#
+#   modernize-use-trailing-return-type:
+#       Pure style; leading return types are consistent with the rest of the
+#       WinSDK / MFC surface.
+#
+#   readability-identifier-length:
+#       Short identifiers like `i`, `v4`, `ttl`, `dx`, `cx`, `cy` mirror the
+#       Win32 / WinSDK vocabulary. Renaming them hurts readability.
+#
+#   readability-implicit-bool-conversion:
+#       Win32 `BOOL` is `typedef int`, `HWND` is `HWND__*`, and `HRESULT` is
+#       used as a pass-or-fail integer. `if (boolFn())`, `if (hwnd)`, and
+#       `if (!Create(...))` are idiomatic across the Win32 / MFC surface.
+#       The check cannot distinguish these from real implicit conversions and
+#       would demand `!= 0` / `!= nullptr` annotations on hundreds of call
+#       sites without finding a single bug. Structural exception.
+#
+#   readability-uppercase-literal-suffix:
+#       Existing convention is lowercase (`0x02`, `1u`). Changing this
+#       would touch every numeric literal without improving anything.
+#
+# --- Other group overlaps that would duplicate findings --------------------
+#
+#   hicpp-braces-around-statements:
+#       Alias of readability-braces-around-statements (kept enabled).
+#
+#   hicpp-use-auto:
+#       Alias of modernize-use-auto (kept off as a style choice; see above).
+#
+#   hicpp-uppercase-literal-suffix:
+#       Alias of readability-uppercase-literal-suffix (kept off; see above).
+#
+#   hicpp-named-parameter:
+#       Alias of readability-named-parameter (kept enabled).
+#
+#   llvm-header-guard:
+#       Enforces the LLVM-specific `PROJECT_DIR_FILE_H` macro format. This
+#       project uses `FILE_H_` guards already; reformatting gains nothing.
+#
+#   llvm-include-order:
+#       Wants alphabetic/category ordering that would move the PCH `Global.h`
+#       out of first position and break the build.
+#
+#   llvm-namespace-comment:
+#       Alias of readability-namespace-comments (kept enabled).
+#
+#   misc-no-recursion:
+#       No recursion in this codebase; the check is pure noise.
+#
+#   google-runtime-int:
+#       Google style forbids `short` / `long` in favor of fixed-width types.
+#       The Win32 surface is built on `DWORD` / `ULONG` / `LONG`; replacing
+#       them at the boundary is not feasible.
+#
+#   google-runtime-references:
+#       Bans non-const reference parameters. Incompatible with the idiomatic
+#       `GetXyz(..., Out& out)` helpers used across the codebase.
+#
+#   google-readability-todo:
+#       Requires `// TODO(username):` format; there are no TODOs in-tree.
+...

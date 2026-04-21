@@ -67,6 +67,21 @@
     <ClCompile Include="src\LRUStore.cpp">
       <Filter>Source</Filter>
     </ClCompile>
+    <ClCompile Include="src\DialogLayout.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\HostComboModel.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TraceConfigState.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TraceListView.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
+    <ClCompile Include="src\TraceSessionController.cpp">
+      <Filter>Source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="src\CommandLine.h">
@@ -136,6 +151,24 @@
       <Filter>Header</Filter>
     </ClInclude>
     <ClInclude Include="src\LRUStore.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\DialogLayout.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\HostComboModel.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\SessionView.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TraceConfigState.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TraceListView.h">
+      <Filter>Header</Filter>
+    </ClInclude>
+    <ClInclude Include="src\TraceSessionController.h">
       <Filter>Header</Filter>
     </ClInclude>
   </ItemGroup>

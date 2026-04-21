@@ -23,8 +23,8 @@ enum class Validation {
 
 struct Result {
 	Validation validation = Validation::Ok;
-	CString    normalizedHost;
-	CString    error;
+	CString normalizedHost;
+	CString error;
 };
 
 // Trims rawHost, rejects empty, then synchronously probes DNS. Returns a

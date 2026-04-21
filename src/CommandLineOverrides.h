@@ -16,9 +16,9 @@
 
 struct CommandLineOverrides {
 	std::optional<double> interval;
-	std::optional<int>    pingsize;
-	std::optional<int>    maxLRU;
-	std::optional<BOOL>   useDNS;
+	std::optional<int> pingsize;
+	std::optional<int> maxLRU;
+	std::optional<BOOL> useDNS;
 };
 
 #endif // COMMANDLINEOVERRIDES_H_

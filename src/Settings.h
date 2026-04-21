@@ -22,8 +22,7 @@ struct TraceConfigState;
 //
 //*****************************************************************************
 
-class Settings
-{
+class Settings {
 public:
 	// Seeds state with caller's current values. Applies cmdline overrides
 	// up-front, then loads the registry; registry values replace state only

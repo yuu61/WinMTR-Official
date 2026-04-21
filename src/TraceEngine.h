@@ -26,6 +26,8 @@ public:
 	~TraceEngine();
 	TraceEngine(const TraceEngine&)            = delete;
 	TraceEngine& operator=(const TraceEngine&) = delete;
+	TraceEngine(TraceEngine&&)                 = delete;
+	TraceEngine& operator=(TraceEngine&&)      = delete;
 
 	[[nodiscard]] bool    IsValid()   const { return probe_.IsValid(); }
 	[[nodiscard]] LPCWSTR LastError() const { return probe_.LastError(); }
@@ -42,13 +44,15 @@ public:
 private:
 	void ExecuteTrace(const IpAddress& dest, int ttl);
 	void ResolveHopName(int hop);
+	void ApplyReplyStatus(int hop, ULONG status, ULONG rtt, const IpAddress& replyAddr);
+	[[nodiscard]] bool WaitIntervalOrStop(ULONG rtt);
 
 	// Used only to validate that ICMP is usable on this host.
 	IcmpIO            probe_;
 	HopStatistics     stats_;
 	TraceOptions      options_;
-	std::atomic<bool> tracing_;
-	HANDLE            stop_event_;
+	std::atomic<bool> tracing_{false};
+	HANDLE            stop_event_ = nullptr;
 };
 
 #endif // TRACEENGINE_H_

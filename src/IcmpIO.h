@@ -33,6 +33,8 @@ public:
 	~IcmpIO();
 	IcmpIO(const IcmpIO&)            = delete;
 	IcmpIO& operator=(const IcmpIO&) = delete;
+	IcmpIO(IcmpIO&&)                 = delete;
+	IcmpIO& operator=(IcmpIO&&)      = delete;
 
 	[[nodiscard]] bool    IsValid()   const { return valid_; }
 	[[nodiscard]] LPCWSTR LastError() const { return last_error_; }
@@ -47,11 +49,11 @@ public:
 	             HANDLE stop_event, DWORD timeout);
 
 private:
-	bool    valid_;
+	bool    valid_      = false;
 	HANDLE  v4_handle_;
 	HANDLE  v6_handle_;
-	HANDLE  echo_event_;
-	LPCWSTR last_error_;
+	HANDLE  echo_event_ = nullptr;
+	LPCWSTR last_error_ = nullptr;
 };
 
 #endif // ICMPIO_H_

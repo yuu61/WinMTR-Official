@@ -8,40 +8,35 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
-StatusBar::StatusBar()
-{
-}
+namespace {
+constexpr int kStatusBarMinHeight = 23;
+constexpr int kEdgePaneMargin = 3;
+} // namespace
 
 StatusBar::~StatusBar()
 {
-	for ( int i = 0; i < m_arrPaneControls.GetSize(); i++ ){
-		if( m_arrPaneControls[i]->hWnd && ::IsWindow(m_arrPaneControls[i]->hWnd) ) {
-			::ShowWindow(m_arrPaneControls[i]->hWnd, SW_HIDE); 
-			if( m_arrPaneControls[i]->bAutoDestroy ) {
+	for (int i = 0; i < m_arrPaneControls.GetSize(); i++) {
+		if (m_arrPaneControls[i]->hWnd && ::IsWindow(m_arrPaneControls[i]->hWnd)) {
+			::ShowWindow(m_arrPaneControls[i]->hWnd, SW_HIDE);
+			if (m_arrPaneControls[i]->bAutoDestroy) {
 				::DestroyWindow(m_arrPaneControls[i]->hWnd);
 			}
 		}
-		_STATUSBAR_PANE_CTRL_ *pPaneCtrl = m_arrPaneControls[i];
-		if( pPaneCtrl )
-			delete pPaneCtrl;
+		delete m_arrPaneControls[i];
 	}
 }
 
 BEGIN_MESSAGE_MAP(StatusBar, CStatusBar)
-	//{{AFX_MSG_MAP(StatusBar)
 	ON_WM_CREATE()
-	//}}AFX_MSG_MAP
 END_MESSAGE_MAP()
 
 
-/////////////////////////////////////////////////////////////////////////////
-// StatusBar message handlers
-//////////////////////////////////////////////////////////////////////////
-
 BOOL StatusBar::Setup(CWnd* parent, UINT titleStringId)
 {
-	if (!Create(parent)) return FALSE;
-	GetStatusBarCtrl().SetMinHeight(23);
+	if (!Create(parent)) {
+		return FALSE;
+	}
+	GetStatusBarCtrl().SetMinHeight(kStatusBarMinHeight);
 	UINT sbi[1]{};
 	sbi[0] = titleStringId;
 	SetIndicators(sbi, 1);
@@ -57,280 +52,248 @@ BOOL StatusBar::AddLinkPane(CMFCLinkCtrl& link, LPCWSTR text, LPCWSTR url,
 		return FALSE;
 	}
 	link.SetURL(url);
-	if (!AddPane(paneId, 1)) return FALSE;
+	if (!AddPane(paneId, 1)) {
+		return FALSE;
+	}
 	SetPaneWidth(CommandToIndex(paneId), width);
 	return AddPaneControl(&link, paneId, FALSE);
 }
 
 int StatusBar::OnCreate(LPCREATESTRUCT lpCreateStruct)
 {
-	if( CStatusBar::OnCreate(lpCreateStruct) == -1 )
+	if (CStatusBar::OnCreate(lpCreateStruct) == -1) {
 		return -1;
-	
+	}
 	return 0;
 }
 
-//////////////////////////////////////////////////////////////////////////
-
 LRESULT StatusBar::WindowProc(UINT message, WPARAM wParam, LPARAM lParam)
 {
-	LRESULT lResult =CStatusBar::WindowProc(message, wParam, lParam);
-	if( message == WM_SIZE ){
+	const LRESULT lResult = CStatusBar::WindowProc(message, wParam, lParam);
+	if (message == WM_SIZE) {
 		RepositionControls();
 	}
 	return lResult;
 }
 
-//////////////////////////////////////////////////////////////////////////
-
 void StatusBar::RepositionControls()
 {
-	HDWP _hDWP = ::BeginDeferWindowPos( (int)m_arrPaneControls.GetSize() );
-	
+	HDWP hDWP = ::BeginDeferWindowPos(static_cast<int>(m_arrPaneControls.GetSize()));
+
 	CRect rcClient;
 	GetClientRect(&rcClient);
-	for (int i = 0; i < m_arrPaneControls.GetSize(); i++ )
-	{
-		int   iIndex  = CommandToIndex(m_arrPaneControls[i]->nID);
-		HWND hWnd    = m_arrPaneControls[i]->hWnd;
-		
+	for (int i = 0; i < m_arrPaneControls.GetSize(); i++) {
+		// clang-analyzer follows RemovePane's `delete m_arrPaneControls[i]; RemoveAt(i);`
+		// into this loop and flags the access as use-after-free, but `RemoveAt` has
+		// already dropped the freed entry from the array, so every element the loop
+		// visits here is still live. Known analyzer limitation with MFC CArray.
+		// NOLINTNEXTLINE(clang-analyzer-cplusplus.NewDelete)
+		const int iIndex = CommandToIndex(m_arrPaneControls[i]->nID);
+		// `const HWND` would bind the const to the typedef'd pointer itself
+		// (HWND__* const), not the pointee. Spell the pointer out so the
+		// intent of a non-reassigned local is expressed without tripping
+		// misc-misplaced-const / readability-qualified-auto.
+		auto* const hWnd = m_arrPaneControls[i]->hWnd;
+
 		CRect rcPane;
 		GetItemRect(iIndex, &rcPane);
-		
-		// CStatusBar::GetItemRect() sometimes returns invalid size 
+
+		// CStatusBar::GetItemRect() sometimes returns invalid size
 		// of the last pane - we will re-compute it
-		int cx = ::GetSystemMetrics( SM_CXEDGE );
-		DWORD dwPaneStyle = GetPaneStyle( iIndex );
-		if( iIndex == (m_nCount-1) )
-		{
-			if( (dwPaneStyle & SBPS_STRETCH ) == 0 )
-			{
-				UINT nID, nStyle;
-				int  cxWidth;
-				GetPaneInfo( iIndex, nID, nStyle, cxWidth );
-				rcPane.right = rcPane.left + cxWidth + cx*3;
-			} // if( (dwPaneStyle & SBPS_STRETCH ) == 0 )
-			else
-			{
-				GetClientRect( &rcClient );
+		const int cx = ::GetSystemMetrics(SM_CXEDGE);
+		const DWORD dwPaneStyle = GetPaneStyle(iIndex);
+		if (iIndex == (m_nCount - 1)) {
+			if ((dwPaneStyle & SBPS_STRETCH) == 0) {
+				UINT nID = 0;
+				UINT nStyle = 0;
+				int cxWidth = 0;
+				GetPaneInfo(iIndex, nID, nStyle, cxWidth);
+				rcPane.right = rcPane.left + cxWidth + cx * kEdgePaneMargin;
+			} else {
+				GetClientRect(&rcClient);
 				rcPane.right = rcClient.right;
-				if( (GetStyle() & SBARS_SIZEGRIP) == SBARS_SIZEGRIP )
-				{
-					int cxSmIcon = ::GetSystemMetrics( SM_CXSMICON );
+				if ((GetStyle() & SBARS_SIZEGRIP) == SBARS_SIZEGRIP) {
+					const int cxSmIcon = ::GetSystemMetrics(SM_CXSMICON);
 					rcPane.right -= cxSmIcon + cx;
-				} // if( (GetStyle() & SBARS_SIZEGRIP) == SBARS_SIZEGRIP )
-			} // else from if( (dwPaneStyle & SBPS_STRETCH ) == 0 )
-		} // if( iIndex == (m_nCount-1) )
-		
-		if ((GetPaneStyle (iIndex) & SBPS_NOBORDERS) == 0){
-			rcPane.DeflateRect(cx,cx);
-		}else{
-			rcPane.DeflateRect(cx,1,cx,1);
+				}
+			}
 		}
-		
-		if (hWnd && ::IsWindow(hWnd)){
-			_hDWP = ::DeferWindowPos(
-				_hDWP, 
-				hWnd, 
-				NULL, 
-				rcPane.left,
-				rcPane.top, 
-				rcPane.Width(), 
-				rcPane.Height(),
-				SWP_NOZORDER|SWP_NOOWNERZORDER|SWP_SHOWWINDOW
-				);
+
+		if ((GetPaneStyle(iIndex) & SBPS_NOBORDERS) == 0) {
+			rcPane.DeflateRect(cx, cx);
+		} else {
+			rcPane.DeflateRect(cx, 1, cx, 1);
+		}
+
+		if (hWnd && ::IsWindow(hWnd)) {
+			hDWP = ::DeferWindowPos(
+			    hDWP,
+			    hWnd,
+			    nullptr,
+			    rcPane.left,
+			    rcPane.top,
+			    rcPane.Width(),
+			    rcPane.Height(),
+			    SWP_NOZORDER | SWP_NOOWNERZORDER | SWP_SHOWWINDOW);
 
 			::RedrawWindow(
-				hWnd,
-				NULL,
-				NULL,
-				RDW_INVALIDATE|RDW_UPDATENOW
-				|RDW_ERASE|RDW_ERASENOW
-				);
-			
-		} // if (hWnd && ::IsWindow(hWnd)){ 
+			    hWnd,
+			    nullptr,
+			    nullptr,
+			    RDW_INVALIDATE | RDW_UPDATENOW | RDW_ERASE | RDW_ERASENOW);
+		}
 	}
-	
-	VERIFY( ::EndDeferWindowPos( _hDWP ) );
-};
 
-//////////////////////////////////////////////////////////////////////////
+	VERIFY(::EndDeferWindowPos(hDWP));
+}
 
-BOOL StatusBar::AddPane(
-	 UINT nID,	// ID of the  pane
-	 int nIndex	// index of the pane
-	 )
+BOOL StatusBar::AddPane(UINT nID, int nIndex)
 {
-	if (nIndex < 0 || nIndex > m_nCount){
+	if (nIndex < 0 || nIndex > m_nCount) {
 		ASSERT(FALSE);
 		return FALSE;
 	}
-	
-	if (CommandToIndex(nID) != -1){
+	if (CommandToIndex(nID) != -1) {
 		ASSERT(FALSE);
 		return FALSE;
 	}
-	
-	CArray<_STATUSBAR_PANE_*,_STATUSBAR_PANE_*> arrPanesTmp;
+
+	CArray<StatusBarPane*, StatusBarPane*> arrPanesTmp;
 	int iIndex = 0;
-	for (iIndex = 0; iIndex < m_nCount+1; iIndex++)
-	{
-		_STATUSBAR_PANE_* pNewPane = new _STATUSBAR_PANE_;
-		
-		if (iIndex == nIndex){
-			pNewPane->nID    = nID;
+	for (iIndex = 0; iIndex < m_nCount + 1; iIndex++) {
+		StatusBarPane* pNewPane = new StatusBarPane;
+
+		if (iIndex == nIndex) {
+			pNewPane->nID = nID;
 			pNewPane->nStyle = SBPS_NORMAL;
-		}else{
+		} else {
 			int idx = iIndex;
-			if (iIndex > nIndex) idx--;
-			
-			_STATUSBAR_PANE_* pOldPane  = GetPanePtr(idx);
-			pNewPane->cxText  = pOldPane->cxText;
-			pNewPane->nFlags  = pOldPane->nFlags;
-			pNewPane->nID     = pOldPane->nID;
-			pNewPane->nStyle  = pOldPane->nStyle;
+			if (iIndex > nIndex) {
+				idx--;
+			}
+			StatusBarPane* pOldPane = GetPanePtr(idx);
+			pNewPane->cxText = pOldPane->cxText;
+			pNewPane->nFlags = pOldPane->nFlags;
+			pNewPane->nID = pOldPane->nID;
+			pNewPane->nStyle = pOldPane->nStyle;
 			pNewPane->strText = pOldPane->strText;
 		}
 		arrPanesTmp.Add(pNewPane);
 	}
-	
-	int nPanesCount = (int)arrPanesTmp.GetSize();
-	UINT* lpIDArray = new UINT[ nPanesCount ];
+
+	const int nPanesCount = static_cast<int>(arrPanesTmp.GetSize());
+	UINT* lpIDArray = new UINT[nPanesCount];
 	for (iIndex = 0; iIndex < nPanesCount; iIndex++) {
 		lpIDArray[iIndex] = arrPanesTmp[iIndex]->nID;
 	}
-	
-	// set the indicators 
+
 	SetIndicators(lpIDArray, nPanesCount);
-	// free memory
-	for (iIndex = 0; iIndex < nPanesCount; iIndex++){
-		_STATUSBAR_PANE_* pPane = arrPanesTmp[iIndex];
-		if (iIndex != nIndex)
+	for (iIndex = 0; iIndex < nPanesCount; iIndex++) {
+		StatusBarPane* pPane = arrPanesTmp[iIndex];
+		if (iIndex != nIndex) {
 			PaneInfoSet(iIndex, pPane);
-		if(pPane) 
-			delete pPane;
+		}
+		delete pPane;
 	}
-	
+
 	arrPanesTmp.RemoveAll();
-	if(lpIDArray) 
-		delete []lpIDArray;
-	
+	delete[] lpIDArray;
+
 	RepositionControls();
-	
+
 	return TRUE;
 }
 
-//////////////////////////////////////////////////////////////////////////
-
-BOOL StatusBar::RemovePane(
-	UINT nID	// ID of the pane
-	)
+BOOL StatusBar::RemovePane(UINT nID)
 {
-	if ( CommandToIndex(nID) == -1 || m_nCount == 1 ){
+	if (CommandToIndex(nID) == -1 || m_nCount == 1) {
 		ASSERT(FALSE);
 		return FALSE;
 	}
-	
-	CArray<_STATUSBAR_PANE_*,_STATUSBAR_PANE_*> arrPanesTmp;
-	int nIndex;
-	for (nIndex = 0; nIndex < m_nCount; nIndex++)
-	{
-		_STATUSBAR_PANE_* pOldPane = GetPanePtr(nIndex);
-		
-		if (pOldPane->nID == nID)
+
+	CArray<StatusBarPane*, StatusBarPane*> arrPanesTmp;
+	for (int nIndex = 0; nIndex < m_nCount; nIndex++) {
+		StatusBarPane* pOldPane = GetPanePtr(nIndex);
+		if (pOldPane->nID == nID) {
 			continue;
-		
-		_STATUSBAR_PANE_* pNewPane = new _STATUSBAR_PANE_;
-		
-		pNewPane->cxText  = pOldPane->cxText;
-		pNewPane->nFlags  = pOldPane->nFlags;
-		pNewPane->nID     = pOldPane->nID;
-		pNewPane->nStyle  = pOldPane->nStyle;
+		}
+		StatusBarPane* pNewPane = new StatusBarPane;
+		pNewPane->cxText = pOldPane->cxText;
+		pNewPane->nFlags = pOldPane->nFlags;
+		pNewPane->nID = pOldPane->nID;
+		pNewPane->nStyle = pOldPane->nStyle;
 		pNewPane->strText = pOldPane->strText;
 		arrPanesTmp.Add(pNewPane);
 	}
-	
+
 	UINT* lpIDArray = new UINT[arrPanesTmp.GetSize()];
-	for (nIndex = 0; nIndex < arrPanesTmp.GetSize(); nIndex++) {
+	for (int nIndex = 0; nIndex < arrPanesTmp.GetSize(); nIndex++) {
 		lpIDArray[nIndex] = arrPanesTmp[nIndex]->nID;
 	}
-	
-	// set the indicators
-	SetIndicators(lpIDArray, (int)arrPanesTmp.GetSize());
-	// free memory
-	for (nIndex = 0; nIndex < arrPanesTmp.GetSize(); nIndex++){
-		_STATUSBAR_PANE_* pPane = arrPanesTmp[nIndex];
+
+	SetIndicators(lpIDArray, static_cast<int>(arrPanesTmp.GetSize()));
+	for (int nIndex = 0; nIndex < arrPanesTmp.GetSize(); nIndex++) {
+		StatusBarPane* pPane = arrPanesTmp[nIndex];
 		PaneInfoSet(nIndex, pPane);
-		if(pPane) 
-			delete pPane;
+		delete pPane;
 	}
-	
-	for ( int i = 0; i < m_arrPaneControls.GetSize(); i++ ){
-		if (m_arrPaneControls[i]->nID == nID){
-			if( m_arrPaneControls[i]->hWnd && ::IsWindow(m_arrPaneControls[i]->hWnd) ) {
-				::ShowWindow(m_arrPaneControls[i]->hWnd, SW_HIDE); 
-				if( m_arrPaneControls[i]->bAutoDestroy ) {
+
+	for (int i = 0; i < m_arrPaneControls.GetSize(); i++) {
+		if (m_arrPaneControls[i]->nID == nID) {
+			if (m_arrPaneControls[i]->hWnd && ::IsWindow(m_arrPaneControls[i]->hWnd)) {
+				::ShowWindow(m_arrPaneControls[i]->hWnd, SW_HIDE);
+				if (m_arrPaneControls[i]->bAutoDestroy) {
 					::DestroyWindow(m_arrPaneControls[i]->hWnd);
 				}
 			}
-			_STATUSBAR_PANE_CTRL_ *pPaneCtrl = m_arrPaneControls[i];
-			if( pPaneCtrl )
-				delete pPaneCtrl;
+			delete m_arrPaneControls[i];
 			m_arrPaneControls.RemoveAt(i);
 			break;
 		}
 	}
-	
+
 	arrPanesTmp.RemoveAll();
-	if(lpIDArray) 
-		delete []lpIDArray;
-	
+	delete[] lpIDArray;
+
 	RepositionControls();
-	
+
 	return TRUE;
 }
 
-//////////////////////////////////////////////////////////////////////////
-
 BOOL StatusBar::AddPaneControl(HWND hWnd, UINT nID, BOOL bAutoDestroy)
 {
-	if (CommandToIndex (nID) == -1) {
+	if (CommandToIndex(nID) == -1) {
 		return FALSE;
 	}
-	
-	_STATUSBAR_PANE_CTRL_* pPaneCtrl = new _STATUSBAR_PANE_CTRL_;
-	pPaneCtrl->nID         = nID;
-	pPaneCtrl->hWnd        = hWnd;
+
+	StatusBarPaneCtrl* pPaneCtrl = new StatusBarPaneCtrl;
+	pPaneCtrl->nID = nID;
+	pPaneCtrl->hWnd = hWnd;
 	pPaneCtrl->bAutoDestroy = bAutoDestroy;
-	
+
 	m_arrPaneControls.Add(pPaneCtrl);
 
 	RepositionControls();
 	return TRUE;
 }
 
-//////////////////////////////////////////////////////////////////////////
-
-BOOL StatusBar::PaneInfoGet(int nIndex, _STATUSBAR_PANE_* pPane)
+BOOL StatusBar::PaneInfoGet(int nIndex, StatusBarPane* pPane)
 {
-	if( nIndex < m_nCount  && nIndex >= 0 )
-	{
-		GetPaneInfo( nIndex,  pPane->nID, pPane->nStyle, pPane->cxText );
+	if (nIndex < m_nCount && nIndex >= 0) {
+		GetPaneInfo(nIndex, pPane->nID, pPane->nStyle, pPane->cxText);
 		CString strPaneText;
-		GetPaneText( nIndex , strPaneText );
-		pPane->strText = LPCTSTR(strPaneText);
+		GetPaneText(nIndex, strPaneText);
+		pPane->strText = strPaneText.GetString();
 		return TRUE;
 	}
 	return FALSE;
 }
 
-//////////////////////////////////////////////////////////////////////////
-
-BOOL StatusBar::PaneInfoSet(int nIndex, _STATUSBAR_PANE_* pPane)
+BOOL StatusBar::PaneInfoSet(int nIndex, StatusBarPane* pPane)
 {
-	if( nIndex < m_nCount  && nIndex >= 0 ){
-		SetPaneInfo( nIndex, pPane->nID, pPane->nStyle, pPane->cxText );
-		SetPaneText( nIndex, LPCTSTR( pPane->strText) );
+	if (nIndex < m_nCount && nIndex >= 0) {
+		SetPaneInfo(nIndex, pPane->nID, pPane->nStyle, pPane->cxText);
+		SetPaneText(nIndex, pPane->strText.GetString());
 		return TRUE;
 	}
 	return FALSE;

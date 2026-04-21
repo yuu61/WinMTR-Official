@@ -19,9 +19,9 @@
 namespace CommandLine {
 
 struct ParseResult {
-	bool                        helpRequested = false;
+	bool helpRequested = false;
 	std::optional<std::wstring> hostName;
-	CommandLineOverrides        overrides;
+	CommandLineOverrides overrides;
 };
 
 // Parses the full command line string (e.g. as returned by GetCommandLineW())
