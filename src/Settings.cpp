@@ -82,7 +82,10 @@ BOOL Settings::InitAndLoad(TraceConfigState& state, const CommandLineOverrides& 
 		tmp = (DWORD)state.pingsize;
 		RegSetValueExW(hConfig, L"PingSize", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
 	} else {
-		if (!overrides.pingsize) state.pingsize = (int)tmp;
+		if (!overrides.pingsize) {
+			const int v = static_cast<int>(tmp);
+			state.pingsize = (v >= 0 && v <= 8184) ? v : DEFAULT_PING_SIZE;
+		}
 	}
 
 	sz = sizeof(DWORD);
@@ -91,7 +94,10 @@ BOOL Settings::InitAndLoad(TraceConfigState& state, const CommandLineOverrides& 
 		tmp = (DWORD)maxLRU;
 		RegSetValueExW(hConfig, L"MaxLRU", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
 	} else {
-		if (!overrides.maxLRU) maxLRU = (int)tmp;
+		if (!overrides.maxLRU) {
+			const int v = static_cast<int>(tmp);
+			maxLRU = (v >= 1 && v <= 10000) ? v : DEFAULT_MAX_LRU;
+		}
 	}
 	state.lru.SetMax(maxLRU);
 
@@ -108,12 +114,15 @@ BOOL Settings::InitAndLoad(TraceConfigState& state, const CommandLineOverrides& 
 		tmp = (DWORD)(state.interval * 1000);
 		RegSetValueExW(hConfig, L"Interval", 0, REG_DWORD, (const BYTE*)&tmp, sizeof(DWORD));
 	} else {
-		if (!overrides.interval) state.interval = (double)tmp / 1000.0;
+		if (!overrides.interval) {
+			const double v = static_cast<double>(tmp) / 1000.0;
+			state.interval = (v >= 0.1 && v <= 60.0) ? v : DEFAULT_INTERVAL;
+		}
 	}
 	RegCloseKey(hConfig);
 
 	RegCloseKey(hWinMTR);
-	state.lru.Load(outHosts);
+	(void)state.lru.Load(outHosts);  // history load failure is non-fatal; outHosts stays empty
 	return TRUE;
 }
 

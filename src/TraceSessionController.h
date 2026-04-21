@@ -26,11 +26,11 @@ class TraceEngine;
 
 class TraceSessionController {
 public:
-	enum State {
-		IDLE,
-		TRACING,
-		STOPPING,
-		EXIT
+	enum class State {
+		Idle,
+		Tracing,
+		Stopping,
+		Exit
 	};
 
 	explicit TraceSessionController(ISessionView* view);
@@ -52,24 +52,24 @@ public:
 	void Tick();
 
 	[[nodiscard]] State CurrentState() const { return state_; }
-	[[nodiscard]] bool  IsTracing()   const { return state_ == TRACING; }
+	[[nodiscard]] bool  IsTracing()   const { return state_ == State::Tracing; }
 	[[nodiscard]] const HopStatistics& Stats() const;
 
 	[[nodiscard]] bool    IsEngineValid() const;
 	[[nodiscard]] LPCWSTR EngineError()   const;
 
 private:
-	enum Transition {
-		IDLE_TO_IDLE,
-		IDLE_TO_TRACING,
-		IDLE_TO_EXIT,
-		TRACING_TO_TRACING,
-		TRACING_TO_STOPPING,
-		TRACING_TO_IDLE,
-		TRACING_TO_EXIT,
-		STOPPING_TO_IDLE,
-		STOPPING_TO_STOPPING,
-		STOPPING_TO_EXIT
+	enum class Transition {
+		IdleToIdle,
+		IdleToTracing,
+		IdleToExit,
+		TracingToTracing,
+		TracingToStopping,
+		TracingToIdle,
+		TracingToExit,
+		StoppingToIdle,
+		StoppingToStopping,
+		StoppingToExit
 	};
 
 	void Transit(State new_state);

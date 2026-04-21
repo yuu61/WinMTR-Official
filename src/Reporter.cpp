@@ -88,6 +88,7 @@ CString Reporter::BuildHtmlReport(const HopStatistics& stats)
 //*****************************************************************************
 bool Reporter::CopyToClipboard(CWnd* owner, const CString& content)
 {
+	if (owner == nullptr) return false;
 	if (!owner->OpenClipboard())
 		return false;
 	EmptyClipboard();
@@ -108,9 +109,12 @@ bool Reporter::CopyToClipboard(CWnd* owner, const CString& content)
 	wcscpy_s(buffer, chars, (LPCWSTR)content);
 	GlobalUnlock(clipbuffer);
 
-	SetClipboardData(CF_UNICODETEXT, clipbuffer);
+	HANDLE h = SetClipboardData(CF_UNICODETEXT, clipbuffer);
+	if (!h) {
+		GlobalFree(clipbuffer);
+	}
 	CloseClipboard();
-	return true;
+	return h != nullptr;
 }
 
 
@@ -144,5 +148,7 @@ bool Reporter::SaveToFile(LPCWSTR path, const CString& content)
 		out.write(utf8.data(), utf8Len);
 	}
 
+	out.flush();
+	out.close();
 	return out.good();
 }

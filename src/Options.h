@@ -26,10 +26,10 @@ class Options : public CDialog
 public:
 	Options(CWnd* pParent = NULL);
 
-	void SetUseDNS(BOOL udns)		{ useDNS = udns;  };
-	void SetInterval(double i)		{ interval = i;   };
-	void SetPingSize(int ps)		{ pingsize = ps;  };
-	void SetMaxLRU(int mlru)		{ maxLRU = mlru;  };
+	void SetUseDNS(BOOL udns)		{ useDNS = udns;  }
+	void SetInterval(double i)		{ interval = i;   }
+	void SetPingSize(int ps)		{ pingsize = ps;  }
+	void SetMaxLRU(int mlru)		{ maxLRU = mlru;  }
 
 	[[nodiscard]] double GetInterval() const { return interval; }
 	[[nodiscard]] int    GetPingSize() const { return pingsize; }
@@ -43,10 +43,10 @@ public:
 	CButton	m_checkDNS;
 
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX);
+	virtual void DoDataExchange(CDataExchange* pDX) override;
 
-	virtual BOOL OnInitDialog();
-	virtual void OnOK();
+	virtual BOOL OnInitDialog() override;
+	virtual void OnOK() override;
 
 	afx_msg void OnLicense();
 

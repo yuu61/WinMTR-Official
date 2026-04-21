@@ -54,14 +54,16 @@ bool LRUStore::Load(std::vector<CString>& outHosts)
 	} else {
 		wchar_t hostBuf[255]{};
 		nr_ = (int)tmp;
+		outHosts.reserve(static_cast<size_t>(max_));
 		for (int i = 0; i < max_; ++i) {
 			const auto keyName = std::format(L"Host{}", i + 1);
 			DWORD hostSize = sizeof(hostBuf);
 			if (RegQueryValueExW(hLRU, keyName.c_str(), 0, NULL, (BYTE*)hostBuf, &hostSize) == ERROR_SUCCESS) {
 				DWORD chars = hostSize / sizeof(wchar_t);
-				if (chars > 0 && chars <= _countof(hostBuf))
-					hostBuf[chars - 1] = L'\0';
-				outHosts.push_back(CString(hostBuf));
+				if (chars == 0 || chars > _countof(hostBuf)) continue;
+				hostBuf[_countof(hostBuf) - 1] = L'\0';
+				if (hostBuf[0] == L'\0') continue;
+				outHosts.emplace_back(hostBuf);
 			}
 		}
 	}

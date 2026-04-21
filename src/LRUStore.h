@@ -23,7 +23,7 @@ public:
 
 	// Reads NrLRU + Host{1..Max()} from the registry. Populates outHosts and
 	// initializes Count(). Returns false on registry failure.
-	bool Load(std::vector<CString>& outHosts);
+	[[nodiscard]] bool Load(std::vector<CString>& outHosts);
 
 	// Stores host at the next slot; wraps Count() back to 1 when it reaches Max().
 	void Append(LPCWSTR host);

@@ -27,7 +27,7 @@ class Main : public CWinApp
 public:
 	Main();
 
-	virtual BOOL InitInstance();
+	virtual BOOL InitInstance() override;
 
 	DECLARE_MESSAGE_MAP()
 };

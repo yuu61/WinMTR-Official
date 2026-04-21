@@ -70,21 +70,21 @@ CommandLine::ParseResult CommandLine::Parse(LPCWSTR cmdLine)
 
 		if (Matches(a, L"-i", L"--interval") && i + 1 < argc) {
 			double v = 0.0;
-			if (TryParseDouble(argv[++i], v))
+			if (TryParseDouble(argv[++i], v) && v >= 0.1 && v <= 60.0)
 				result.overrides.interval = v;
 			continue;
 		}
 
 		if (Matches(a, L"-s", L"--size") && i + 1 < argc) {
 			int v = 0;
-			if (TryParseInt(argv[++i], v))
+			if (TryParseInt(argv[++i], v) && v >= 0 && v <= 8184)
 				result.overrides.pingsize = v;
 			continue;
 		}
 
 		if (Matches(a, L"-m", L"--maxLRU") && i + 1 < argc) {
 			int v = 0;
-			if (TryParseInt(argv[++i], v))
+			if (TryParseInt(argv[++i], v) && v >= 1 && v <= 10000)
 				result.overrides.maxLRU = v;
 			continue;
 		}

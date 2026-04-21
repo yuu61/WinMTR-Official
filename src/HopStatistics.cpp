@@ -120,7 +120,7 @@ void HopStatistics::UpdateRTT(int at, int rtt)
 {
 	std::lock_guard g(mutex_);
 	host_[at].last  = rtt;
-	host_[at].total += rtt;
+	if (rtt >= 0) host_[at].total += static_cast<unsigned long>(rtt);
 	if (host_[at].best > rtt || host_[at].xmit == 1) host_[at].best = rtt;
 	if (host_[at].worst < rtt)                       host_[at].worst = rtt;
 }

@@ -26,6 +26,12 @@
 static char THIS_FILE[] = __FILE__;
 #endif
 
+namespace {
+constexpr wchar_t kTxtFileFilter[]  = L"Text Files (*.txt)|*.txt|All Files (*.*)|*.*||";
+constexpr wchar_t kHtmlFileFilter[] = L"HTML Files (*.htm, *.html)|*.htm;*.html|All Files (*.*)|*.*||";
+constexpr UINT_PTR kRefreshTimerId  = 1;
+}
+
 BEGIN_MESSAGE_MAP(Dialog, CDialog)
 	ON_WM_PAINT()
 	ON_WM_SIZE()
@@ -39,8 +45,6 @@ BEGIN_MESSAGE_MAP(Dialog, CDialog)
 	ON_BN_CLICKED(ID_EXPT, OnEXPT)
 	ON_BN_CLICKED(ID_EXPH, OnEXPH)
 	ON_NOTIFY(NM_DBLCLK, IDC_LIST_MTR, OnDblclkList)
-	ON_CBN_SELCHANGE(IDC_COMBO_HOST, &Dialog::OnCbnSelchangeComboHost)
-	ON_CBN_SELENDOK(IDC_COMBO_HOST, &Dialog::OnCbnSelendokComboHost)
 	ON_CBN_CLOSEUP(IDC_COMBO_HOST, &Dialog::OnCbnCloseupComboHost)
 	ON_WM_TIMER()
 	ON_WM_CLOSE()
@@ -54,7 +58,7 @@ Dialog::Dialog(CWnd* pParent)
 	: CDialog(Dialog::IDD, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
-	m_autostart = 0;
+	m_autostart = false;
 	controller = std::make_unique<TraceSessionController>(this);
 }
 
@@ -93,18 +97,20 @@ BOOL Dialog::OnInitDialog()
 	wchar_t caption[] = L"WinMTR v" WINMTR_VERSION L" 64 bit by Appnor MSP - www.winmtr.net";
 #endif
 
-	SetTimer(1, WINMTR_DIALOG_TIMER, NULL);
+	SetTimer(kRefreshTimerId, WINMTR_DIALOG_TIMER, NULL);
 	SetWindowText(caption);
 
 	SetIcon(m_hIcon, TRUE);
 	SetIcon(m_hIcon, FALSE);
 
-	if (!statusBar.Setup(this, IDS_STRING_SB_NAME))
+	if (!statusBar.Setup(this, IDS_STRING_SB_NAME)) {
 		AfxMessageBox(L"Error creating status bar");
+		return FALSE;
+	}
 
 	m_appnorLink.reset(new CMFCLinkCtrl);
 	if (!statusBar.AddLinkPane(*m_appnorLink, L"www.appnor.com",
-			L"http://www.appnor.com/?utm_source=winmtr&utm_medium=desktop&utm_campaign=software",
+			L"https://www.appnor.com/?utm_source=winmtr&utm_medium=desktop&utm_campaign=software",
 			1234, 100)) {
 		AfxMessageBox(L"Failed to add status bar link pane", MB_ICONERROR);
 		return FALSE;
@@ -217,7 +223,7 @@ void Dialog::OnDblclkList(NMHDR* /*pNMHDR*/, LRESULT* pResult)
 
 void Dialog::SetHostName(const wchar_t* host)
 {
-	m_autostart = 1;
+	m_autostart = true;
 	wcsncpy_s(msz_defaulthostname, host, _TRUNCATE);
 }
 
@@ -229,7 +235,7 @@ void Dialog::OnRestart()
 		return;
 	}
 
-	if (controller->CurrentState() != TraceSessionController::IDLE) {
+	if (controller->CurrentState() != TraceSessionController::State::Idle) {
 		controller->RequestStop();
 		return;
 	}
@@ -293,43 +299,46 @@ void Dialog::OnOptions()
 
 void Dialog::OnCTTC()
 {
-	Reporter::CopyToClipboard(this, Reporter::BuildTextReport(controller->Stats()));
+	if (!Reporter::CopyToClipboard(this, Reporter::BuildTextReport(controller->Stats()))) {
+		AfxMessageBox(L"Failed to copy report to clipboard.");
+	}
 }
 
 
 void Dialog::OnCHTC()
 {
-	Reporter::CopyToClipboard(this, Reporter::BuildHtmlReport(controller->Stats()));
+	if (!Reporter::CopyToClipboard(this, Reporter::BuildHtmlReport(controller->Stats()))) {
+		AfxMessageBox(L"Failed to copy report to clipboard.");
+	}
 }
 
 
 void Dialog::OnEXPT()
 {
-	wchar_t BASED_CODE szFilter[] = L"Text Files (*.txt)|*.txt|All Files (*.*)|*.*||";
-
-	CFileDialog dlg(FALSE, L"TXT", NULL, OFN_HIDEREADONLY | OFN_EXPLORER, szFilter, this);
-	if (dlg.DoModal() == IDOK)
-		Reporter::SaveToFile(dlg.GetPathName(), Reporter::BuildTextReport(controller->Stats()));
+	CFileDialog dlg(FALSE, L"TXT", NULL, OFN_HIDEREADONLY | OFN_EXPLORER, kTxtFileFilter, this);
+	if (dlg.DoModal() == IDOK) {
+		if (!Reporter::SaveToFile(dlg.GetPathName(), Reporter::BuildTextReport(controller->Stats()))) {
+			AfxMessageBox(L"Failed to save report to file.");
+		}
+	}
 }
 
 
 void Dialog::OnEXPH()
 {
-	wchar_t BASED_CODE szFilter[] = L"HTML Files (*.htm, *.html)|*.htm;*.html|All Files (*.*)|*.*||";
-
-	CFileDialog dlg(FALSE, L"HTML", NULL, OFN_HIDEREADONLY | OFN_EXPLORER, szFilter, this);
-	if (dlg.DoModal() == IDOK)
-		Reporter::SaveToFile(dlg.GetPathName(), Reporter::BuildHtmlReport(controller->Stats()));
+	CFileDialog dlg(FALSE, L"HTML", NULL, OFN_HIDEREADONLY | OFN_EXPLORER, kHtmlFileFilter, this);
+	if (dlg.DoModal() == IDOK) {
+		if (!Reporter::SaveToFile(dlg.GetPathName(), Reporter::BuildHtmlReport(controller->Stats()))) {
+			AfxMessageBox(L"Failed to save report to file.");
+		}
+	}
 }
 
 
 void Dialog::OnCancel()
 {
-}
-
-
-void Dialog::OnCbnSelchangeComboHost()
-{
+	// Intentionally empty: Escape must not close the dialog.
+	// Exit goes through the Exit button which triggers TraceSessionController::RequestExit().
 }
 
 
@@ -337,11 +346,6 @@ void Dialog::ClearHistory()
 {
 	config.lru.Clear();
 	HostComboModel::ClearAndResetSentinel(m_comboHost);
-}
-
-
-void Dialog::OnCbnSelendokComboHost()
-{
 }
 
 
@@ -433,9 +437,13 @@ void Dialog::PostTraceCompleted()
 
 void Dialog::PostTraceFailed(const CString& error)
 {
-	auto* copy = new CString(error);
-	if (!PostMessage(WM_WINMTR_TRACE_FAILED, 0, reinterpret_cast<LPARAM>(copy))) {
-		delete copy;
+	try {
+		auto* copy = new CString(error);
+		if (!PostMessage(WM_WINMTR_TRACE_FAILED, 0, reinterpret_cast<LPARAM>(copy))) {
+			delete copy;
+		}
+	} catch (...) {
+		// Swallow: worker thread must not terminate the process.
 	}
 }
 

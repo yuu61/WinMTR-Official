@@ -6,6 +6,7 @@
 #include "TraceEngine.h"
 #include "HostResolver.h"
 
+#include <algorithm>
 #include <sstream>
 #include <thread>
 #include <vector>
@@ -22,6 +23,9 @@ TraceEngine::TraceEngine()
 	  stop_event_(NULL)
 {
 	stop_event_ = CreateEventW(NULL, TRUE, FALSE, NULL);
+	if (stop_event_ == NULL) {
+		TRACE_MSG(L"TraceEngine: CreateEventW failed, GetLastError=" << GetLastError());
+	}
 }
 
 TraceEngine::~TraceEngine()
@@ -68,6 +72,7 @@ void TraceEngine::Trace(const IpAddress& dest, const TraceOptions& opts)
 #pragma warning(suppress: 6262) // legacy 16KB stack frame; default thread stack is 1MB
 void TraceEngine::ExecuteTrace(const IpAddress& dest, int ttl)
 {
+	try {
 	TRACE_MSG(L"Thread with TTL=" << ttl << L" started.");
 
 	IcmpIO icmp;
@@ -81,8 +86,8 @@ void TraceEngine::ExecuteTrace(const IpAddress& dest, int ttl)
 	// the required ICMP headroom. For IPv6 the per-record struct is larger,
 	// so size against the worst case.
 	char repData[sizeof(ICMPV6_ECHO_REPLY) + 8192 + ICMP_REPLY_HEADROOM];
-	const int nDataLen = options_.pingsize;
-	for (int i = 0; i < nDataLen; ++i) reqData[i] = 32; // whitespace
+	const int nDataLen = std::clamp(options_.pingsize, 0, static_cast<int>(sizeof(reqData)));
+	for (int i = 0; i < nDataLen; ++i) reqData[i] = ' '; // whitespace
 
 	const int hop = ttl - 1;
 
@@ -169,6 +174,9 @@ void TraceEngine::ExecuteTrace(const IpAddress& dest, int ttl)
 	}
 
 	TRACE_MSG(L"Thread with TTL=" << ttl << L" stopped.");
+	} catch (...) {
+		TRACE_MSG(L"ExecuteTrace caught exception on TTL " << ttl);
+	}
 }
 
 void TraceEngine::ResolveHopName(int hop)

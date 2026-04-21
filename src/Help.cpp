@@ -36,6 +36,5 @@ END_MESSAGE_MAP()
 
 void Help::OnBnClickedOk()
 {
-	// TODO: Add your control notification handler code here
 	CDialog::OnOK();
 }

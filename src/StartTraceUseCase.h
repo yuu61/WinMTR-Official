@@ -29,7 +29,7 @@ struct Result {
 
 // Trims rawHost, rejects empty, then synchronously probes DNS. Returns a
 // Result the caller can branch on. No UI calls.
-Result Validate(const CString& rawHost);
+[[nodiscard]] Result Validate(const CString& rawHost);
 
 } // namespace StartTraceUseCase
 

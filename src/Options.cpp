@@ -112,13 +112,25 @@ void Options::OnOK()
 	useDNS = m_checkDNS.GetCheck();
 
 	m_editInterval.GetWindowText(tmpstr, 20);
-	ParseDoubleField(tmpstr, interval);
+	{
+		double tmpDbl = interval;
+		if (ParseDoubleField(tmpstr, tmpDbl) && tmpDbl >= 0.1 && tmpDbl <= 60.0)
+			interval = tmpDbl;
+	}
 
 	m_editSize.GetWindowText(tmpstr, 20);
-	ParseIntField(tmpstr, pingsize);
+	{
+		int tmpInt = pingsize;
+		if (ParseIntField(tmpstr, tmpInt) && tmpInt >= 0 && tmpInt <= 8184)
+			pingsize = tmpInt;
+	}
 
 	m_editMaxLRU.GetWindowText(tmpstr, 20);
-	ParseIntField(tmpstr, maxLRU);
+	{
+		int tmpInt = maxLRU;
+		if (ParseIntField(tmpstr, tmpInt) && tmpInt >= 1 && tmpInt <= 10000)
+			maxLRU = tmpInt;
+	}
 
 	CDialog::OnOK();
 }

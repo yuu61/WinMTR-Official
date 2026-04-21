@@ -30,9 +30,9 @@ public:
 	enum { IDD = IDD_DIALOG_LICENSE };
 
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX);
+	virtual void DoDataExchange(CDataExchange* pDX) override;
 
-	virtual BOOL OnInitDialog();
+	virtual BOOL OnInitDialog() override;
 	
 	DECLARE_MESSAGE_MAP()
 };

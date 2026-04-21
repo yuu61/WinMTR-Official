@@ -29,7 +29,7 @@ public:
 	// up-front, then loads the registry; registry values replace state only
 	// for fields that were not overridden. Missing registry entries are seeded
 	// from state (so first-run writes reflect both defaults and cmdline).
-	static BOOL InitAndLoad(TraceConfigState& state, const CommandLineOverrides& overrides, std::vector<CString>& outHosts);
+	[[nodiscard]] static BOOL InitAndLoad(TraceConfigState& state, const CommandLineOverrides& overrides, std::vector<CString>& outHosts);
 
 	static void SaveOptions(int pingsize, int maxLRU, BOOL useDNS, double interval);
 };

@@ -3,6 +3,6 @@
 
 #define WINMTR_VERSION  L"0.92"
 #define WINMTR_LICENSE  L"GPL - GNU Public License"
-#define WINMTR_HOMEPAGE L"http://WinMTR.sourceforge.net"
+#define WINMTR_HOMEPAGE L"https://WinMTR.sourceforge.net"
 
 #endif // VERSION_H_

@@ -100,7 +100,7 @@ void Properties::PopulateFrom(const HopStatistics& stats, int hop)
 
 	stats.GetName(hop, host, _countof(host));
 	HostResolver::FormatNumeric(addr, ip, _countof(ip));
-	wcscpy_s(comment, L"Host alive.");
+	wcsncpy_s(comment, L"Host alive.", _TRUNCATE);
 
 	ping_avrg  = (float)stats.GetAvg(hop);
 	ping_last  = (float)stats.GetLast(hop);

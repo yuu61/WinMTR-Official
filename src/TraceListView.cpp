@@ -34,7 +34,7 @@ void Refresh(CListCtrl& list, const HopStatistics& stats)
 {
 	wchar_t buf[255];
 	const int nh = stats.GetMax();
-	while (list.GetItemCount() > nh) list.DeleteItem(list.GetItemCount() - 1);
+	for (int n = list.GetItemCount(); n > nh; --n) list.DeleteItem(n - 1);
 
 	const auto setCol = [&](int row, int col, const std::wstring& s) {
 		list.SetItem(row, col, LVIF_TEXT, s.c_str(), 0, 0, 0, 0);

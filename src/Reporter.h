@@ -24,11 +24,11 @@ class HopStatistics;
 class Reporter
 {
 public:
-	static CString BuildTextReport(const HopStatistics& stats);
-	static CString BuildHtmlReport(const HopStatistics& stats);
+	[[nodiscard]] static CString BuildTextReport(const HopStatistics& stats);
+	[[nodiscard]] static CString BuildHtmlReport(const HopStatistics& stats);
 
-	static bool CopyToClipboard(CWnd* owner, const CString& content);
-	static bool SaveToFile(LPCWSTR path, const CString& content);
+	[[nodiscard]] static bool CopyToClipboard(CWnd* owner, const CString& content);
+	[[nodiscard]] static bool SaveToFile(LPCWSTR path, const CString& content);
 };
 
 #endif // ifndef REPORTER_H_

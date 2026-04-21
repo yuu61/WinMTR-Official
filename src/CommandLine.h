@@ -28,7 +28,7 @@ struct ParseResult {
 // into a ParseResult. Splits via CommandLineToArgvW so quoting and escaping
 // follow standard Windows shell semantics. On --help / -h, sets helpRequested
 // and skips the remainder.
-ParseResult Parse(LPCWSTR cmdLine);
+[[nodiscard]] ParseResult Parse(LPCWSTR cmdLine);
 
 } // namespace CommandLine
 

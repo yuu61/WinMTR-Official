@@ -71,18 +71,18 @@ public:
 	void PostTraceFailed(const CString& error)     override;
 
 protected:
-	virtual void DoDataExchange(CDataExchange* pDX);
+	virtual void DoDataExchange(CDataExchange* pDX) override;
 
 	TraceConfigState                        config;
 	CommandLineOverrides                    cmdline_overrides;
 	std::unique_ptr<TraceSessionController> controller;
 
-	int     m_autostart;
+	bool    m_autostart = false;
 	wchar_t msz_defaulthostname[1000]{};
 	HICON   m_hIcon;
 	CSize   m_minTrackSize{};
 
-	virtual BOOL OnInitDialog();
+	virtual BOOL OnInitDialog() override;
 	afx_msg void OnPaint();
 	afx_msg void OnSize(UINT, int, int);
 	afx_msg void OnSizing(UINT, LPRECT);
@@ -90,7 +90,7 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	afx_msg void OnRestart();
 	afx_msg void OnOptions();
-	virtual void OnCancel();
+	virtual void OnCancel() override;
 
 	afx_msg void OnCTTC();
 	afx_msg void OnCHTC();
@@ -100,9 +100,6 @@ protected:
 	afx_msg void OnDblclkList(NMHDR* pNMHDR, LRESULT* pResult);
 
 	DECLARE_MESSAGE_MAP()
-public:
-	afx_msg void OnCbnSelchangeComboHost();
-	afx_msg void OnCbnSelendokComboHost();
 private:
 	void ClearHistory();
 public:
